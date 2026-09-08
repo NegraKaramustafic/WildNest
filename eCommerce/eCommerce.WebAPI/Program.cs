@@ -4,6 +4,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.Services.ActivityStateMachine;
+using eCommerce.Services.ReservationStateMachine;
 using eCommerce.Services.ProductStateMachine;
 using eCommerce.Services.Validators;
 using eCommerce.WebAPI.Filters;
@@ -70,6 +71,12 @@ TypeAdapterConfig<Ticket, TicketResponse>.NewConfig()
     .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
     .Map(dest => dest.VerifiedByFullName, src => src.VerifiedByUser != null ? $"{src.VerifiedByUser.FirstName} {src.VerifiedByUser.LastName}".Trim() : null)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .Map(dest => dest.ActivityName, src => src.Schedule != null && src.Schedule.Activity != null ? src.Schedule.Activity.Name : string.Empty)
+    .Map(dest => dest.ScheduleDate, src => src.Schedule != null ? src.Schedule.Date : default)
+    .Map(dest => dest.ScheduleStartTime, src => src.Schedule != null ? src.Schedule.StartTime : default)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -85,6 +92,14 @@ builder.Services.AddScoped<InitialActivityState>();
 builder.Services.AddScoped<DraftActivityState>();
 builder.Services.AddScoped<ActiveActivityState>();
 builder.Services.AddScoped<InactiveActivityState>();
+
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<BaseReservationState>();
+builder.Services.AddScoped<InitialReservationState>();
+builder.Services.AddScoped<PendingReservationState>();
+builder.Services.AddScoped<ConfirmedReservationState>();
+builder.Services.AddScoped<CompletedReservationState>();
+builder.Services.AddScoped<CancelledReservationState>();
 
 // category service
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -131,6 +146,8 @@ builder.Services.AddScoped<IValidator<ScheduleInsertRequest>, ScheduleInsertVali
 builder.Services.AddScoped<IValidator<ScheduleUpdateRequest>, ScheduleUpdateValidator>();
 builder.Services.AddScoped<IValidator<TicketInsertRequest>, TicketInsertValidator>();
 builder.Services.AddScoped<IValidator<TicketUpdateRequest>, TicketUpdateValidator>();
+builder.Services.AddScoped<IValidator<ReservationInsertRequest>, ReservationInsertValidator>();
+builder.Services.AddScoped<IValidator<ReservationUpdateRequest>, ReservationUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

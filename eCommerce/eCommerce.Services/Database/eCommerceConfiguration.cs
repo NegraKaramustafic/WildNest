@@ -85,6 +85,22 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(t => t.VerifiedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Reservation>()
+                .HasIndex(r => r.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.Schedule)
+                .WithMany()
+                .HasForeignKey(r => r.ScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }

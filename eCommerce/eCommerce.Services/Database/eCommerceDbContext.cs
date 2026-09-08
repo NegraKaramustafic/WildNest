@@ -29,6 +29,7 @@ namespace eCommerce.Services.Database
         public DbSet<Activity> Activities { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
