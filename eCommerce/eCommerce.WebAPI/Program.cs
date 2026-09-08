@@ -77,6 +77,7 @@ TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
     .Map(dest => dest.ScheduleDate, src => src.Schedule != null ? src.Schedule.Date : default)
     .Map(dest => dest.ScheduleStartTime, src => src.Schedule != null ? src.Schedule.StartTime : default)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Payment, PaymentResponse>.NewConfig().IgnoreNullValues(true);
 
 
 // register application services
@@ -125,6 +126,7 @@ builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -148,6 +150,8 @@ builder.Services.AddScoped<IValidator<TicketInsertRequest>, TicketInsertValidato
 builder.Services.AddScoped<IValidator<TicketUpdateRequest>, TicketUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReservationInsertRequest>, ReservationInsertValidator>();
 builder.Services.AddScoped<IValidator<ReservationUpdateRequest>, ReservationUpdateValidator>();
+builder.Services.AddScoped<IValidator<PaymentInsertRequest>, PaymentInsertValidator>();
+builder.Services.AddScoped<IValidator<PaymentUpdateRequest>, PaymentUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

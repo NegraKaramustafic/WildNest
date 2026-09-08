@@ -31,6 +31,11 @@ namespace eCommerce.Services.Database
         [MaxLength(20)]
         public string Code { get; set; } = string.Empty;
 
+        public int? PaymentId { get; set; }
+
+        [ForeignKey("PaymentId")]
+        public Payment? Payment { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

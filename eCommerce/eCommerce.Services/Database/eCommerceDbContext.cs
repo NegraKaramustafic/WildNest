@@ -30,6 +30,7 @@ namespace eCommerce.Services.Database
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<Payment> Payments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

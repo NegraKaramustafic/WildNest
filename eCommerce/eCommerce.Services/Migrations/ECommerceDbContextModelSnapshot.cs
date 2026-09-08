@@ -602,6 +602,35 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -1227,6 +1256,9 @@ namespace eCommerce.Services.Migrations
                     b.Property<int>("GuestCount")
                         .HasColumnType("int");
 
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
@@ -1243,6 +1275,8 @@ namespace eCommerce.Services.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("PaymentId");
 
                     b.HasIndex("ScheduleId");
 
@@ -1439,6 +1473,9 @@ namespace eCommerce.Services.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PricePerPerson")
                         .HasColumnType("decimal(18,2)");
 
@@ -1475,6 +1512,8 @@ namespace eCommerce.Services.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("PaymentId");
 
                     b.HasIndex("UserId");
 
@@ -1906,6 +1945,11 @@ namespace eCommerce.Services.Migrations
 
             modelBuilder.Entity("eCommerce.Services.Database.Reservation", b =>
                 {
+                    b.HasOne("eCommerce.Services.Database.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("eCommerce.Services.Database.Schedule", "Schedule")
                         .WithMany()
                         .HasForeignKey("ScheduleId")
@@ -1917,6 +1961,8 @@ namespace eCommerce.Services.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Payment");
 
                     b.Navigation("Schedule");
 
@@ -1936,6 +1982,11 @@ namespace eCommerce.Services.Migrations
 
             modelBuilder.Entity("eCommerce.Services.Database.Ticket", b =>
                 {
+                    b.HasOne("eCommerce.Services.Database.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("eCommerce.Services.Database.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1946,6 +1997,8 @@ namespace eCommerce.Services.Migrations
                         .WithMany()
                         .HasForeignKey("VerifiedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Payment");
 
                     b.Navigation("User");
 

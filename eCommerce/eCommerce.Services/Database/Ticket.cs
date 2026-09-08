@@ -44,6 +44,11 @@ namespace eCommerce.Services.Database
 
         public TicketVerificationMethod? VerificationMethod { get; set; }
 
+        public int? PaymentId { get; set; }
+
+        [ForeignKey("PaymentId")]
+        public Payment? Payment { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
