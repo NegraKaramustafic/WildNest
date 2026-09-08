@@ -17,6 +17,8 @@ namespace eCommerce.Services.Database
             SeedUserRoles(modelBuilder);
             SeedAnimalCategories(modelBuilder);
             SeedAnimals(modelBuilder);
+            SeedActivities(modelBuilder);
+            SeedSchedules(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -899,6 +901,166 @@ namespace eCommerce.Services.Database
                     IsActive = true,
                     AdoptionPrice = 18.00m,
                     CreatedAt = createdAt
+                }
+            );
+        }
+
+        private void SeedActivities(ModelBuilder modelBuilder)
+        {
+            var createdAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc);
+
+            modelBuilder.Entity<Activity>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Elephant Feeding Experience",
+                    Description = "Help keepers prepare fruit for Kavi and join a guided feeding session with our Asian elephant.",
+                    AnimalId = 1,
+                    Type = eCommerce.Model.Enums.ActivityType.Feeding,
+                    Duration = new TimeSpan(1, 30, 0),
+                    Price = 25.00m,
+                    Capacity = 15,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "Nocturnal Safari Walk",
+                    Description = "A guided evening walk through the park to spot nocturnal animals as they become active.",
+                    AnimalId = (int?)null,
+                    Type = eCommerce.Model.Enums.ActivityType.Safari,
+                    Duration = new TimeSpan(2, 0, 0),
+                    Price = 30.00m,
+                    Capacity = 20,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Bird Photography Workshop",
+                    Description = "Learn composition and lighting tips while photographing macaws and other birds in the aviary.",
+                    AnimalId = (int?)null,
+                    Type = eCommerce.Model.Enums.ActivityType.Workshop,
+                    Duration = new TimeSpan(2, 0, 0),
+                    Price = 40.00m,
+                    Capacity = 12,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 4,
+                    Name = "Panda Keeper for a Day",
+                    Description = "Spend a full day with keepers caring for Bao, from breakfast bamboo to enclosure enrichment.",
+                    AnimalId = (int?)null,
+                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    Duration = new TimeSpan(7, 0, 0),
+                    Price = 120.00m,
+                    Capacity = 4,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Draft,
+                    CreatedAt = createdAt
+                }
+            );
+        }
+
+        private void SeedSchedules(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Schedule>().HasData(
+                new
+                {
+                    Id = 1,
+                    ActivityId = 1,
+                    Date = new DateOnly(2026, 9, 9),
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(10, 30),
+                    CapacityLeft = 15,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 2,
+                    ActivityId = 3,
+                    Date = new DateOnly(2026, 9, 9),
+                    StartTime = new TimeOnly(11, 0),
+                    EndTime = new TimeOnly(13, 0),
+                    CapacityLeft = 12,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 3,
+                    ActivityId = 1,
+                    Date = new DateOnly(2026, 9, 10),
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(10, 30),
+                    CapacityLeft = 15,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 4,
+                    ActivityId = 2,
+                    Date = new DateOnly(2026, 9, 10),
+                    StartTime = new TimeOnly(20, 0),
+                    EndTime = new TimeOnly(22, 0),
+                    CapacityLeft = 20,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 5,
+                    ActivityId = 3,
+                    Date = new DateOnly(2026, 9, 11),
+                    StartTime = new TimeOnly(10, 0),
+                    EndTime = new TimeOnly(12, 0),
+                    CapacityLeft = 12,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 6,
+                    ActivityId = 1,
+                    Date = new DateOnly(2026, 9, 12),
+                    StartTime = new TimeOnly(14, 0),
+                    EndTime = new TimeOnly(15, 30),
+                    CapacityLeft = 15,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 7,
+                    ActivityId = 2,
+                    Date = new DateOnly(2026, 9, 12),
+                    StartTime = new TimeOnly(19, 30),
+                    EndTime = new TimeOnly(21, 30),
+                    CapacityLeft = 20,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 8,
+                    ActivityId = 2,
+                    Date = new DateOnly(2026, 9, 13),
+                    StartTime = new TimeOnly(20, 0),
+                    EndTime = new TimeOnly(22, 0),
+                    CapacityLeft = 20,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 9,
+                    ActivityId = 3,
+                    Date = new DateOnly(2026, 9, 13),
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(11, 0),
+                    CapacityLeft = 12,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
                 }
             );
         }
