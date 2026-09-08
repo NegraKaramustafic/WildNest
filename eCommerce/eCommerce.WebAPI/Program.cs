@@ -54,6 +54,10 @@ TypeAdapterConfig<Order, OrderResponse>.NewConfig()
     .Map(dest => dest.Status, src => (int)src.Status);
 TypeAdapterConfig<OrderItem, OrderItemResponse>.NewConfig()
     .Map(dest => dest.ProductName, src => src.Product != null ? src.Product.Name : string.Empty);
+TypeAdapterConfig<AnimalCategory, AnimalCategoryResponse>.NewConfig().IgnoreNullValues(true);
+TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
+    .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -83,6 +87,8 @@ builder.Services.AddScoped<ICryptoService, CryptoService>();
 
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
+builder.Services.AddScoped<IAnimalService, AnimalService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -96,6 +102,10 @@ builder.Services.AddScoped<IValidator<AssetInsertRequest>, AssetInsertValidator>
 builder.Services.AddScoped<IValidator<AssetUpdateRequest>, AssetUpdateValidator>();
 builder.Services.AddScoped<IValidator<ProductReviewInsertRequest>, ProductReviewInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductReviewUpdateRequest>, ProductReviewUpdateValidator>();
+builder.Services.AddScoped<IValidator<AnimalCategoryInsertRequest>, AnimalCategoryInsertValidator>();
+builder.Services.AddScoped<IValidator<AnimalCategoryUpdateRequest>, AnimalCategoryUpdateValidator>();
+builder.Services.AddScoped<IValidator<AnimalInsertRequest>, AnimalInsertValidator>();
+builder.Services.AddScoped<IValidator<AnimalUpdateRequest>, AnimalUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

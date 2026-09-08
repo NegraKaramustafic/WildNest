@@ -22,6 +22,220 @@ namespace eCommerce.Services.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("AdoptionPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Diet")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Habitat")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Lifespan")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Species")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Tag")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Weight")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Animals");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AdoptionPrice = 15.00m,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Kavi is a gentle 15-year-old Asian elephant rescued from a logging camp. He loves watermelons and mud baths.",
+                            Diet = "Herbivore",
+                            Habitat = "Tropical",
+                            IsActive = true,
+                            Lifespan = "60-70 years",
+                            Name = "Kavi",
+                            Species = "Asian Elephant",
+                            Tag = 3,
+                            Weight = 4500m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Zara is a playful red panda who spends her days napping in the treetops. She is especially fond of bamboo shoots and apple slices.",
+                            Diet = "Omnivore",
+                            Habitat = "Temperate",
+                            IsActive = true,
+                            Lifespan = "8-12 years",
+                            Name = "Zara",
+                            Species = "Red Panda",
+                            Tag = 1,
+                            Weight = 5.0m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoryId = 4,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Milo is a lively ring-tailed lemur who sunbathes with his troop each morning. He never misses a chance to steal a grape.",
+                            Diet = "Omnivore",
+                            Habitat = "Tropical",
+                            IsActive = true,
+                            Lifespan = "16-19 years",
+                            Name = "Milo",
+                            Species = "Ring-tailed Lemur",
+                            Tag = 2,
+                            Weight = 2.5m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AdoptionPrice = 20.00m,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Luna is a quiet snow leopard often seen stretching on cool rocky ledges at dusk. She is shy with crowds but very curious.",
+                            Diet = "Carnivore",
+                            Habitat = "Mountain",
+                            IsActive = true,
+                            Lifespan = "15-18 years",
+                            Name = "Luna",
+                            Species = "Snow Leopard",
+                            Tag = 3,
+                            Weight = 40m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AdoptionPrice = 25.00m,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Bao is a calm giant panda with a famously picky appetite. His keepers know he will do almost anything for fresh bamboo.",
+                            Diet = "Herbivore",
+                            Habitat = "Temperate",
+                            IsActive = true,
+                            Lifespan = "20 years",
+                            Name = "Bao",
+                            Species = "Giant Panda",
+                            Tag = 1,
+                            Weight = 110m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 2,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Rio is a brightly colored scarlet macaw who greets visitors with an impressive vocal range. He loves mango and showing off.",
+                            Diet = "Omnivore",
+                            Habitat = "Tropical",
+                            IsActive = true,
+                            Lifespan = "40-50 years",
+                            Name = "Rio",
+                            Species = "Scarlet Macaw",
+                            Tag = 2,
+                            Weight = 1.0m
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AdoptionPrice = 18.00m,
+                            CategoryId = 1,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Nala is a confident lioness and one of the most popular residents of the savanna habitat. She spends warm afternoons dozing in the grass.",
+                            Diet = "Carnivore",
+                            Habitat = "Savanna",
+                            IsActive = true,
+                            Lifespan = "10-14 years",
+                            Name = "Nala",
+                            Species = "African Lion",
+                            Tag = 1,
+                            Weight = 160m
+                        });
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.AnimalCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AnimalCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Mammals"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Birds"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Reptiles"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Primates"
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Asset", b =>
                 {
                     b.Property<int>("Id")
@@ -1189,6 +1403,17 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.AnimalCategory", "Category")
+                        .WithMany("Animals")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Asset", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Product", "Product")
@@ -1358,6 +1583,11 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.AnimalCategory", b =>
+                {
+                    b.Navigation("Animals");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Cart", b =>

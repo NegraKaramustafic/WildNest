@@ -15,6 +15,8 @@ namespace eCommerce.Services.Database
             SeedRoles(modelBuilder);
             SeedUsers(modelBuilder);
             SeedUserRoles(modelBuilder);
+            SeedAnimalCategories(modelBuilder);
+            SeedAnimals(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -760,6 +762,143 @@ namespace eCommerce.Services.Database
                     UserId = 5,
                     RoleId = 2,
                     DateAssigned = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc)
+                }
+            );
+        }
+
+        private void SeedAnimalCategories(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<AnimalCategory>().HasData(
+                new { Id = 1, Name = "Mammals" },
+                new { Id = 2, Name = "Birds" },
+                new { Id = 3, Name = "Reptiles" },
+                new { Id = 4, Name = "Primates" }
+            );
+        }
+
+        private void SeedAnimals(ModelBuilder modelBuilder)
+        {
+            var createdAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc);
+
+            modelBuilder.Entity<Animal>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Kavi",
+                    Species = "Asian Elephant",
+                    CategoryId = 1,
+                    Habitat = "Tropical",
+                    Diet = "Herbivore",
+                    Weight = 4500m,
+                    Lifespan = "60-70 years",
+                    Description = "Kavi is a gentle 15-year-old Asian elephant rescued from a logging camp. He loves watermelons and mud baths.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.Adoptable,
+                    IsActive = true,
+                    AdoptionPrice = 15.00m,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "Zara",
+                    Species = "Red Panda",
+                    CategoryId = 1,
+                    Habitat = "Temperate",
+                    Diet = "Omnivore",
+                    Weight = 5.0m,
+                    Lifespan = "8-12 years",
+                    Description = "Zara is a playful red panda who spends her days napping in the treetops. She is especially fond of bamboo shoots and apple slices.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.Popular,
+                    IsActive = true,
+                    AdoptionPrice = (decimal?)null,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Milo",
+                    Species = "Ring-tailed Lemur",
+                    CategoryId = 4,
+                    Habitat = "Tropical",
+                    Diet = "Omnivore",
+                    Weight = 2.5m,
+                    Lifespan = "16-19 years",
+                    Description = "Milo is a lively ring-tailed lemur who sunbathes with his troop each morning. He never misses a chance to steal a grape.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.New,
+                    IsActive = true,
+                    AdoptionPrice = (decimal?)null,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 4,
+                    Name = "Luna",
+                    Species = "Snow Leopard",
+                    CategoryId = 1,
+                    Habitat = "Mountain",
+                    Diet = "Carnivore",
+                    Weight = 40m,
+                    Lifespan = "15-18 years",
+                    Description = "Luna is a quiet snow leopard often seen stretching on cool rocky ledges at dusk. She is shy with crowds but very curious.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.Adoptable,
+                    IsActive = true,
+                    AdoptionPrice = 20.00m,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 5,
+                    Name = "Bao",
+                    Species = "Giant Panda",
+                    CategoryId = 1,
+                    Habitat = "Temperate",
+                    Diet = "Herbivore",
+                    Weight = 110m,
+                    Lifespan = "20 years",
+                    Description = "Bao is a calm giant panda with a famously picky appetite. His keepers know he will do almost anything for fresh bamboo.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.Popular,
+                    IsActive = true,
+                    AdoptionPrice = 25.00m,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 6,
+                    Name = "Rio",
+                    Species = "Scarlet Macaw",
+                    CategoryId = 2,
+                    Habitat = "Tropical",
+                    Diet = "Omnivore",
+                    Weight = 1.0m,
+                    Lifespan = "40-50 years",
+                    Description = "Rio is a brightly colored scarlet macaw who greets visitors with an impressive vocal range. He loves mango and showing off.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.New,
+                    IsActive = true,
+                    AdoptionPrice = (decimal?)null,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 7,
+                    Name = "Nala",
+                    Species = "African Lion",
+                    CategoryId = 1,
+                    Habitat = "Savanna",
+                    Diet = "Carnivore",
+                    Weight = 160m,
+                    Lifespan = "10-14 years",
+                    Description = "Nala is a confident lioness and one of the most popular residents of the savanna habitat. She spends warm afternoons dozing in the grass.",
+                    ImageUrl = (string?)null,
+                    Tag = eCommerce.Model.Enums.AnimalTag.Popular,
+                    IsActive = true,
+                    AdoptionPrice = 18.00m,
+                    CreatedAt = createdAt
                 }
             );
         }

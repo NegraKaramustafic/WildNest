@@ -51,6 +51,12 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(pr => pr.OrderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Animal>()
+                .HasOne(a => a.Category)
+                .WithMany(c => c.Animals)
+                .HasForeignKey(a => a.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }
