@@ -3,6 +3,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
+using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ProductStateMachine;
 using eCommerce.Services.Validators;
 using eCommerce.WebAPI.Filters;
@@ -58,6 +59,17 @@ TypeAdapterConfig<AnimalCategory, AnimalCategoryResponse>.NewConfig().IgnoreNull
 TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
     .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Activity, ActivityResponse>.NewConfig()
+    .Map(dest => dest.AnimalName, src => src.Animal != null ? src.Animal.Name : null)
+    .IgnoreNullValues(true);
+TypeAdapterConfig<Schedule, ScheduleResponse>.NewConfig()
+    .Map(dest => dest.ActivityName, src => src.Activity != null ? src.Activity.Name : string.Empty)
+    .Map(dest => dest.ActivityPrice, src => src.Activity != null ? src.Activity.Price : 0m)
+    .IgnoreNullValues(true);
+TypeAdapterConfig<Ticket, TicketResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .Map(dest => dest.VerifiedByFullName, src => src.VerifiedByUser != null ? $"{src.VerifiedByUser.FirstName} {src.VerifiedByUser.LastName}".Trim() : null)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -66,6 +78,13 @@ builder.Services.AddScoped<BaseProductState>();
 builder.Services.AddScoped<InitialProductState>();
 builder.Services.AddScoped<DraftProductState>();
 builder.Services.AddScoped<ActiveProductState>();
+
+builder.Services.AddScoped<IActivityService, ActivityService>();
+builder.Services.AddScoped<BaseActivityState>();
+builder.Services.AddScoped<InitialActivityState>();
+builder.Services.AddScoped<DraftActivityState>();
+builder.Services.AddScoped<ActiveActivityState>();
+builder.Services.AddScoped<InactiveActivityState>();
 
 // category service
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -89,6 +108,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -106,6 +127,10 @@ builder.Services.AddScoped<IValidator<AnimalCategoryInsertRequest>, AnimalCatego
 builder.Services.AddScoped<IValidator<AnimalCategoryUpdateRequest>, AnimalCategoryUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalInsertRequest>, AnimalInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalUpdateRequest>, AnimalUpdateValidator>();
+builder.Services.AddScoped<IValidator<ScheduleInsertRequest>, ScheduleInsertValidator>();
+builder.Services.AddScoped<IValidator<ScheduleUpdateRequest>, ScheduleUpdateValidator>();
+builder.Services.AddScoped<IValidator<TicketInsertRequest>, TicketInsertValidator>();
+builder.Services.AddScoped<IValidator<TicketUpdateRequest>, TicketUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

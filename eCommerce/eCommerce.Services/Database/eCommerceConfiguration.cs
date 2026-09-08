@@ -57,6 +57,34 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(a => a.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Activity>()
+                .HasOne(a => a.Animal)
+                .WithMany()
+                .HasForeignKey(a => a.AnimalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Schedule>()
+                .HasOne(s => s.Activity)
+                .WithMany(a => a.Schedules)
+                .HasForeignKey(s => s.ActivityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(t => t.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.VerifiedByUser)
+                .WithMany()
+                .HasForeignKey(t => t.VerifiedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }

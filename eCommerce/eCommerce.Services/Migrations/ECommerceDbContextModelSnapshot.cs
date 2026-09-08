@@ -22,6 +22,106 @@ namespace eCommerce.Services.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("time");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId");
+
+                    b.ToTable("Activities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AnimalId = 1,
+                            Capacity = 15,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Help keepers prepare fruit for Kavi and join a guided feeding session with our Asian elephant.",
+                            Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            Name = "Elephant Feeding Experience",
+                            Price = 25.00m,
+                            Status = 1,
+                            Type = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Capacity = 20,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "A guided evening walk through the park to spot nocturnal animals as they become active.",
+                            Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            Name = "Nocturnal Safari Walk",
+                            Price = 30.00m,
+                            Status = 1,
+                            Type = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Capacity = 12,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Learn composition and lighting tips while photographing macaws and other birds in the aviary.",
+                            Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            Name = "Bird Photography Workshop",
+                            Price = 40.00m,
+                            Status = 1,
+                            Type = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Capacity = 4,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Spend a full day with keepers caring for Bao, from breakfast bamboo to enclosure enrichment.",
+                            Duration = new TimeSpan(0, 7, 0, 0, 0),
+                            Name = "Panda Keeper for a Day",
+                            Price = 120.00m,
+                            Status = 0,
+                            Type = 3
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
                 {
                     b.Property<int>("Id")
@@ -1155,6 +1255,191 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Schedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActivityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CapacityLeft")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivityId");
+
+                    b.ToTable("Schedules");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ActivityId = 1,
+                            CapacityLeft = 15,
+                            Date = new DateOnly(2026, 9, 9),
+                            EndTime = new TimeOnly(10, 30, 0),
+                            StartTime = new TimeOnly(9, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ActivityId = 3,
+                            CapacityLeft = 12,
+                            Date = new DateOnly(2026, 9, 9),
+                            EndTime = new TimeOnly(13, 0, 0),
+                            StartTime = new TimeOnly(11, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ActivityId = 1,
+                            CapacityLeft = 15,
+                            Date = new DateOnly(2026, 9, 10),
+                            EndTime = new TimeOnly(10, 30, 0),
+                            StartTime = new TimeOnly(9, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ActivityId = 2,
+                            CapacityLeft = 20,
+                            Date = new DateOnly(2026, 9, 10),
+                            EndTime = new TimeOnly(22, 0, 0),
+                            StartTime = new TimeOnly(20, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ActivityId = 3,
+                            CapacityLeft = 12,
+                            Date = new DateOnly(2026, 9, 11),
+                            EndTime = new TimeOnly(12, 0, 0),
+                            StartTime = new TimeOnly(10, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ActivityId = 1,
+                            CapacityLeft = 15,
+                            Date = new DateOnly(2026, 9, 12),
+                            EndTime = new TimeOnly(15, 30, 0),
+                            StartTime = new TimeOnly(14, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ActivityId = 2,
+                            CapacityLeft = 20,
+                            Date = new DateOnly(2026, 9, 12),
+                            EndTime = new TimeOnly(21, 30, 0),
+                            StartTime = new TimeOnly(19, 30, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ActivityId = 2,
+                            CapacityLeft = 20,
+                            Date = new DateOnly(2026, 9, 13),
+                            EndTime = new TimeOnly(22, 0, 0),
+                            StartTime = new TimeOnly(20, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ActivityId = 3,
+                            CapacityLeft = 12,
+                            Date = new DateOnly(2026, 9, 13),
+                            EndTime = new TimeOnly(11, 0, 0),
+                            StartTime = new TimeOnly(9, 0, 0),
+                            Status = 0
+                        });
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Ticket", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PricePerPerson")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("QrCodeData")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VerificationMethod")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("VerifiedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("VisitorCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("VerifiedByUserId");
+
+                    b.ToTable("Tickets");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.UnitOfMeasure", b =>
                 {
                     b.Property<int>("Id")
@@ -1403,6 +1688,16 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Animal", "Animal")
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Animal");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.AnimalCategory", "Category")
@@ -1566,6 +1861,35 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Schedule", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Activity", "Activity")
+                        .WithMany("Schedules")
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Activity");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Ticket", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.User", "VerifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("VerifiedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("User");
+
+                    b.Navigation("VerifiedByUser");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Role", "Role")
@@ -1583,6 +1907,11 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
+                {
+                    b.Navigation("Schedules");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.AnimalCategory", b =>
