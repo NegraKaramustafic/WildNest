@@ -19,6 +19,7 @@ namespace eCommerce.Services.Database
             SeedAnimals(modelBuilder);
             SeedActivities(modelBuilder);
             SeedSchedules(modelBuilder);
+            SeedZooPartners(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -1061,6 +1062,45 @@ namespace eCommerce.Services.Database
                     EndTime = new TimeOnly(11, 0),
                     CapacityLeft = 12,
                     Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                }
+            );
+        }
+
+        private void SeedZooPartners(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ZooPartner>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Sunbird Sanctuary",
+                    Location = "Costa Rica",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 20000m,
+                    CurrentAmount = 12400m,
+                    IsActive = true
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "Mountain Haven Rescue",
+                    Location = "Nepal",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 15000m,
+                    CurrentAmount = 8200m,
+                    IsActive = true
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Coral Coast Wildlife",
+                    Location = "Australia",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 25000m,
+                    CurrentAmount = 18900m,
+                    IsActive = true
                 }
             );
         }

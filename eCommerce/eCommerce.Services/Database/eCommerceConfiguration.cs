@@ -113,6 +113,42 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(r => r.PaymentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Adoption>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Adoption>()
+                .HasOne(a => a.Animal)
+                .WithMany()
+                .HasForeignKey(a => a.AnimalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Adoption>()
+                .HasOne(a => a.Payment)
+                .WithMany()
+                .HasForeignKey(a => a.PaymentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Donation>()
+                .HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Donation>()
+                .HasOne(d => d.ZooPartner)
+                .WithMany()
+                .HasForeignKey(d => d.ZooPartnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Donation>()
+                .HasOne(d => d.Payment)
+                .WithMany()
+                .HasForeignKey(d => d.PaymentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }

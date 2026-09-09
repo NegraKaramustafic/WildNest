@@ -78,6 +78,15 @@ TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
     .Map(dest => dest.ScheduleStartTime, src => src.Schedule != null ? src.Schedule.StartTime : default)
     .IgnoreNullValues(true);
 TypeAdapterConfig<Payment, PaymentResponse>.NewConfig().IgnoreNullValues(true);
+TypeAdapterConfig<ZooPartner, ZooPartnerResponse>.NewConfig().IgnoreNullValues(true);
+TypeAdapterConfig<Adoption, AdoptionResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .Map(dest => dest.AnimalName, src => src.Animal != null ? src.Animal.Name : string.Empty)
+    .IgnoreNullValues(true);
+TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .Map(dest => dest.ZooPartnerName, src => src.ZooPartner != null ? src.ZooPartner.Name : string.Empty)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -127,6 +136,9 @@ builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
+builder.Services.AddScoped<IAdoptionService, AdoptionService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -152,6 +164,12 @@ builder.Services.AddScoped<IValidator<ReservationInsertRequest>, ReservationInse
 builder.Services.AddScoped<IValidator<ReservationUpdateRequest>, ReservationUpdateValidator>();
 builder.Services.AddScoped<IValidator<PaymentInsertRequest>, PaymentInsertValidator>();
 builder.Services.AddScoped<IValidator<PaymentUpdateRequest>, PaymentUpdateValidator>();
+builder.Services.AddScoped<IValidator<ZooPartnerInsertRequest>, ZooPartnerInsertValidator>();
+builder.Services.AddScoped<IValidator<ZooPartnerUpdateRequest>, ZooPartnerUpdateValidator>();
+builder.Services.AddScoped<IValidator<AdoptionInsertRequest>, AdoptionInsertValidator>();
+builder.Services.AddScoped<IValidator<AdoptionUpdateRequest>, AdoptionUpdateValidator>();
+builder.Services.AddScoped<IValidator<DonationInsertRequest>, DonationInsertValidator>();
+builder.Services.AddScoped<IValidator<DonationUpdateRequest>, DonationUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
