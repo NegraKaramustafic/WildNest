@@ -19,6 +19,9 @@ namespace eCommerce.Services.Database
             SeedAnimals(modelBuilder);
             SeedActivities(modelBuilder);
             SeedSchedules(modelBuilder);
+            SeedZooPartners(modelBuilder);
+            SeedReviews(modelBuilder);
+            SeedBadges(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -1061,6 +1064,153 @@ namespace eCommerce.Services.Database
                     EndTime = new TimeOnly(11, 0),
                     CapacityLeft = 12,
                     Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                }
+            );
+        }
+
+        private void SeedZooPartners(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ZooPartner>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Sunbird Sanctuary",
+                    Location = "Costa Rica",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 20000m,
+                    CurrentAmount = 12400m,
+                    IsActive = true
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "Mountain Haven Rescue",
+                    Location = "Nepal",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 15000m,
+                    CurrentAmount = 8200m,
+                    IsActive = true
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Coral Coast Wildlife",
+                    Location = "Australia",
+                    Description = (string?)null,
+                    ImageUrl = (string?)null,
+                    GoalAmount = 25000m,
+                    CurrentAmount = 18900m,
+                    IsActive = true
+                }
+            );
+        }
+
+        private void SeedReviews(ModelBuilder modelBuilder)
+        {
+            var createdAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc);
+
+            modelBuilder.Entity<Review>().HasData(
+                new
+                {
+                    Id = 1,
+                    UserId = 3,
+                    ActivityId = 1,
+                    Rating = 5,
+                    Comment = "Amazing experience! The kids were thrilled, staff were very kind.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 2,
+                    UserId = 4,
+                    ActivityId = 1,
+                    Rating = 5,
+                    Comment = "Kavi is such a gentle giant. Helping with the feeding was unforgettable.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 3,
+                    UserId = 5,
+                    ActivityId = 1,
+                    Rating = 4,
+                    Comment = "Really well organised. We learned a lot and the keepers were so patient.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 4,
+                    UserId = 3,
+                    ActivityId = 2,
+                    Rating = 5,
+                    Comment = "Magical evening walk. Spotting the nocturnal animals was a highlight of our trip.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 5,
+                    UserId = 4,
+                    ActivityId = 2,
+                    Rating = 4,
+                    Comment = "Loved the atmosphere after dark. Guides were knowledgeable and made everyone feel safe.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 6,
+                    UserId = 5,
+                    ActivityId = 2,
+                    Rating = 5,
+                    Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
+                    CreatedAt = createdAt
+                }
+            );
+        }
+
+        private void SeedBadges(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Badge>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Wildlife Guardian",
+                    Description = "Adopt your first animal",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FirstAdoption
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "First Explorer",
+                    Description = "Book your first activity",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FirstBooking
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Generous Heart",
+                    Description = "Donate to 3 zoos",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.ThreeDonations
+                },
+                new
+                {
+                    Id = 4,
+                    Name = "Animal Whisperer",
+                    Description = "Visit 10 animal profiles",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.TenAnimalVisits
+                },
+                new
+                {
+                    Id = 5,
+                    Name = "Conservation Hero",
+                    Description = "Adopt 5 animals",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FiveAdoptions
                 }
             );
         }

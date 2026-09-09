@@ -122,6 +122,43 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Adoption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MonthlyAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Adoptions");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
                 {
                     b.Property<int>("Id")
@@ -370,6 +407,72 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("Assets");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Badge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Criteria")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("IconUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Badges");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Criteria = 0,
+                            Description = "Adopt your first animal",
+                            Name = "Wildlife Guardian"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Criteria = 1,
+                            Description = "Book your first activity",
+                            Name = "First Explorer"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Criteria = 2,
+                            Description = "Donate to 3 zoos",
+                            Name = "Generous Heart"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Criteria = 3,
+                            Description = "Visit 10 animal profiles",
+                            Name = "Animal Whisperer"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Criteria = 4,
+                            Description = "Adopt 5 animals",
+                            Name = "Conservation Hero"
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Cart", b =>
                 {
                     b.Property<int>("Id")
@@ -501,6 +604,40 @@ namespace eCommerce.Services.Migrations
                             IsActive = true,
                             Name = "Accessories"
                         });
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Donation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ZooPartnerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ZooPartnerId");
+
+                    b.ToTable("Donations");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Order", b =>
@@ -1285,6 +1422,97 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("Reservations");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActivityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivityId");
+
+                    b.HasIndex("UserId", "ActivityId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ActivityId = 1,
+                            Comment = "Amazing experience! The kids were thrilled, staff were very kind.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ActivityId = 1,
+                            Comment = "Kavi is such a gentle giant. Helping with the feeding was unforgettable.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ActivityId = 1,
+                            Comment = "Really well organised. We learned a lot and the keepers were so patient.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 4,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ActivityId = 2,
+                            Comment = "Magical evening walk. Spotting the nocturnal animals was a highlight of our trip.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ActivityId = 2,
+                            Comment = "Loved the atmosphere after dark. Guides were knowledgeable and made everyone feel safe.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 4,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ActivityId = 2,
+                            Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 5
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -1707,6 +1935,33 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.UserBadge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BadgeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EarnedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BadgeId");
+
+                    b.HasIndex("UserId", "BadgeId")
+                        .IsUnique();
+
+                    b.ToTable("UserBadges");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>
                 {
                     b.Property<int>("Id")
@@ -1770,6 +2025,75 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.ZooPartner", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CurrentAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("GoalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ZooPartners");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrentAmount = 12400m,
+                            GoalAmount = 20000m,
+                            IsActive = true,
+                            Location = "Costa Rica",
+                            Name = "Sunbird Sanctuary"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CurrentAmount = 8200m,
+                            GoalAmount = 15000m,
+                            IsActive = true,
+                            Location = "Nepal",
+                            Name = "Mountain Haven Rescue"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CurrentAmount = 18900m,
+                            GoalAmount = 25000m,
+                            IsActive = true,
+                            Location = "Australia",
+                            Name = "Coral Coast Wildlife"
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Animal", "Animal")
@@ -1778,6 +2102,32 @@ namespace eCommerce.Services.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Animal");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Adoption", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Animal", "Animal")
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Animal", b =>
@@ -1840,6 +2190,32 @@ namespace eCommerce.Services.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Donation", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.ZooPartner", "ZooPartner")
+                        .WithMany()
+                        .HasForeignKey("ZooPartnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("User");
+
+                    b.Navigation("ZooPartner");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Order", b =>
@@ -1969,6 +2345,25 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Activity", "Activity")
+                        .WithMany()
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Activity");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Schedule", b =>
                 {
                     b.HasOne("eCommerce.Services.Database.Activity", "Activity")
@@ -2003,6 +2398,25 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
 
                     b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.UserBadge", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Badge", "Badge")
+                        .WithMany()
+                        .HasForeignKey("BadgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Badge");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>

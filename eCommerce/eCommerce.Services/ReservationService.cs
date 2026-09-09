@@ -15,6 +15,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     private const string AdminRole = "Admin";
 
     private readonly IAuthenticatedUserAccessor _userAccessor;
+    private readonly IBadgeAwardService _badgeAwardService;
 
     protected BaseReservationState ReservationState { get; }
 
@@ -22,11 +23,13 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         ECommerceDbContext dbContext,
         MapsterMapper.IMapper mapper,
         BaseReservationState reservationState,
-        IAuthenticatedUserAccessor userAccessor)
+        IAuthenticatedUserAccessor userAccessor,
+        IBadgeAwardService badgeAwardService)
         : base(mapper, dbContext)
     {
         ReservationState = reservationState;
         _userAccessor = userAccessor;
+        _badgeAwardService = badgeAwardService;
     }
 
     protected override Task<IQueryable<Reservation>> IncludeRelatedEntitiesAsync(ReservationSearchObject? search, IQueryable<Reservation> query = null!)
@@ -90,7 +93,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         return response;
     }
 
-    public Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)
+    public async Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)
     {
         if (!_userAccessor.IsInRole(AdminRole))
         {
@@ -100,7 +103,9 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         }
 
         var state = ReservationState.GetReservationState(nameof(InitialReservationState));
-        return state.InsertAsync(request);
+        var created = await state.InsertAsync(request);
+        await _badgeAwardService.CheckAndAwardBadgesAsync(created.UserId);
+        return created;
     }
 
     public async Task<ReservationResponse> UpdateAsync(int id, ReservationUpdateRequest request)
