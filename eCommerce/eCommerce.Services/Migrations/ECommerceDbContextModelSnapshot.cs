@@ -1356,6 +1356,97 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("Reservations");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActivityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivityId");
+
+                    b.HasIndex("UserId", "ActivityId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ActivityId = 1,
+                            Comment = "Amazing experience! The kids were thrilled, staff were very kind.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ActivityId = 1,
+                            Comment = "Kavi is such a gentle giant. Helping with the feeding was unforgettable.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ActivityId = 1,
+                            Comment = "Really well organised. We learned a lot and the keepers were so patient.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 4,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ActivityId = 2,
+                            Comment = "Magical evening walk. Spotting the nocturnal animals was a highlight of our trip.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ActivityId = 2,
+                            Comment = "Loved the atmosphere after dark. Guides were knowledgeable and made everyone feel safe.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 4,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ActivityId = 2,
+                            Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 5
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -2157,6 +2248,25 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Payment");
 
                     b.Navigation("Schedule");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.Review", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Activity", "Activity")
+                        .WithMany()
+                        .HasForeignKey("ActivityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Activity");
 
                     b.Navigation("User");
                 });

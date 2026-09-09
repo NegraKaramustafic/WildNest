@@ -149,6 +149,22 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(d => d.PaymentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Review>()
+                .HasIndex(r => new { r.UserId, r.ActivityId })
+                .IsUnique();
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Activity)
+                .WithMany()
+                .HasForeignKey(r => r.ActivityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }

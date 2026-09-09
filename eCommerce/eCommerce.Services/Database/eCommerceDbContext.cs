@@ -34,6 +34,7 @@ namespace eCommerce.Services.Database
         public DbSet<ZooPartner> ZooPartners { get; set; }
         public DbSet<Adoption> Adoptions { get; set; }
         public DbSet<Donation> Donations { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

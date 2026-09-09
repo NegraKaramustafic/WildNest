@@ -20,6 +20,7 @@ namespace eCommerce.Services.Database
             SeedActivities(modelBuilder);
             SeedSchedules(modelBuilder);
             SeedZooPartners(modelBuilder);
+            SeedReviews(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -1101,6 +1102,68 @@ namespace eCommerce.Services.Database
                     GoalAmount = 25000m,
                     CurrentAmount = 18900m,
                     IsActive = true
+                }
+            );
+        }
+
+        private void SeedReviews(ModelBuilder modelBuilder)
+        {
+            var createdAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc);
+
+            modelBuilder.Entity<Review>().HasData(
+                new
+                {
+                    Id = 1,
+                    UserId = 3,
+                    ActivityId = 1,
+                    Rating = 5,
+                    Comment = "Amazing experience! The kids were thrilled, staff were very kind.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 2,
+                    UserId = 4,
+                    ActivityId = 1,
+                    Rating = 5,
+                    Comment = "Kavi is such a gentle giant. Helping with the feeding was unforgettable.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 3,
+                    UserId = 5,
+                    ActivityId = 1,
+                    Rating = 4,
+                    Comment = "Really well organised. We learned a lot and the keepers were so patient.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 4,
+                    UserId = 3,
+                    ActivityId = 2,
+                    Rating = 5,
+                    Comment = "Magical evening walk. Spotting the nocturnal animals was a highlight of our trip.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 5,
+                    UserId = 4,
+                    ActivityId = 2,
+                    Rating = 4,
+                    Comment = "Loved the atmosphere after dark. Guides were knowledgeable and made everyone feel safe.",
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 6,
+                    UserId = 5,
+                    ActivityId = 2,
+                    Rating = 5,
+                    Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
+                    CreatedAt = createdAt
                 }
             );
         }

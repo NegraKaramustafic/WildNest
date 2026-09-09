@@ -87,6 +87,10 @@ TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
     .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
     .Map(dest => dest.ZooPartnerName, src => src.ZooPartner != null ? src.ZooPartner.Name : string.Empty)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Review, ReviewResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .Map(dest => dest.ActivityName, src => src.Activity != null ? src.Activity.Name : string.Empty)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -139,6 +143,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
 builder.Services.AddScoped<IAdoptionService, AdoptionService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -170,6 +175,8 @@ builder.Services.AddScoped<IValidator<AdoptionInsertRequest>, AdoptionInsertVali
 builder.Services.AddScoped<IValidator<AdoptionUpdateRequest>, AdoptionUpdateValidator>();
 builder.Services.AddScoped<IValidator<DonationInsertRequest>, DonationInsertValidator>();
 builder.Services.AddScoped<IValidator<DonationUpdateRequest>, DonationUpdateValidator>();
+builder.Services.AddScoped<IValidator<ReviewInsertRequest>, ReviewInsertValidator>();
+builder.Services.AddScoped<IValidator<ReviewUpdateRequest>, ReviewUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
