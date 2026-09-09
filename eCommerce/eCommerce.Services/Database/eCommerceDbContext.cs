@@ -35,6 +35,8 @@ namespace eCommerce.Services.Database
         public DbSet<Adoption> Adoptions { get; set; }
         public DbSet<Donation> Donations { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Badge> Badges { get; set; }
+        public DbSet<UserBadge> UserBadges { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

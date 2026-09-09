@@ -17,16 +17,19 @@ namespace eCommerce.Services
         private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly IBadgeAwardService _badgeAwardService;
 
         public AdoptionService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<AdoptionInsertRequest> insertValidator,
             IValidator<AdoptionUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor)
+            IAuthenticatedUserAccessor userAccessor,
+            IBadgeAwardService badgeAwardService)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
+            _badgeAwardService = badgeAwardService;
         }
 
         protected override async Task<IQueryable<Adoption>> IncludeRelatedEntitiesAsync(AdoptionSearchObject? search, IQueryable<Adoption> query = null!)
@@ -63,7 +66,9 @@ namespace eCommerce.Services
             }
 
             var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            var response = await GetByIdAsync(created.Id);
+            await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
+            return response;
         }
 
         public override async Task<AdoptionResponse> UpdateAsync(int id, AdoptionUpdateRequest request)

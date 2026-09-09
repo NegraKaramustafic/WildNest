@@ -165,6 +165,22 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(r => r.ActivityId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<UserBadge>()
+                .HasIndex(ub => new { ub.UserId, ub.BadgeId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserBadge>()
+                .HasOne(ub => ub.User)
+                .WithMany()
+                .HasForeignKey(ub => ub.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserBadge>()
+                .HasOne(ub => ub.Badge)
+                .WithMany()
+                .HasForeignKey(ub => ub.BadgeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Add any additional model configurations here
         }
     }

@@ -35,6 +35,12 @@ namespace eCommerce.WebAPI.Filters
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 _logger.LogWarning("Client rule: {Message}", ce.Message);
             }
+            else if (context.Exception is UnauthorizedAccessException ua)
+            {
+                context.ModelState.AddModelError("forbidden", ua.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                _logger.LogWarning("Forbidden: {Message}", ua.Message);
+            }
             else
             {
                 //context.ModelState.AddModelError("serverError", context.Exception.Message);
@@ -59,7 +65,10 @@ namespace eCommerce.WebAPI.Filters
             {
                 message,
                 errors = list
-            });
+            })
+            {
+                StatusCode = context.HttpContext.Response.StatusCode
+            };
         }
     }
 }

@@ -21,6 +21,7 @@ namespace eCommerce.Services.Database
             SeedSchedules(modelBuilder);
             SeedZooPartners(modelBuilder);
             SeedReviews(modelBuilder);
+            SeedBadges(modelBuilder);
         }
 
         private void SeedProductTypes(ModelBuilder modelBuilder)
@@ -1164,6 +1165,52 @@ namespace eCommerce.Services.Database
                     Rating = 5,
                     Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
                     CreatedAt = createdAt
+                }
+            );
+        }
+
+        private void SeedBadges(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Badge>().HasData(
+                new
+                {
+                    Id = 1,
+                    Name = "Wildlife Guardian",
+                    Description = "Adopt your first animal",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FirstAdoption
+                },
+                new
+                {
+                    Id = 2,
+                    Name = "First Explorer",
+                    Description = "Book your first activity",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FirstBooking
+                },
+                new
+                {
+                    Id = 3,
+                    Name = "Generous Heart",
+                    Description = "Donate to 3 zoos",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.ThreeDonations
+                },
+                new
+                {
+                    Id = 4,
+                    Name = "Animal Whisperer",
+                    Description = "Visit 10 animal profiles",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.TenAnimalVisits
+                },
+                new
+                {
+                    Id = 5,
+                    Name = "Conservation Hero",
+                    Description = "Adopt 5 animals",
+                    IconUrl = (string?)null,
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.FiveAdoptions
                 }
             );
         }

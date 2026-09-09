@@ -91,6 +91,12 @@ TypeAdapterConfig<Review, ReviewResponse>.NewConfig()
     .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
     .Map(dest => dest.ActivityName, src => src.Activity != null ? src.Activity.Name : string.Empty)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Badge, BadgeResponse>.NewConfig().IgnoreNullValues(true);
+TypeAdapterConfig<UserBadge, UserBadgeResponse>.NewConfig()
+    .Map(dest => dest.BadgeName, src => src.Badge != null ? src.Badge.Name : string.Empty)
+    .Map(dest => dest.BadgeDescription, src => src.Badge != null ? src.Badge.Description : null)
+    .Map(dest => dest.BadgeIconUrl, src => src.Badge != null ? src.Badge.IconUrl : null)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -144,6 +150,9 @@ builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
 builder.Services.AddScoped<IAdoptionService, AdoptionService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IBadgeService, BadgeService>();
+builder.Services.AddScoped<IBadgeAwardService, BadgeAwardService>();
+builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
@@ -177,6 +186,8 @@ builder.Services.AddScoped<IValidator<DonationInsertRequest>, DonationInsertVali
 builder.Services.AddScoped<IValidator<DonationUpdateRequest>, DonationUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReviewInsertRequest>, ReviewInsertValidator>();
 builder.Services.AddScoped<IValidator<ReviewUpdateRequest>, ReviewUpdateValidator>();
+builder.Services.AddScoped<IValidator<BadgeInsertRequest>, BadgeInsertValidator>();
+builder.Services.AddScoped<IValidator<BadgeUpdateRequest>, BadgeUpdateValidator>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

@@ -407,6 +407,72 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("Assets");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.Badge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Criteria")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("IconUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Badges");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Criteria = 0,
+                            Description = "Adopt your first animal",
+                            Name = "Wildlife Guardian"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Criteria = 1,
+                            Description = "Book your first activity",
+                            Name = "First Explorer"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Criteria = 2,
+                            Description = "Donate to 3 zoos",
+                            Name = "Generous Heart"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Criteria = 3,
+                            Description = "Visit 10 animal profiles",
+                            Name = "Animal Whisperer"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Criteria = 4,
+                            Description = "Adopt 5 animals",
+                            Name = "Conservation Hero"
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Cart", b =>
                 {
                     b.Property<int>("Id")
@@ -1869,6 +1935,33 @@ namespace eCommerce.Services.Migrations
                         });
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.UserBadge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BadgeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EarnedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BadgeId");
+
+                    b.HasIndex("UserId", "BadgeId")
+                        .IsUnique();
+
+                    b.ToTable("UserBadges");
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>
                 {
                     b.Property<int>("Id")
@@ -2305,6 +2398,25 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
 
                     b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.UserBadge", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.Badge", "Badge")
+                        .WithMany()
+                        .HasForeignKey("BadgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("eCommerce.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Badge");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.UserRole", b =>

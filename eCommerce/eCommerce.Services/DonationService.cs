@@ -15,16 +15,19 @@ namespace eCommerce.Services
         private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly IBadgeAwardService _badgeAwardService;
 
         public DonationService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<DonationInsertRequest> insertValidator,
             IValidator<DonationUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor)
+            IAuthenticatedUserAccessor userAccessor,
+            IBadgeAwardService badgeAwardService)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
+            _badgeAwardService = badgeAwardService;
         }
 
         protected override async Task<IQueryable<Donation>> IncludeRelatedEntitiesAsync(DonationSearchObject? search, IQueryable<Donation> query = null!)
@@ -61,7 +64,9 @@ namespace eCommerce.Services
             }
 
             var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            var response = await GetByIdAsync(created.Id);
+            await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
+            return response;
         }
 
         public override async Task<DonationResponse> UpdateAsync(int id, DonationUpdateRequest request)
