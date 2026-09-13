@@ -15,22 +15,16 @@ namespace eCommerce.Services
         private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
-        private readonly IBadgeAwardService _badgeAwardService;
-        private readonly INotificationEventService _notificationEvents;
 
         public DonationService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<DonationInsertRequest> insertValidator,
             IValidator<DonationUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor,
-            IBadgeAwardService badgeAwardService,
-            INotificationEventService notificationEvents)
+            IAuthenticatedUserAccessor userAccessor)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
-            _badgeAwardService = badgeAwardService;
-            _notificationEvents = notificationEvents;
         }
 
         protected override async Task<IQueryable<Donation>> IncludeRelatedEntitiesAsync(DonationSearchObject? search, IQueryable<Donation> query = null!)
@@ -60,10 +54,7 @@ namespace eCommerce.Services
         public override async Task<DonationResponse> InsertAsync(DonationInsertRequest request)
         {
             var created = await base.InsertAsync(request);
-            var response = await GetByIdAsync(created.Id);
-            await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
-            await _notificationEvents.NotifyDonationReceivedAsync(response);
-            return response;
+            return await GetByIdAsync(created.Id);
         }
 
         public override async Task<DonationResponse> UpdateAsync(int id, DonationUpdateRequest request)
@@ -91,17 +82,15 @@ namespace eCommerce.Services
 
         protected override Donation MapInsertRequestToEntity(DonationInsertRequest request)
         {
-            var partner = _dbContext.ZooPartners.Find(request.ZooPartnerId);
-            if (partner == null)
+            if (_dbContext.ZooPartners.Find(request.ZooPartnerId) == null)
             {
                 throw new KeyNotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
             }
 
-            partner.CurrentAmount += request.Amount;
-
             var entity = base.MapInsertRequestToEntity(request);
             entity.UserId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
+            entity.PaymentId = null;
             return entity;
         }
 
@@ -111,11 +100,13 @@ namespace eCommerce.Services
             var existingZooPartnerId = entity.ZooPartnerId;
             var existingAmount = entity.Amount;
             var existingCreatedAt = entity.CreatedAt;
+            var existingPaymentId = entity.PaymentId;
             base.MapUpdateRequestToEntity(request, entity);
             entity.UserId = existingUserId;
             entity.ZooPartnerId = existingZooPartnerId;
             entity.Amount = existingAmount;
             entity.CreatedAt = existingCreatedAt;
+            entity.PaymentId = existingPaymentId;
         }
 
         protected override IEnumerable<Donation> ApplyFilters(IEnumerable<Donation> query, DonationSearchObject? search)

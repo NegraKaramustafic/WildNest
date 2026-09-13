@@ -6,6 +6,7 @@ namespace eCommerce.Model.Enums
     public enum AdoptionStatus
     {
         Active = 0,
-        Cancelled = 1
+        Cancelled = 1,
+        PendingPayment = 2
     }
 }

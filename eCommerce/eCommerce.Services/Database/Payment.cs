@@ -18,8 +18,24 @@ namespace eCommerce.Services.Database
 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
+        public int? UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public User? User { get; set; }
+
+        [MaxLength(50)]
+        public string? RelatedEntityType { get; set; }
+
+        public int? RelatedEntityId { get; set; }
+
         [MaxLength(255)]
         public string? StripePaymentIntentId { get; set; }
+
+        [MaxLength(255)]
+        public string? StripeCheckoutSessionId { get; set; }
+
+        [MaxLength(255)]
+        public string? StripeRefundId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

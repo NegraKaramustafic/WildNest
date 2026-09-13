@@ -22,6 +22,7 @@ using System.Text;
 
 EnvFileLoader.Load();
 _ = RabbitMqSettings.FromEnvironment();
+var stripeSettings = StripeSettings.FromEnvironment();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -121,6 +122,7 @@ builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddSingleton(stripeSettings);
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
 builder.Services.AddScoped<IAdoptionService, AdoptionService>();
@@ -149,6 +151,7 @@ builder.Services.AddScoped<IValidator<ReservationInsertRequest>, ReservationInse
 builder.Services.AddScoped<IValidator<ReservationUpdateRequest>, ReservationUpdateValidator>();
 builder.Services.AddScoped<IValidator<PaymentInsertRequest>, PaymentInsertValidator>();
 builder.Services.AddScoped<IValidator<PaymentUpdateRequest>, PaymentUpdateValidator>();
+builder.Services.AddScoped<IValidator<PaymentCheckoutRequest>, PaymentCheckoutValidator>();
 builder.Services.AddScoped<IValidator<ZooPartnerInsertRequest>, ZooPartnerInsertValidator>();
 builder.Services.AddScoped<IValidator<ZooPartnerUpdateRequest>, ZooPartnerUpdateValidator>();
 builder.Services.AddScoped<IValidator<AdoptionInsertRequest>, AdoptionInsertValidator>();

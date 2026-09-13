@@ -19,6 +19,7 @@ namespace eCommerce.Services.Database
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<StripeProcessedEvent> StripeProcessedEvents { get; set; }
         public DbSet<ZooPartner> ZooPartners { get; set; }
         public DbSet<Adoption> Adoptions { get; set; }
         public DbSet<Donation> Donations { get; set; }

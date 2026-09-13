@@ -17,8 +17,7 @@ namespace eCommerce.Services
         private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
-        private readonly IBadgeAwardService _badgeAwardService;
-        private readonly INotificationEventService _notificationEvents;
+        private readonly IPaymentService _paymentService;
 
         public AdoptionService(
             ECommerceDbContext dbContext,
@@ -26,13 +25,11 @@ namespace eCommerce.Services
             IValidator<AdoptionInsertRequest> insertValidator,
             IValidator<AdoptionUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            IBadgeAwardService badgeAwardService,
-            INotificationEventService notificationEvents)
+            IPaymentService paymentService)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
-            _badgeAwardService = badgeAwardService;
-            _notificationEvents = notificationEvents;
+            _paymentService = paymentService;
         }
 
         protected override async Task<IQueryable<Adoption>> IncludeRelatedEntitiesAsync(AdoptionSearchObject? search, IQueryable<Adoption> query = null!)
@@ -62,10 +59,7 @@ namespace eCommerce.Services
         public override async Task<AdoptionResponse> InsertAsync(AdoptionInsertRequest request)
         {
             var created = await base.InsertAsync(request);
-            var response = await GetByIdAsync(created.Id);
-            await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
-            await _notificationEvents.NotifyAdoptionCreatedAsync(response);
-            return response;
+            return await GetByIdAsync(created.Id);
         }
 
         public override async Task<AdoptionResponse> UpdateAsync(int id, AdoptionUpdateRequest request)
@@ -108,8 +102,9 @@ namespace eCommerce.Services
             entity.UserId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
             entity.MonthlyAmount = animal.AdoptionPrice.Value;
-            entity.Status = AdoptionStatus.Active;
+            entity.Status = AdoptionStatus.PendingPayment;
             entity.StartDate = DateTime.UtcNow;
+            entity.PaymentId = null;
             return entity;
         }
 
@@ -119,11 +114,15 @@ namespace eCommerce.Services
             var existingStartDate = entity.StartDate;
             var existingUserId = entity.UserId;
             var existingAnimalId = entity.AnimalId;
+            var existingPaymentId = entity.PaymentId;
+            var existingMonthlyAmount = entity.MonthlyAmount;
             base.MapUpdateRequestToEntity(request, entity);
             entity.Status = existingStatus;
             entity.StartDate = existingStartDate;
             entity.UserId = existingUserId;
             entity.AnimalId = existingAnimalId;
+            entity.PaymentId = existingPaymentId;
+            entity.MonthlyAmount = existingMonthlyAmount;
         }
 
         protected override IEnumerable<Adoption> ApplyFilters(IEnumerable<Adoption> query, AdoptionSearchObject? search)
@@ -174,6 +173,15 @@ namespace eCommerce.Services
 
             entity.Status = AdoptionStatus.Cancelled;
             await _dbContext.SaveChangesAsync();
+
+            if (entity.PaymentId.HasValue)
+            {
+                // Intentional: virtual adoption is a non-refundable contribution.
+                // Cancel expires an unpaid Stripe session, but a completed charge is not refunded
+                // (unlike Ticket/Reservation, which are refundable bookings). Not a missing feature.
+                await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value, refundIfCompleted: false);
+            }
+
             return await GetByIdAsync(id);
         }
 

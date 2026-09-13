@@ -15,6 +15,7 @@ namespace eCommerce.Model.Responses
         public decimal TotalPrice { get; set; }
         public ReservationStatus Status { get; set; }
         public string Code { get; set; } = string.Empty;
+        public int? PaymentId { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> AllowedActions { get; set; } = new List<string>();
     }
