@@ -5,9 +5,6 @@ namespace eCommerce.Model.Requests
     public class ReviewInsertRequest
     {
         [Required]
-        public int UserId { get; set; }
-
-        [Required]
         public int ActivityId { get; set; }
 
         [Required]

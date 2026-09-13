@@ -968,6 +968,90 @@ namespace eCommerce.Services.Database
                     ImageUrl = (string?)null,
                     Status = eCommerce.Model.Enums.ActivityStatus.Draft,
                     CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 5,
+                    Name = "Red Panda Snack Time",
+                    Description = "Join keepers as they prepare fruit and bamboo snacks for Zara and watch her forage in the treetops.",
+                    AnimalId = 2,
+                    Type = eCommerce.Model.Enums.ActivityType.Feeding,
+                    Duration = new TimeSpan(1, 0, 0),
+                    Price = 20.00m,
+                    Capacity = 12,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 6,
+                    Name = "Lemur Morning Meet",
+                    Description = "Meet Milo and his troop at sunrise, then help scatter grapes and browse during their morning forage.",
+                    AnimalId = 3,
+                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    Duration = new TimeSpan(1, 0, 0),
+                    Price = 18.00m,
+                    Capacity = 10,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 7,
+                    Name = "Snow Leopard Twilight Safari",
+                    Description = "A quiet late-afternoon walk to Luna's mountain habitat as she becomes active on the rocky ledges.",
+                    AnimalId = 4,
+                    Type = eCommerce.Model.Enums.ActivityType.Safari,
+                    Duration = new TimeSpan(1, 30, 0),
+                    Price = 35.00m,
+                    Capacity = 16,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 8,
+                    Name = "Lion Savanna Adventure",
+                    Description = "Guided adventure through the savanna habitat with a close-up look at Nala and her pride's daily routine.",
+                    AnimalId = 7,
+                    Type = eCommerce.Model.Enums.ActivityType.Adventure,
+                    Duration = new TimeSpan(2, 0, 0),
+                    Price = 45.00m,
+                    Capacity = 14,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 9,
+                    Name = "Macaw Voice Workshop",
+                    Description = "Learn how scarlet macaws communicate, then practice call-and-response with Rio in the aviary.",
+                    AnimalId = 6,
+                    Type = eCommerce.Model.Enums.ActivityType.Workshop,
+                    Duration = new TimeSpan(1, 30, 0),
+                    Price = 28.00m,
+                    Capacity = 10,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 10,
+                    Name = "Panda Enrichment Hour",
+                    Description = "Help design and place puzzle feeders for Bao, then watch him work out how to reach the bamboo.",
+                    AnimalId = 5,
+                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    Duration = new TimeSpan(1, 0, 0),
+                    Price = 32.00m,
+                    Capacity = 8,
+                    ImageUrl = (string?)null,
+                    Status = eCommerce.Model.Enums.ActivityStatus.Active,
+                    CreatedAt = createdAt
                 }
             );
         }
@@ -1063,6 +1147,66 @@ namespace eCommerce.Services.Database
                     StartTime = new TimeOnly(9, 0),
                     EndTime = new TimeOnly(11, 0),
                     CapacityLeft = 12,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 10,
+                    ActivityId = 5,
+                    Date = new DateOnly(2026, 9, 14),
+                    StartTime = new TimeOnly(10, 0),
+                    EndTime = new TimeOnly(11, 0),
+                    CapacityLeft = 12,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 11,
+                    ActivityId = 6,
+                    Date = new DateOnly(2026, 9, 14),
+                    StartTime = new TimeOnly(9, 0),
+                    EndTime = new TimeOnly(10, 0),
+                    CapacityLeft = 10,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 12,
+                    ActivityId = 7,
+                    Date = new DateOnly(2026, 9, 14),
+                    StartTime = new TimeOnly(17, 0),
+                    EndTime = new TimeOnly(18, 30),
+                    CapacityLeft = 16,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 13,
+                    ActivityId = 8,
+                    Date = new DateOnly(2026, 9, 15),
+                    StartTime = new TimeOnly(11, 0),
+                    EndTime = new TimeOnly(13, 0),
+                    CapacityLeft = 14,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 14,
+                    ActivityId = 9,
+                    Date = new DateOnly(2026, 9, 15),
+                    StartTime = new TimeOnly(14, 0),
+                    EndTime = new TimeOnly(15, 30),
+                    CapacityLeft = 10,
+                    Status = eCommerce.Model.Enums.ScheduleStatus.Active
+                },
+                new
+                {
+                    Id = 15,
+                    ActivityId = 10,
+                    Date = new DateOnly(2026, 9, 16),
+                    StartTime = new TimeOnly(10, 0),
+                    EndTime = new TimeOnly(11, 0),
+                    CapacityLeft = 8,
                     Status = eCommerce.Model.Enums.ScheduleStatus.Active
                 }
             );

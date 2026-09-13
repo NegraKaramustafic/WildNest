@@ -4,6 +4,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
+using eCommerce.Services.Recommendation;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ReservationStateMachine;
 using eCommerce.Services.ProductStateMachine;
@@ -163,6 +164,8 @@ builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
 builder.Services.AddSingleton<INotificationPublisher, RabbitMqNotificationPublisher>();
 builder.Services.AddScoped<INotificationEventService, NotificationEventService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<RecommendationModelCache>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();

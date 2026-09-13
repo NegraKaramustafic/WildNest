@@ -6,6 +6,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
+using eCommerce.Services.Recommendation;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,16 +17,19 @@ namespace eCommerce.Services
         private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly RecommendationModelCache _recommendationModelCache;
 
         public ReviewService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<ReviewInsertRequest> insertValidator,
             IValidator<ReviewUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor)
+            IAuthenticatedUserAccessor userAccessor,
+            RecommendationModelCache recommendationModelCache)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
+            _recommendationModelCache = recommendationModelCache;
         }
 
         protected override async Task<IQueryable<Review>> IncludeRelatedEntitiesAsync(ReviewSearchObject? search, IQueryable<Review> query = null!)
@@ -54,22 +58,25 @@ namespace eCommerce.Services
 
         public override async Task<ReviewResponse> InsertAsync(ReviewInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
+            var userId = RequireCurrentUserId();
 
             var alreadyReviewed = _dbContext.Reviews.Any(r =>
-                r.UserId == request.UserId && r.ActivityId == request.ActivityId);
+                r.UserId == userId && r.ActivityId == request.ActivityId);
             if (alreadyReviewed)
             {
                 throw new ClinetException("You have already reviewed this activity");
             }
 
             var created = await base.InsertAsync(request);
+            _recommendationModelCache.MarkDirty();
             return await GetByIdAsync(created.Id);
+        }
+
+        protected override Review MapInsertRequestToEntity(ReviewInsertRequest request)
+        {
+            var entity = base.MapInsertRequestToEntity(request);
+            entity.UserId = RequireCurrentUserId();
+            return entity;
         }
 
         public override async Task<ReviewResponse> UpdateAsync(int id, ReviewUpdateRequest request)
@@ -81,6 +88,7 @@ namespace eCommerce.Services
             }
 
             await base.UpdateAsync(id, request);
+            _recommendationModelCache.MarkDirty();
             return await GetByIdAsync(id);
         }
 
@@ -93,6 +101,7 @@ namespace eCommerce.Services
             }
 
             await base.DeleteAsync(id);
+            _recommendationModelCache.MarkDirty();
         }
 
         protected override void MapUpdateRequestToEntity(ReviewUpdateRequest request, Review entity)
@@ -122,6 +131,12 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        private int RequireCurrentUserId()
+        {
+            return _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
         }
 
         private bool CanModifyReview(int reviewUserId)
