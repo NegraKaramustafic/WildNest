@@ -21,6 +21,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.8" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.1" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
+    <PackageReference Include="Microsoft.ML" Version="4.0.2" />
+    <PackageReference Include="Microsoft.ML.Recommender" Version="0.22.2" />
   </ItemGroup>
 
 </Project>

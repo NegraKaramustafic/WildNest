@@ -7,9 +7,6 @@ namespace eCommerce.Services.Validators
     {
         public ReviewInsertValidator()
         {
-            RuleFor(x => x.UserId)
-                .GreaterThan(0).WithMessage("UserId is required and must be greater than 0.");
-
             RuleFor(x => x.ActivityId)
                 .GreaterThan(0).WithMessage("ActivityId is required and must be greater than 0.");
 

@@ -119,6 +119,84 @@ namespace eCommerce.Services.Migrations
                             Price = 120.00m,
                             Status = 0,
                             Type = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AnimalId = 2,
+                            Capacity = 12,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Join keepers as they prepare fruit and bamboo snacks for Zara and watch her forage in the treetops.",
+                            Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            Name = "Red Panda Snack Time",
+                            Price = 20.00m,
+                            Status = 1,
+                            Type = 0
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AnimalId = 3,
+                            Capacity = 10,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Meet Milo and his troop at sunrise, then help scatter grapes and browse during their morning forage.",
+                            Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            Name = "Lemur Morning Meet",
+                            Price = 18.00m,
+                            Status = 1,
+                            Type = 3
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AnimalId = 4,
+                            Capacity = 16,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "A quiet late-afternoon walk to Luna's mountain habitat as she becomes active on the rocky ledges.",
+                            Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            Name = "Snow Leopard Twilight Safari",
+                            Price = 35.00m,
+                            Status = 1,
+                            Type = 1
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AnimalId = 7,
+                            Capacity = 14,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Guided adventure through the savanna habitat with a close-up look at Nala and her pride's daily routine.",
+                            Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            Name = "Lion Savanna Adventure",
+                            Price = 45.00m,
+                            Status = 1,
+                            Type = 4
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AnimalId = 6,
+                            Capacity = 10,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Learn how scarlet macaws communicate, then practice call-and-response with Rio in the aviary.",
+                            Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            Name = "Macaw Voice Workshop",
+                            Price = 28.00m,
+                            Status = 1,
+                            Type = 2
+                        },
+                        new
+                        {
+                            Id = 10,
+                            AnimalId = 5,
+                            Capacity = 8,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Help design and place puzzle feeders for Bao, then watch him work out how to reach the bamboo.",
+                            Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            Name = "Panda Enrichment Hour",
+                            Price = 32.00m,
+                            Status = 1,
+                            Type = 3
                         });
                 });
 
@@ -1725,6 +1803,66 @@ namespace eCommerce.Services.Migrations
                             Date = new DateOnly(2026, 9, 13),
                             EndTime = new TimeOnly(11, 0, 0),
                             StartTime = new TimeOnly(9, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ActivityId = 5,
+                            CapacityLeft = 12,
+                            Date = new DateOnly(2026, 9, 14),
+                            EndTime = new TimeOnly(11, 0, 0),
+                            StartTime = new TimeOnly(10, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ActivityId = 6,
+                            CapacityLeft = 10,
+                            Date = new DateOnly(2026, 9, 14),
+                            EndTime = new TimeOnly(10, 0, 0),
+                            StartTime = new TimeOnly(9, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ActivityId = 7,
+                            CapacityLeft = 16,
+                            Date = new DateOnly(2026, 9, 14),
+                            EndTime = new TimeOnly(18, 30, 0),
+                            StartTime = new TimeOnly(17, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ActivityId = 8,
+                            CapacityLeft = 14,
+                            Date = new DateOnly(2026, 9, 15),
+                            EndTime = new TimeOnly(13, 0, 0),
+                            StartTime = new TimeOnly(11, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ActivityId = 9,
+                            CapacityLeft = 10,
+                            Date = new DateOnly(2026, 9, 15),
+                            EndTime = new TimeOnly(15, 30, 0),
+                            StartTime = new TimeOnly(14, 0, 0),
+                            Status = 0
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ActivityId = 10,
+                            CapacityLeft = 8,
+                            Date = new DateOnly(2026, 9, 16),
+                            EndTime = new TimeOnly(11, 0, 0),
+                            StartTime = new TimeOnly(10, 0, 0),
                             Status = 0
                         });
                 });
