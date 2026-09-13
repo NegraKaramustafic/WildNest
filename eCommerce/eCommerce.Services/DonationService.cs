@@ -16,6 +16,7 @@ namespace eCommerce.Services
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly IBadgeAwardService _badgeAwardService;
+        private readonly INotificationEventService _notificationEvents;
 
         public DonationService(
             ECommerceDbContext dbContext,
@@ -23,11 +24,13 @@ namespace eCommerce.Services
             IValidator<DonationInsertRequest> insertValidator,
             IValidator<DonationUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            IBadgeAwardService badgeAwardService)
+            IBadgeAwardService badgeAwardService,
+            INotificationEventService notificationEvents)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
             _badgeAwardService = badgeAwardService;
+            _notificationEvents = notificationEvents;
         }
 
         protected override async Task<IQueryable<Donation>> IncludeRelatedEntitiesAsync(DonationSearchObject? search, IQueryable<Donation> query = null!)
@@ -59,6 +62,7 @@ namespace eCommerce.Services
             var created = await base.InsertAsync(request);
             var response = await GetByIdAsync(created.Id);
             await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
+            await _notificationEvents.NotifyDonationReceivedAsync(response);
             return response;
         }
 

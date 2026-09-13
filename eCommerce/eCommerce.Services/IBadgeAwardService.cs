@@ -2,6 +2,6 @@ namespace eCommerce.Services
 {
     public interface IBadgeAwardService
     {
-        Task CheckAndAwardBadgesAsync(int userId);
+        Task<IReadOnlyList<AwardedBadge>> CheckAndAwardBadgesAsync(int userId);
     }
 }

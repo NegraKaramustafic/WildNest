@@ -21,16 +21,19 @@ namespace eCommerce.Services
         private const int MaxCodeAttempts = 20;
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly INotificationEventService _notificationEvents;
 
         public TicketService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<TicketInsertRequest> insertValidator,
             IValidator<TicketUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor)
+            IAuthenticatedUserAccessor userAccessor,
+            INotificationEventService notificationEvents)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
+            _notificationEvents = notificationEvents;
         }
 
         protected override async Task<IQueryable<Ticket>> IncludeRelatedEntitiesAsync(TicketSearchObject? search, IQueryable<Ticket> query = null!)
@@ -60,7 +63,9 @@ namespace eCommerce.Services
         public override async Task<TicketResponse> InsertAsync(TicketInsertRequest request)
         {
             var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            var response = await GetByIdAsync(created.Id);
+            await _notificationEvents.NotifyTicketPurchasedAsync(response);
+            return response;
         }
 
         public override async Task<TicketResponse> UpdateAsync(int id, TicketUpdateRequest request)
@@ -197,6 +202,7 @@ namespace eCommerce.Services
                 response.Warning = "Ticket is not valid for today";
             }
 
+            await _notificationEvents.NotifyTicketVerifiedAsync(response);
             return response;
         }
 

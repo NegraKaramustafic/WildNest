@@ -14,5 +14,40 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: wildnest-rabbitmq
+    hostname: rabbitmq
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Separate subscriber process — consumption must NOT live inside eCommerce.WebAPI.
+  subscriber:
+    build:
+      context: .
+      dockerfile: eCommerce.Subscriber/Dockerfile
+    container_name: wildnest-subscriber
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_HOSTNAME: rabbitmq
+      ConnectionStrings__DefaultConnection: Server=ecomm-fit-2026;Database=eCommerce;User Id=sa;Password=qweasd123!;TrustServerCertificate=True;
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      ecomm-fit-2026:
+        condition: service_started
+
 volumes:
   sqlserver_data:
