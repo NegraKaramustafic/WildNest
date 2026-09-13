@@ -7,7 +7,6 @@ using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ReservationStateMachine;
-using eCommerce.Services.ProductStateMachine;
 using eCommerce.Services.Validators;
 using eCommerce.WebAPI.Filters;
 using eCommerce.WebAPI.Services;
@@ -15,7 +14,6 @@ using eCommerce.WebAPI.Services.AccessManager;
 using FluentValidation;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -48,19 +46,8 @@ builder.Services.AddMapster();
 // configure a few mappings explicitly if needed (optional)
 // Mapster will automatically map same-named properties, but configuration
 // ensures any custom rules or future needs can be added here.
-TypeAdapterConfig<Product, ProductResponse>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<Category, CategoryResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<User, UserResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<UserUpdateRequest, User>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<ProductType, ProductTypeResponse>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<UnitOfMeasure, UnitOfMeasureResponse>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<Asset, AssetResponse>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<ProductReview, ProductReviewResponse>.NewConfig()
-    .Map(dest => dest.ReviewerDisplayName, src => $"{src.User.FirstName} {src.User.LastName}".Trim());
-TypeAdapterConfig<Order, OrderResponse>.NewConfig()
-    .Map(dest => dest.Status, src => (int)src.Status);
-TypeAdapterConfig<OrderItem, OrderItemResponse>.NewConfig()
-    .Map(dest => dest.ProductName, src => src.Product != null ? src.Product.Name : string.Empty);
 TypeAdapterConfig<AnimalCategory, AnimalCategoryResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
     .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
@@ -107,13 +94,6 @@ TypeAdapterConfig<Notification, NotificationResponse>.NewConfig()
     .IgnoreNullValues(true);
 
 
-// register application services
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<BaseProductState>();
-builder.Services.AddScoped<InitialProductState>();
-builder.Services.AddScoped<DraftProductState>();
-builder.Services.AddScoped<ActiveProductState>();
-
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<BaseActivityState>();
 builder.Services.AddScoped<InitialActivityState>();
@@ -129,17 +109,7 @@ builder.Services.AddScoped<ConfirmedReservationState>();
 builder.Services.AddScoped<CompletedReservationState>();
 builder.Services.AddScoped<CancelledReservationState>();
 
-// category service
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-// product type service
-builder.Services.AddScoped<IProductTypeService, ProductTypeService>();
-// unit of measure service
-builder.Services.AddScoped<IUnitOfMeasureService, UnitOfMeasureService>();
-// user service
 builder.Services.AddScoped<IUserService, UserService>();
-
-builder.Services.AddScoped<IAssetService, AssetService>();
-
 
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
@@ -147,8 +117,6 @@ builder.Services.AddScoped<IAccessManager, AccessManager>();
 
 builder.Services.AddScoped<ICryptoService, CryptoService>();
 
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
@@ -167,18 +135,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 
-builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
-builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();
-builder.Services.AddScoped<IValidator<UnitOfMeasureInsertRequest>, UnitOfMeasureInsertValidator>();
-builder.Services.AddScoped<IValidator<UnitOfMeasureUpdateRequest>, UnitOfMeasureUpdateValidator>();
-builder.Services.AddScoped<IValidator<CategoriesInsertRequest>, CategoryInsertValidator>();
-builder.Services.AddScoped<IValidator<CategoriesUpdateRequest>, CategoryUpdateValidator>();
 builder.Services.AddScoped<IValidator<UserInsertRequest>, UserInsertValidator>();
 builder.Services.AddScoped<IValidator<UserUpdateRequest>, UserUpdateValidator>();
-builder.Services.AddScoped<IValidator<AssetInsertRequest>, AssetInsertValidator>();
-builder.Services.AddScoped<IValidator<AssetUpdateRequest>, AssetUpdateValidator>();
-builder.Services.AddScoped<IValidator<ProductReviewInsertRequest>, ProductReviewInsertValidator>();
-builder.Services.AddScoped<IValidator<ProductReviewUpdateRequest>, ProductReviewUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryInsertRequest>, AnimalCategoryInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryUpdateRequest>, AnimalCategoryUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalInsertRequest>, AnimalInsertValidator>();
@@ -234,8 +192,8 @@ builder.Services.AddSwaggerGen(
         options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
         {
             Version = "v1",
-            Title = "eCommerce API",
-            Description = "API for managing products and categories in the eCommerce application"
+            Title = "Zoo API",
+            Description = "API for managing zoo animals, activities, tickets, reservations, and related services"
         });
 
         var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
