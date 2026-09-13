@@ -95,13 +95,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     public async Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)
     {
-        if (!_userAccessor.IsInRole(AdminRole))
-        {
-            var userId = _userAccessor.GetUserId()
-                ?? throw new InvalidOperationException("User id claim is missing.");
-            request.UserId = userId;
-        }
-
         var state = ReservationState.GetReservationState(nameof(InitialReservationState));
         var created = await state.InsertAsync(request);
         await _badgeAwardService.CheckAndAwardBadgesAsync(created.UserId);

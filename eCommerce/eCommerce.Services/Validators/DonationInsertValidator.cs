@@ -7,9 +7,6 @@ namespace eCommerce.Services.Validators
     {
         public DonationInsertValidator()
         {
-            RuleFor(x => x.UserId)
-                .GreaterThan(0).WithMessage("UserId is required and must be greater than 0.");
-
             RuleFor(x => x.ZooPartnerId)
                 .GreaterThan(0).WithMessage("ZooPartnerId is required and must be greater than 0.");
 

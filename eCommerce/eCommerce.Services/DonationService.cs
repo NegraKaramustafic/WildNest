@@ -56,13 +56,6 @@ namespace eCommerce.Services
 
         public override async Task<DonationResponse> InsertAsync(DonationInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
-
             var created = await base.InsertAsync(request);
             var response = await GetByIdAsync(created.Id);
             await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
@@ -103,6 +96,8 @@ namespace eCommerce.Services
             partner.CurrentAmount += request.Amount;
 
             var entity = base.MapInsertRequestToEntity(request);
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
             return entity;
         }
 

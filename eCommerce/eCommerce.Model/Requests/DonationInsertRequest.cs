@@ -5,9 +5,6 @@ namespace eCommerce.Model.Requests
     public class DonationInsertRequest
     {
         [Required]
-        public int UserId { get; set; }
-
-        [Required]
         public int ZooPartnerId { get; set; }
 
         [Required]

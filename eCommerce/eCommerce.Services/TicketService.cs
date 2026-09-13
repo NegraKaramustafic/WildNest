@@ -59,13 +59,6 @@ namespace eCommerce.Services
 
         public override async Task<TicketResponse> InsertAsync(TicketInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
-
             var created = await base.InsertAsync(request);
             return await GetByIdAsync(created.Id);
         }
@@ -96,7 +89,10 @@ namespace eCommerce.Services
         protected override Ticket MapInsertRequestToEntity(TicketInsertRequest request)
         {
             var entity = base.MapInsertRequestToEntity(request);
-            entity.TotalPrice = request.PricePerPerson * request.VisitorCount;
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
+            entity.PricePerPerson = ZooPricing.ZooEntryPricePerPerson;
+            entity.TotalPrice = entity.PricePerPerson * request.VisitorCount;
             entity.Status = TicketStatus.Active;
             entity.Code = GenerateUniqueCode();
             entity.QrCodeData = entity.Code;

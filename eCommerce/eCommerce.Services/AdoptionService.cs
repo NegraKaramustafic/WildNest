@@ -58,13 +58,6 @@ namespace eCommerce.Services
 
         public override async Task<AdoptionResponse> InsertAsync(AdoptionInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
-
             var created = await base.InsertAsync(request);
             var response = await GetByIdAsync(created.Id);
             await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
@@ -108,7 +101,9 @@ namespace eCommerce.Services
             }
 
             var entity = base.MapInsertRequestToEntity(request);
-            entity.MonthlyAmount = request.MonthlyAmount ?? animal.AdoptionPrice.Value;
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
+            entity.MonthlyAmount = animal.AdoptionPrice.Value;
             entity.Status = AdoptionStatus.Active;
             entity.StartDate = DateTime.UtcNow;
             return entity;

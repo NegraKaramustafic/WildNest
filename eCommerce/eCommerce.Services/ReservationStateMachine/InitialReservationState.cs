@@ -12,15 +12,18 @@ namespace eCommerce.Services.ReservationStateMachine
     public class InitialReservationState : BaseReservationState
     {
         private readonly IValidator<ReservationInsertRequest> _insertValidator;
+        private readonly IAuthenticatedUserAccessor _userAccessor;
 
         public InitialReservationState(
             ECommerceDbContext dbContext,
             IMapper mapper,
             IServiceProvider serviceProvider,
-            IValidator<ReservationInsertRequest> insertValidator)
+            IValidator<ReservationInsertRequest> insertValidator,
+            IAuthenticatedUserAccessor userAccessor)
             : base(dbContext, mapper, serviceProvider)
         {
             _insertValidator = insertValidator;
+            _userAccessor = userAccessor;
         }
 
         public override async Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)
@@ -48,6 +51,8 @@ namespace eCommerce.Services.ReservationStateMachine
             schedule.CapacityLeft -= request.GuestCount;
 
             var entity = Mapper.Map<Reservation>(request);
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
             entity.Status = ReservationStatus.Pending;
             entity.TotalPrice = request.GuestCount * schedule.Activity.Price;
             entity.Code = GenerateUniqueCode();
