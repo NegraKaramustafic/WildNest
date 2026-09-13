@@ -18,6 +18,7 @@ namespace eCommerce.Services
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly IBadgeAwardService _badgeAwardService;
+        private readonly INotificationEventService _notificationEvents;
 
         public AdoptionService(
             ECommerceDbContext dbContext,
@@ -25,11 +26,13 @@ namespace eCommerce.Services
             IValidator<AdoptionInsertRequest> insertValidator,
             IValidator<AdoptionUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            IBadgeAwardService badgeAwardService)
+            IBadgeAwardService badgeAwardService,
+            INotificationEventService notificationEvents)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
             _badgeAwardService = badgeAwardService;
+            _notificationEvents = notificationEvents;
         }
 
         protected override async Task<IQueryable<Adoption>> IncludeRelatedEntitiesAsync(AdoptionSearchObject? search, IQueryable<Adoption> query = null!)
@@ -58,16 +61,10 @@ namespace eCommerce.Services
 
         public override async Task<AdoptionResponse> InsertAsync(AdoptionInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
-
             var created = await base.InsertAsync(request);
             var response = await GetByIdAsync(created.Id);
             await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
+            await _notificationEvents.NotifyAdoptionCreatedAsync(response);
             return response;
         }
 
@@ -108,7 +105,9 @@ namespace eCommerce.Services
             }
 
             var entity = base.MapInsertRequestToEntity(request);
-            entity.MonthlyAmount = request.MonthlyAmount ?? animal.AdoptionPrice.Value;
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
+            entity.MonthlyAmount = animal.AdoptionPrice.Value;
             entity.Status = AdoptionStatus.Active;
             entity.StartDate = DateTime.UtcNow;
             return entity;

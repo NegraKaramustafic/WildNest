@@ -7,18 +7,23 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace eCommerce.Services
 {
     public class PaymentService : BaseCRUDService<Payment, PaymentResponse, PaymentSearchObject, PaymentInsertRequest, PaymentUpdateRequest>, IPaymentService
     {
+        private readonly INotificationEventService _notificationEvents;
+
         public PaymentService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<PaymentInsertRequest> insertValidator,
-            IValidator<PaymentUpdateRequest> updateValidator)
+            IValidator<PaymentUpdateRequest> updateValidator,
+            INotificationEventService notificationEvents)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
+            _notificationEvents = notificationEvents;
         }
 
         protected override Payment MapInsertRequestToEntity(PaymentInsertRequest request)
@@ -63,6 +68,13 @@ namespace eCommerce.Services
 
             entity.Status = PaymentStatus.Completed;
             await _dbContext.SaveChangesAsync();
+
+            var userId = await FindPaymentUserIdAsync(entity.Id);
+            if (userId.HasValue)
+            {
+                await _notificationEvents.NotifyPaymentCompletedAsync(userId.Value, entity.Id, entity.Amount);
+            }
+
             return _mapper.Map<PaymentResponse>(entity);
         }
 
@@ -88,6 +100,14 @@ namespace eCommerce.Services
             }
 
             return entity;
+        }
+
+        private async Task<int?> FindPaymentUserIdAsync(int paymentId)
+        {
+            return await _dbContext.Tickets.Where(t => t.PaymentId == paymentId).Select(t => (int?)t.UserId).FirstOrDefaultAsync()
+                ?? await _dbContext.Reservations.Where(r => r.PaymentId == paymentId).Select(r => (int?)r.UserId).FirstOrDefaultAsync()
+                ?? await _dbContext.Adoptions.Where(a => a.PaymentId == paymentId).Select(a => (int?)a.UserId).FirstOrDefaultAsync()
+                ?? await _dbContext.Donations.Where(d => d.PaymentId == paymentId).Select(d => (int?)d.UserId).FirstOrDefaultAsync();
         }
     }
 }

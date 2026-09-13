@@ -7,18 +7,20 @@ namespace eCommerce.Services
     public class BadgeAwardService : IBadgeAwardService
     {
         private readonly ECommerceDbContext _dbContext;
+        private readonly INotificationEventService _notificationEvents;
 
-        public BadgeAwardService(ECommerceDbContext dbContext)
+        public BadgeAwardService(ECommerceDbContext dbContext, INotificationEventService notificationEvents)
         {
             _dbContext = dbContext;
+            _notificationEvents = notificationEvents;
         }
 
-        public async Task CheckAndAwardBadgesAsync(int userId)
+        public async Task<IReadOnlyList<AwardedBadge>> CheckAndAwardBadgesAsync(int userId)
         {
             var badges = await _dbContext.Badges.ToListAsync();
             if (badges.Count == 0)
             {
-                return;
+                return Array.Empty<AwardedBadge>();
             }
 
             var earnedBadgeIds = await _dbContext.UserBadges
@@ -30,7 +32,7 @@ namespace eCommerce.Services
             var reservationCount = await _dbContext.Reservations.CountAsync(r => r.UserId == userId);
             var donationCount = await _dbContext.Donations.CountAsync(d => d.UserId == userId);
 
-            var awardedAny = false;
+            var awarded = new List<AwardedBadge>();
             foreach (var badge in badges)
             {
                 if (earnedBadgeIds.Contains(badge.Id))
@@ -59,13 +61,22 @@ namespace eCommerce.Services
                     BadgeId = badge.Id,
                     EarnedAt = DateTime.UtcNow
                 });
-                awardedAny = true;
+                awarded.Add(new AwardedBadge { BadgeId = badge.Id, Name = badge.Name });
             }
 
-            if (awardedAny)
+            if (awarded.Count == 0)
             {
-                await _dbContext.SaveChangesAsync();
+                return awarded;
             }
+
+            await _dbContext.SaveChangesAsync();
+
+            foreach (var badge in awarded)
+            {
+                await _notificationEvents.NotifyBadgeEarnedAsync(userId, badge.BadgeId, badge.Name);
+            }
+
+            return awarded;
         }
     }
 }

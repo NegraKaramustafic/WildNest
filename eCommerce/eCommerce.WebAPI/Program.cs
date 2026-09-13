@@ -1,3 +1,4 @@
+using eCommerce.Common.Services;
 using eCommerce.Common.Services.CryptoService;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
@@ -19,6 +20,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text;
+
+EnvFileLoader.Load();
+_ = RabbitMqSettings.FromEnvironment();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +101,9 @@ TypeAdapterConfig<UserBadge, UserBadgeResponse>.NewConfig()
     .Map(dest => dest.BadgeDescription, src => src.Badge != null ? src.Badge.Description : null)
     .Map(dest => dest.BadgeIconUrl, src => src.Badge != null ? src.Badge.IconUrl : null)
     .IgnoreNullValues(true);
+TypeAdapterConfig<Notification, NotificationResponse>.NewConfig()
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
+    .IgnoreNullValues(true);
 
 
 // register application services
@@ -153,6 +160,9 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();
 builder.Services.AddScoped<IBadgeAwardService, BadgeAwardService>();
 builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
+builder.Services.AddSingleton<INotificationPublisher, RabbitMqNotificationPublisher>();
+builder.Services.AddScoped<INotificationEventService, NotificationEventService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddScoped<IValidator<ProductTypeInsertRequest>, ProductTypeInsertValidator>();
 builder.Services.AddScoped<IValidator<ProductTypeUpdateRequest>, ProductTypeUpdateValidator>();

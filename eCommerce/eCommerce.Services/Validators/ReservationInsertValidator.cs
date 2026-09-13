@@ -7,9 +7,6 @@ namespace eCommerce.Services.Validators
     {
         public ReservationInsertValidator()
         {
-            RuleFor(x => x.UserId)
-                .GreaterThan(0).WithMessage("UserId is required and must be greater than 0.");
-
             RuleFor(x => x.ScheduleId)
                 .GreaterThan(0).WithMessage("ScheduleId is required and must be greater than 0.");
 

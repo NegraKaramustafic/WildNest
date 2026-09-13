@@ -5,9 +5,6 @@ namespace eCommerce.Model.Requests
     public class ReservationInsertRequest
     {
         [Required]
-        public int UserId { get; set; }
-
-        [Required]
         public int ScheduleId { get; set; }
 
         [Required]

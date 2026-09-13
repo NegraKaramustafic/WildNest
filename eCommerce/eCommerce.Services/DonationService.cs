@@ -16,6 +16,7 @@ namespace eCommerce.Services
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly IBadgeAwardService _badgeAwardService;
+        private readonly INotificationEventService _notificationEvents;
 
         public DonationService(
             ECommerceDbContext dbContext,
@@ -23,11 +24,13 @@ namespace eCommerce.Services
             IValidator<DonationInsertRequest> insertValidator,
             IValidator<DonationUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            IBadgeAwardService badgeAwardService)
+            IBadgeAwardService badgeAwardService,
+            INotificationEventService notificationEvents)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
             _badgeAwardService = badgeAwardService;
+            _notificationEvents = notificationEvents;
         }
 
         protected override async Task<IQueryable<Donation>> IncludeRelatedEntitiesAsync(DonationSearchObject? search, IQueryable<Donation> query = null!)
@@ -56,16 +59,10 @@ namespace eCommerce.Services
 
         public override async Task<DonationResponse> InsertAsync(DonationInsertRequest request)
         {
-            if (!_userAccessor.IsInRole(AdminRole))
-            {
-                var userId = _userAccessor.GetUserId()
-                    ?? throw new InvalidOperationException("User id claim is missing.");
-                request.UserId = userId;
-            }
-
             var created = await base.InsertAsync(request);
             var response = await GetByIdAsync(created.Id);
             await _badgeAwardService.CheckAndAwardBadgesAsync(response.UserId);
+            await _notificationEvents.NotifyDonationReceivedAsync(response);
             return response;
         }
 
@@ -103,6 +100,8 @@ namespace eCommerce.Services
             partner.CurrentAmount += request.Amount;
 
             var entity = base.MapInsertRequestToEntity(request);
+            entity.UserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
             return entity;
         }
 
