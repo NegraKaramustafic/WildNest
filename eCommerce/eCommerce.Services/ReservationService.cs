@@ -16,9 +16,9 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     private const string AdminRole = "Admin";
 
     private readonly IAuthenticatedUserAccessor _userAccessor;
-    private readonly IBadgeAwardService _badgeAwardService;
     private readonly INotificationEventService _notificationEvents;
     private readonly RecommendationModelCache _recommendationModelCache;
+    private readonly IPaymentService _paymentService;
 
     protected BaseReservationState ReservationState { get; }
 
@@ -27,16 +27,16 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         MapsterMapper.IMapper mapper,
         BaseReservationState reservationState,
         IAuthenticatedUserAccessor userAccessor,
-        IBadgeAwardService badgeAwardService,
         INotificationEventService notificationEvents,
-        RecommendationModelCache recommendationModelCache)
+        RecommendationModelCache recommendationModelCache,
+        IPaymentService paymentService)
         : base(mapper, dbContext)
     {
         ReservationState = reservationState;
         _userAccessor = userAccessor;
-        _badgeAwardService = badgeAwardService;
         _notificationEvents = notificationEvents;
         _recommendationModelCache = recommendationModelCache;
+        _paymentService = paymentService;
     }
 
     protected override Task<IQueryable<Reservation>> IncludeRelatedEntitiesAsync(ReservationSearchObject? search, IQueryable<Reservation> query = null!)
@@ -104,7 +104,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     {
         var state = ReservationState.GetReservationState(nameof(InitialReservationState));
         var created = await state.InsertAsync(request);
-        await _badgeAwardService.CheckAndAwardBadgesAsync(created.UserId);
         await _notificationEvents.NotifyReservationCreatedAsync(created);
         return created;
     }
@@ -137,8 +136,14 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     public async Task<ReservationResponse> CancelAsync(int id)
     {
         var entity = await GetAccessibleEntityAsync(id);
+        var paymentId = entity.PaymentId;
         var state = ReservationState.GetReservationState(entity.Status);
         var cancelled = await state.CancelAsync(id);
+        if (paymentId.HasValue)
+        {
+            await _paymentService.HandleEntityCancellationAsync(paymentId.Value);
+        }
+
         await _notificationEvents.NotifyReservationCancelledAsync(cancelled);
         return cancelled;
     }

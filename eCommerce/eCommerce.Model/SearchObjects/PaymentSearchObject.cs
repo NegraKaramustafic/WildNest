@@ -4,6 +4,8 @@ namespace eCommerce.Model.SearchObjects
 {
     public class PaymentSearchObject : BaseSearchObject
     {
+        public int? UserId { get; set; }
+
         /// <summary>
         /// Filter payments by method.
         /// </summary>

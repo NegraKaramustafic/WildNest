@@ -16,6 +16,23 @@ public class TicketController : BaseCRUDController<TicketResponse, TicketSearchO
     {
     }
 
+    [HttpPost("{id}/cancel")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TicketResponse>> Cancel(int id)
+    {
+        try
+        {
+            var result = await _service.CancelAsync(id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpPost("verify")]
     [Authorization("Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -28,9 +28,12 @@ namespace eCommerce.Services
                 .Select(ub => ub.BadgeId)
                 .ToListAsync();
 
-            var adoptionCount = await _dbContext.Adoptions.CountAsync(a => a.UserId == userId);
-            var reservationCount = await _dbContext.Reservations.CountAsync(r => r.UserId == userId);
-            var donationCount = await _dbContext.Donations.CountAsync(d => d.UserId == userId);
+            var adoptionCount = await _dbContext.Adoptions.CountAsync(a =>
+                a.UserId == userId && a.Payment != null && a.Payment.Status == PaymentStatus.Completed);
+            var reservationCount = await _dbContext.Reservations.CountAsync(r =>
+                r.UserId == userId && r.Payment != null && r.Payment.Status == PaymentStatus.Completed);
+            var donationCount = await _dbContext.Donations.CountAsync(d =>
+                d.UserId == userId && d.Payment != null && d.Payment.Status == PaymentStatus.Completed);
 
             var awarded = new List<AwardedBadge>();
             foreach (var badge in badges)

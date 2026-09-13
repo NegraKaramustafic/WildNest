@@ -1,7 +1,9 @@
 using eCommerce.Model.Enums;
+using eCommerce.Model.Exceptions;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
@@ -18,6 +20,12 @@ namespace eCommerce.Services.ReservationStateMachine
             if (entity == null)
             {
                 throw new KeyNotFoundException($"Reservation with id {id} not found.");
+            }
+
+            if (!entity.PaymentId.HasValue
+                || !await DbContext.Payments.AnyAsync(p => p.Id == entity.PaymentId.Value && p.Status == PaymentStatus.Completed))
+            {
+                throw new ClinetException("Reservation cannot be confirmed until payment is completed.");
             }
 
             entity.Status = ReservationStatus.Confirmed;

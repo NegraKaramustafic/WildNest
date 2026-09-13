@@ -22,6 +22,7 @@ namespace eCommerce.Services
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly INotificationEventService _notificationEvents;
+        private readonly IPaymentService _paymentService;
 
         public TicketService(
             ECommerceDbContext dbContext,
@@ -29,11 +30,13 @@ namespace eCommerce.Services
             IValidator<TicketInsertRequest> insertValidator,
             IValidator<TicketUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            INotificationEventService notificationEvents)
+            INotificationEventService notificationEvents,
+            IPaymentService paymentService)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
             _notificationEvents = notificationEvents;
+            _paymentService = paymentService;
         }
 
         protected override async Task<IQueryable<Ticket>> IncludeRelatedEntitiesAsync(TicketSearchObject? search, IQueryable<Ticket> query = null!)
@@ -63,9 +66,7 @@ namespace eCommerce.Services
         public override async Task<TicketResponse> InsertAsync(TicketInsertRequest request)
         {
             var created = await base.InsertAsync(request);
-            var response = await GetByIdAsync(created.Id);
-            await _notificationEvents.NotifyTicketPurchasedAsync(response);
-            return response;
+            return await GetByIdAsync(created.Id);
         }
 
         public override async Task<TicketResponse> UpdateAsync(int id, TicketUpdateRequest request)
@@ -98,7 +99,7 @@ namespace eCommerce.Services
                 ?? throw new InvalidOperationException("User id claim is missing.");
             entity.PricePerPerson = ZooPricing.ZooEntryPricePerPerson;
             entity.TotalPrice = entity.PricePerPerson * request.VisitorCount;
-            entity.Status = TicketStatus.Active;
+            entity.Status = TicketStatus.PendingPayment;
             entity.Code = GenerateUniqueCode();
             entity.QrCodeData = entity.Code;
             return entity;
@@ -186,6 +187,11 @@ namespace eCommerce.Services
                 throw new ClinetException("Ticket is cancelled");
             }
 
+            if (entity.Status == TicketStatus.PendingPayment || !await HasCompletedPaymentAsync(entity.PaymentId))
+            {
+                throw new ClinetException("Ticket payment is not completed.");
+            }
+
             var verifierId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
 
@@ -235,6 +241,45 @@ namespace eCommerce.Services
             }
 
             throw new InvalidOperationException("Unable to generate a unique ticket code.");
+        }
+
+        public async Task<TicketResponse> CancelAsync(int id)
+        {
+            var entity = await _dbContext.Tickets.FindAsync(id);
+            if (entity == null || !CanAccessTicket(entity.UserId))
+            {
+                throw new KeyNotFoundException($"Ticket with id {id} not found.");
+            }
+
+            if (entity.Status == TicketStatus.Cancelled)
+            {
+                throw new ClinetException("Ticket is already cancelled.");
+            }
+
+            if (entity.Status == TicketStatus.Used)
+            {
+                throw new ClinetException("A used ticket cannot be cancelled.");
+            }
+
+            entity.Status = TicketStatus.Cancelled;
+            await _dbContext.SaveChangesAsync();
+
+            if (entity.PaymentId.HasValue)
+            {
+                await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value);
+            }
+
+            return await GetByIdAsync(id);
+        }
+
+        private async Task<bool> HasCompletedPaymentAsync(int? paymentId)
+        {
+            if (!paymentId.HasValue)
+            {
+                return false;
+            }
+
+            return await _dbContext.Payments.AnyAsync(p => p.Id == paymentId.Value && p.Status == PaymentStatus.Completed);
         }
     }
 }

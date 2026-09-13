@@ -69,6 +69,22 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(r => r.ScheduleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.StripePaymentIntentId);
+
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.StripeCheckoutSessionId);
+
+            modelBuilder.Entity<StripeProcessedEvent>()
+                .HasIndex(e => e.EventId)
+                .IsUnique();
+
             modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.Payment)
                 .WithMany()
