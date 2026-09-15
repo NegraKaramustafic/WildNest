@@ -1,67 +1,42 @@
-import 'dart:convert';
-
+import 'package:ecommerce_mobile/theme/app_colors.dart';
+import 'package:ecommerce_mobile/utils/api_client_exception.dart';
 import 'package:flutter/material.dart';
 
 void alertBox(BuildContext context, String title, String content) {
-     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
-
-void alertBoxMoveBack(BuildContext context, String title, String content) {
   showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-            title: Text(title),
-            content: Text(content),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Ok')),
-            ],
-          ));
-}
-
-Image imageFromBase64String(String base64Image) {
-  return Image.memory(
-    base64Decode(base64Image),
-    height: 400,
-    width: 400,
-    fit: BoxFit.cover,
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
   );
 }
 
-MemoryImage ImageFromBase64StringWithoutDimnesions(String base64Image) {
-  return MemoryImage(
-    base64Decode(base64Image),
+bool shouldIgnoreError(Object error) => error is SessionExpiredException;
+
+void showAppError(BuildContext context, Object error) {
+  if (shouldIgnoreError(error) || !context.mounted) {
+    return;
+  }
+  alertBox(context, 'Error', error.toString());
+}
+
+InputDecoration authInputDecoration({
+  required String label,
+  required IconData icon,
+  Widget? suffix,
+}) {
+  return InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon, color: AppColors.sage),
+    suffixIcon: suffix,
   );
 }
 
-Image placeholderImage() {
-  return Image.asset(
-    "assets/images/product_placeholder.jpg",
-    height: 400,
-    width: 400,
-    fit: BoxFit.cover,
-  );
-}
-
-
- const String mField = "This filed is mandatory";
-
-const String numericField = "This filed is numeric";
+const String mandatoryField = 'This field is required';

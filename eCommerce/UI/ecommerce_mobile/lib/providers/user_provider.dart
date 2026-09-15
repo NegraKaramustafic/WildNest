@@ -24,6 +24,6 @@ class UserProvider extends BaseProvider<User> {
 
     http.Response response = await http.put(uri, headers: headers, body: jsonRequest);
 
-    validateResponse(response);
+    await validateResponse(response);
   }
 }
