@@ -1,114 +1,99 @@
 import 'dart:convert';
 
+import 'package:ecommerce_mobile/config/api_config.dart';
 import 'package:ecommerce_mobile/models/search_result.dart';
+import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/utils/api_client_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:http/http.dart';
 
 abstract class BaseProvider<T> with ChangeNotifier {
-  static String? _baseUrl;
-
-  static String? get baseUrl => _baseUrl;
-
-  /// API resource segment, e.g. `Products` → `{baseUrl}Products`.
+  /// API resource segment, e.g. `api/Animal` → `{API_BASE_URL}api/Animal`.
   final String endpoint;
 
-  BaseProvider(this.endpoint) {
-    _baseUrl ??= const String.fromEnvironment(
-      "baseUrl",
-      defaultValue: "http://10.0.2.2:5126/",
-    );
-  }
+  BaseProvider(this.endpoint);
+
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<SearchResult<T>> get({dynamic filter}) async {
-    var url = "$_baseUrl$endpoint";
+    var url = "$baseUrl$endpoint";
     if (filter != null) {
-      var queryString = getQueryString(filter);
-      url = "$url?$queryString";
+      final queryString = getQueryString(filter);
+      if (queryString.isNotEmpty) {
+        url = "$url?$queryString";
+      }
     }
 
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
+    final uri = Uri.parse(url);
+    final response = await http.get(uri, headers: createHeaders());
 
-    var response = await http.get(uri, headers: headers);
+    await validateResponse(response);
+    final data = jsonDecode(response.body);
 
-    validateResponse(response);
-    var data = jsonDecode(response.body);
-
-    var result = SearchResult<T>();
-
+    final result = SearchResult<T>();
     result.totalCount = data['totalCount'];
-    result.items = List<T>.from(data["items"].map((e) => fromJson(e)));
-
+    result.items = List<T>.from((data["items"] as List).map((e) => fromJson(e)));
     return result;
   }
 
   Future<T> getById(int id) async {
-    var url = "$_baseUrl$endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    http.Response response = await http.get(uri, headers: headers);
-    print(
-      "response: ${response.request} ${response.statusCode}, ${response.body}",
-    );
-    validateResponse(response);
-    var data = jsonDecode(response.body);
-
+    final url = "$baseUrl$endpoint/$id";
+    final uri = Uri.parse(url);
+    final response = await http.get(uri, headers: createHeaders());
+    await validateResponse(response);
+    final data = jsonDecode(response.body);
     return fromJson(data);
   }
 
   Future<T> insert(dynamic request) async {
-    var url = "$_baseUrl$endpoint";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
+    final url = "$baseUrl$endpoint";
+    final uri = Uri.parse(url);
+    final jsonRequest = jsonEncode(request);
+    final response = await http.post(
+      uri,
+      headers: createHeaders(),
+      body: jsonRequest,
+    );
 
-    var jsonRequest = jsonEncode(request);
-    var response = await http.post(uri, headers: headers, body: jsonRequest);
-
-    validateResponse(response);
-    var data = jsonDecode(response.body);
+    await validateResponse(response);
+    final data = jsonDecode(response.body);
     return fromJson(data);
   }
 
   Future<T> update(int id, [dynamic request]) async {
-    var url = "$_baseUrl$endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
+    final url = "$baseUrl$endpoint/$id";
+    final uri = Uri.parse(url);
+    final jsonRequest = jsonEncode(request);
+    final response = await http.put(
+      uri,
+      headers: createHeaders(),
+      body: jsonRequest,
+    );
 
-    var jsonRequest = jsonEncode(request);
-    var response = await http.put(uri, headers: headers, body: jsonRequest);
-
-    validateResponse(response);
-    var data = jsonDecode(response.body);
+    await validateResponse(response);
+    final data = jsonDecode(response.body);
     return fromJson(data);
   }
 
-  Future remove(int id) async {
-    var url = "$_baseUrl$endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    var response = await http.delete(uri, headers: headers);
-
-    validateResponse(response);
+  Future<void> remove(int id) async {
+    final url = "$baseUrl$endpoint/$id";
+    final uri = Uri.parse(url);
+    final response = await http.delete(uri, headers: createHeaders());
+    await validateResponse(response);
   }
 
   T fromJson(dynamic data) {
     throw Exception("Method not implemented");
   }
 
-  /// Throws [ApiClientException] with a message from the API when status is not successful.
-  void validateResponse(Response response) {
+  Future<void> validateResponse(Response response) async {
     if (response.statusCode < 299) {
       return;
     }
     if (response.statusCode == 401) {
-      throw ApiClientException(
-        'Your session has expired. Please sign in again.',
-      );
+      await AuthProvider.instance?.handleUnauthorized();
+      throw SessionExpiredException();
     }
 
     final parsed = ApiErrorParser.messageFromBody(response.body);
@@ -118,37 +103,33 @@ abstract class BaseProvider<T> with ChangeNotifier {
       );
     }
 
-    // 400 Bad Request — business rules (ClinetException), validation, etc.
     throw ApiClientException(
       parsed ?? 'Request could not be completed. Please try again.',
     );
   }
 
   Map<String, String> createHeaders() {
-    String accesstoken = AuthProvider.accesstoken ?? "";
-
-    String basicAuth = "Bearer $accesstoken";
-
-    var headers = {
-      "Content-Type": "application/json",
-      "Authorization": basicAuth,
-    };
-
+    final headers = <String, String>{"Content-Type": "application/json"};
+    final token = AuthProvider.accesstoken;
+    if (token != null && token.isNotEmpty) {
+      headers["Authorization"] = "Bearer $token";
+    }
     return headers;
   }
 
   String getQueryString(
     Map params, {
-    String prefix = '&',
+    String prefix = '',
     bool inRecursion = false,
   }) {
-    String query = '';
+    var query = '';
     params.forEach((key, value) {
+      if (value == null) {
+        return;
+      }
       if (inRecursion) {
         if (key is int) {
           key = '[$key]';
-        } else if (value is List || value is Map) {
-          key = '.$key';
         } else {
           key = '.$key';
         }
@@ -156,13 +137,20 @@ abstract class BaseProvider<T> with ChangeNotifier {
       if (value is String || value is int || value is double || value is bool) {
         var encoded = value;
         if (value is String) {
+          if (value.isEmpty) {
+            return;
+          }
           encoded = Uri.encodeComponent(value);
         }
-        query += '$prefix$key=$encoded';
+        final separator = query.isEmpty && prefix.isEmpty ? '' : '&';
+        query += '$separator$prefix$key=$encoded';
       } else if (value is DateTime) {
-        query += '$prefix$key=${value.toIso8601String()}';
+        final separator = query.isEmpty && prefix.isEmpty ? '' : '&';
+        query += '$separator$prefix$key=${value.toIso8601String()}';
       } else if (value is List || value is Map) {
-        if (value is List) value = value.asMap();
+        if (value is List) {
+          value = value.asMap();
+        }
         value.forEach((k, v) {
           query += getQueryString(
             {k: v},
@@ -172,6 +160,6 @@ abstract class BaseProvider<T> with ChangeNotifier {
         });
       }
     });
-    return query;
+    return query.startsWith('&') ? query.substring(1) : query;
   }
 }

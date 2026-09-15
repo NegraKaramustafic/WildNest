@@ -11,6 +11,11 @@ class ApiClientException implements Exception {
   String toString() => message;
 }
 
+class SessionExpiredException extends ApiClientException {
+  SessionExpiredException()
+    : super('Your session has expired. Please sign in again.');
+}
+
 /// Parses JSON error payloads from eCommerce.WebAPI [ExceptionFilter].
 class ApiErrorParser {
   ApiErrorParser._();
