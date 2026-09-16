@@ -3,9 +3,23 @@ import 'package:flutter/material.dart';
 String formatMoney(num value, {bool decimals = false}) {
   final amount = value.toDouble();
   if (!decimals && amount == amount.roundToDouble()) {
-    return '\$${amount.round()}';
+    return '\$${_groupDigits(amount.round().toString())}';
   }
-  return '\$${amount.toStringAsFixed(2)}';
+  final raw = amount.toStringAsFixed(2);
+  final parts = raw.split('.');
+  return '\$${_groupDigits(parts[0])}.${parts[1]}';
+}
+
+String _groupDigits(String digits) {
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    final remaining = digits.length - i;
+    buffer.write(digits[i]);
+    if (remaining > 1 && remaining % 3 == 1) {
+      buffer.write(',');
+    }
+  }
+  return buffer.toString();
 }
 
 String formatDurationHours(Duration duration) {
@@ -103,4 +117,60 @@ String initialsFor(String name) {
 
 String guestLabel(int count) {
   return count == 1 ? '1 Adult' : '$count Adults';
+}
+
+String visitorLabel(int count) {
+  return count == 1 ? '1 visitor' : '$count visitors';
+}
+
+String formatRelativeTime(DateTime date) {
+  final diff = DateTime.now().difference(date.toLocal());
+  if (diff.inMinutes < 1) return 'now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+  if (diff.inHours < 24) return '${diff.inHours}h';
+  if (diff.inDays < 7) return '${diff.inDays}d';
+  return formatReviewDate(date);
+}
+
+String spotsLeftLabel(int spots) {
+  return spots == 1 ? '1 spot left' : '$spots spots left';
+}
+
+String formatDateApi(DateTime date) {
+  final target = DateUtils.dateOnly(date);
+  final mm = target.month.toString().padLeft(2, '0');
+  final dd = target.day.toString().padLeft(2, '0');
+  return '${target.year}-$mm-$dd';
+}
+
+String formatWeekdayShort(DateTime date) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return days[date.weekday - 1];
+}
+
+String formatDayMonth(DateTime date) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  final target = DateUtils.dateOnly(date);
+  return '${target.day} ${months[target.month - 1]}';
+}
+
+String formatDateChipTitle(DateTime date) {
+  final today = DateUtils.dateOnly(DateTime.now());
+  final target = DateUtils.dateOnly(date);
+  if (target == today) return 'Today';
+  if (target == today.add(const Duration(days: 1))) return 'Tomorrow';
+  return formatWeekdayShort(target);
 }

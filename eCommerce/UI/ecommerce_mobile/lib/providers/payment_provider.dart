@@ -12,14 +12,45 @@ class PaymentProvider extends BaseProvider<Payment> {
     return Payment.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<PaymentCheckout> checkoutReservation(int reservationId) async {
+  Future<PaymentCheckout> checkoutReservation(int reservationId) {
+    return checkout(
+      relatedEntityType: 'Reservation',
+      relatedEntityId: reservationId,
+    );
+  }
+
+  Future<PaymentCheckout> checkoutAdoption(int adoptionId) {
+    return checkout(
+      relatedEntityType: 'Adoption',
+      relatedEntityId: adoptionId,
+    );
+  }
+
+  Future<PaymentCheckout> checkoutDonation(int donationId) {
+    return checkout(
+      relatedEntityType: 'Donation',
+      relatedEntityId: donationId,
+    );
+  }
+
+  Future<PaymentCheckout> checkoutTicket(int ticketId) {
+    return checkout(
+      relatedEntityType: 'Ticket',
+      relatedEntityId: ticketId,
+    );
+  }
+
+  Future<PaymentCheckout> checkout({
+    required String relatedEntityType,
+    required int relatedEntityId,
+  }) async {
     final uri = Uri.parse('${BaseProvider.baseUrl}$endpoint/checkout');
     final response = await http.post(
       uri,
       headers: createHeaders(),
       body: jsonEncode({
-        'relatedEntityType': 'Reservation',
-        'relatedEntityId': reservationId,
+        'relatedEntityType': relatedEntityType,
+        'relatedEntityId': relatedEntityId,
       }),
     );
     await validateResponse(response);

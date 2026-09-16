@@ -16,6 +16,7 @@ class Reservation {
   final String code;
   final int? paymentId;
   final DateTime? createdAt;
+  final List<String> allowedActions;
 
   Reservation({
     required this.id,
@@ -31,6 +32,7 @@ class Reservation {
     this.code = '',
     this.paymentId,
     this.createdAt,
+    this.allowedActions = const [],
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
@@ -48,7 +50,29 @@ class Reservation {
       code: asString(json['code']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
       createdAt: parseDateTime(json['createdAt']),
+      allowedActions: (json['allowedActions'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
+  }
+
+  bool get canCancel =>
+      allowedActions.any((action) => action.toLowerCase().contains('cancel')) ||
+      status == ReservationStatus.pending ||
+      status == ReservationStatus.confirmed;
+
+  String get statusLabel {
+    switch (status) {
+      case ReservationStatus.pending:
+        return 'Pending';
+      case ReservationStatus.confirmed:
+        return 'Active';
+      case ReservationStatus.completed:
+        return 'Completed';
+      case ReservationStatus.cancelled:
+        return 'Cancelled';
+    }
   }
 }
 

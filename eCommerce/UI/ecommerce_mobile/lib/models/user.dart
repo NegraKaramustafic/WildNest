@@ -35,4 +35,13 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserToJson(this);
+
+  String get fullName {
+    final parts = [firstName, lastName]
+        .where((part) => part != null && part.trim().isNotEmpty)
+        .map((part) => part!.trim())
+        .toList();
+    if (parts.isNotEmpty) return parts.join(' ');
+    return username?.trim().isNotEmpty == true ? username!.trim() : 'Guest';
+  }
 }
