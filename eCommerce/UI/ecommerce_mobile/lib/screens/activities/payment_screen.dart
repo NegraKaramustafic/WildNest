@@ -7,12 +7,12 @@ import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/screens/activities/booking_confirmed_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
+import 'package:ecommerce_mobile/utils/stripe_checkout.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({
@@ -51,14 +51,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('Stripe did not return a checkout URL.');
       }
 
-      final launched = await _openCheckout(url);
+      final outcome = await launchStripeCheckout(url);
       if (!mounted) return;
-      if (!launched) {
+      if (outcome == StripeCheckoutOutcome.failedToLaunch) {
         alertBox(
           context,
           'Payment',
           'Could not open Stripe Checkout. Please try again.',
         );
+        setState(() => _busy = false);
+        return;
+      }
+      if (outcome != StripeCheckoutOutcome.success) {
         setState(() => _busy = false);
         return;
       }
@@ -71,22 +75,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<bool> _openCheckout(String url) async {
-    final uri = Uri.parse(url);
-    final modes = <LaunchMode>[
-      LaunchMode.inAppBrowserView,
-      LaunchMode.inAppWebView,
-      LaunchMode.externalApplication,
-    ];
-    for (final mode in modes) {
-      try {
-        final ok = await launchUrl(uri, mode: mode);
-        if (ok) return true;
-      } catch (_) {}
-    }
-    return false;
-  }
-
   Future<void> _goToResult(int? paymentId) async {
     final reservationProvider = context.read<ReservationProvider>();
     final paymentProvider = context.read<PaymentProvider>();
@@ -96,12 +84,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       reservation = await reservationProvider.getById(reservation.id);
     } catch (_) {}
     if (paymentId != null || reservation.paymentId != null) {
-      try {
-        final payment = await paymentProvider.getById(
-          paymentId ?? reservation.paymentId!,
-        );
-        paymentStatus = payment.status;
-      } catch (_) {}
+      paymentStatus = await fetchPaymentStatus(
+        paymentProvider,
+        paymentId ?? reservation.paymentId,
+      );
     }
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -196,7 +182,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Card details are entered on Stripe. After you finish, return here to see your booking status.',
+                    'Card details are entered in a secure in-app Stripe sheet. You will return here automatically when payment finishes.',
                     style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 28),

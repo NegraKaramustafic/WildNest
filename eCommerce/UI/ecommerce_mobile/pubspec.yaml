@@ -20,6 +20,8 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   google_fonts: ^6.3.2
   url_launcher: ^6.3.2
+  app_links: ^6.4.1
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

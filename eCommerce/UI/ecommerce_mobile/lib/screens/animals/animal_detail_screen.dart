@@ -3,6 +3,7 @@ import 'package:ecommerce_mobile/providers/activity_provider.dart';
 import 'package:ecommerce_mobile/providers/animal_provider.dart';
 import 'package:ecommerce_mobile/screens/activities/activities_list_screen.dart';
 import 'package:ecommerce_mobile/screens/activities/activity_detail_screen.dart';
+import 'package:ecommerce_mobile/screens/adopt/adoption_payment_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/animal_visuals.dart';
@@ -55,9 +56,19 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
     }
   }
 
-  void _comingSoon(String action) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$action is coming soon.')),
+  Future<void> _adoptVirtually() async {
+    final animal = _animal;
+    if (animal == null) return;
+    if (animal.adoptionPrice == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This animal is not available for adoption.')),
+      );
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AdoptionPaymentScreen(animal: animal),
+      ),
     );
   }
 
@@ -267,7 +278,9 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
                         children: [
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () => _comingSoon('Virtual adoption'),
+                              onPressed: animal.adoptionPrice == null
+                                  ? null
+                                  : _adoptVirtually,
                               child: const FittedBox(
                                 child: Text('Adopt Virtually'),
                               ),

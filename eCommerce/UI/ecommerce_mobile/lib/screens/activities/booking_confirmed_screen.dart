@@ -1,5 +1,6 @@
 import 'package:ecommerce_mobile/models/payment.dart';
 import 'package:ecommerce_mobile/models/reservation.dart';
+import 'package:ecommerce_mobile/screens/profile/my_reservations_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
@@ -83,11 +84,9 @@ class BookingConfirmedScreen extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Reservations list is coming soon.',
-                                  ),
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const MyReservationsScreen(),
                                 ),
                               );
                             },

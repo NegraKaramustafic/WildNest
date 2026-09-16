@@ -1,12 +1,21 @@
+import 'package:ecommerce_mobile/providers/notification_provider.dart';
+import 'package:ecommerce_mobile/screens/notifications/notifications_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class WildNestHeader extends StatelessWidget {
-  const WildNestHeader({super.key, this.showBack = false, this.onBack});
+  const WildNestHeader({
+    super.key,
+    this.showBack = false,
+    this.onBack,
+    this.showNotifications = true,
+  });
 
   final bool showBack;
   final VoidCallback? onBack;
+  final bool showNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -31,35 +40,51 @@ class WildNestHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: AppColors.sage,
-                ),
-              ),
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                    color: AppColors.orange,
-                    shape: BoxShape.circle,
+          if (showNotifications)
+            Consumer<NotificationProvider>(
+              builder: (context, notifications, _) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(21),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: AppColors.sage,
+                        ),
+                      ),
+                      if (notifications.hasUnread)
+                        Positioned(
+                          right: 6,
+                          top: 6,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: const BoxDecoration(
+                              color: AppColors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
+                );
+              },
+            ),
         ],
       ),
     );
