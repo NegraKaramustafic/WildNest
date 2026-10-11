@@ -50,6 +50,29 @@ namespace eCommerce.Services
             return await GetByIdAsync(id);
         }
 
+        protected override Animal MapInsertRequestToEntity(AnimalInsertRequest request)
+        {
+            var entity = base.MapInsertRequestToEntity(request);
+            entity.Category = FindCategory(entity.CategoryId)!;
+            return entity;
+        }
+
+        protected override void MapUpdateRequestToEntity(AnimalUpdateRequest request, Animal entity)
+        {
+            base.MapUpdateRequestToEntity(request, entity);
+            entity.Category = FindCategory(entity.CategoryId)!;
+        }
+
+        private AnimalCategory? FindCategory(int categoryId)
+        {
+            if (categoryId <= 0)
+            {
+                return null;
+            }
+
+            return _dbContext.Set<AnimalCategory>().Find(categoryId);
+        }
+
         protected override IEnumerable<Animal> ApplyFilters(IEnumerable<Animal> query, AnimalSearchObject? search)
         {
             if (search != null)

@@ -51,18 +51,38 @@ TypeAdapterConfig<User, UserResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<UserUpdateRequest, User>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<AnimalCategory, AnimalCategoryResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
-    .Map(dest => dest.CategoryName, src => src.Category != null ? src.Category.Name : string.Empty)
+    .Ignore(dest => dest.CategoryName)
+    .AfterMapping((Animal src, AnimalResponse dest) =>
+        dest.CategoryName = src.Category == null ? string.Empty : src.Category.Name)
     .IgnoreNullValues(true);
 TypeAdapterConfig<Activity, ActivityResponse>.NewConfig()
-    .Map(dest => dest.AnimalName, src => src.Animal != null ? src.Animal.Name : null)
+    .Ignore(dest => dest.AnimalName!)
+    .AfterMapping((Activity src, ActivityResponse dest) =>
+    {
+        dest.AnimalName = src.Animal == null ? null : src.Animal.Name;
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Schedule, ScheduleResponse>.NewConfig()
-    .Map(dest => dest.ActivityName, src => src.Activity != null ? src.Activity.Name : string.Empty)
-    .Map(dest => dest.ActivityPrice, src => src.Activity != null ? src.Activity.Price : 0m)
+    .Ignore(dest => dest.ActivityName)
+    .Ignore(dest => dest.ActivityPrice)
+    .AfterMapping((Schedule src, ScheduleResponse dest) =>
+    {
+        dest.ActivityName = src.Activity == null ? string.Empty : src.Activity.Name;
+        dest.ActivityPrice = src.Activity == null ? 0m : src.Activity.Price;
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Ticket, TicketResponse>.NewConfig()
-    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
-    .Map(dest => dest.VerifiedByFullName, src => src.VerifiedByUser != null ? $"{src.VerifiedByUser.FirstName} {src.VerifiedByUser.LastName}".Trim() : null)
+    .Ignore(dest => dest.UserFullName)
+    .Ignore(dest => dest.VerifiedByFullName!)
+    .AfterMapping((Ticket src, TicketResponse dest) =>
+    {
+        dest.UserFullName = src.User == null
+            ? string.Empty
+            : $"{src.User.FirstName} {src.User.LastName}".Trim();
+        dest.VerifiedByFullName = src.VerifiedByUser == null
+            ? null
+            : $"{src.VerifiedByUser.FirstName} {src.VerifiedByUser.LastName}".Trim();
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
     .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
@@ -73,16 +93,37 @@ TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
 TypeAdapterConfig<Payment, PaymentResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<ZooPartner, ZooPartnerResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<Adoption, AdoptionResponse>.NewConfig()
-    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
-    .Map(dest => dest.AnimalName, src => src.Animal != null ? src.Animal.Name : string.Empty)
+    .Ignore(dest => dest.UserFullName)
+    .Ignore(dest => dest.AnimalName)
+    .AfterMapping((Adoption src, AdoptionResponse dest) =>
+    {
+        dest.UserFullName = src.User == null
+            ? string.Empty
+            : $"{src.User.FirstName} {src.User.LastName}".Trim();
+        dest.AnimalName = src.Animal == null ? string.Empty : src.Animal.Name;
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
-    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
-    .Map(dest => dest.ZooPartnerName, src => src.ZooPartner != null ? src.ZooPartner.Name : string.Empty)
+    .Ignore(dest => dest.UserFullName)
+    .Ignore(dest => dest.ZooPartnerName)
+    .AfterMapping((Donation src, DonationResponse dest) =>
+    {
+        dest.UserFullName = src.User == null
+            ? string.Empty
+            : $"{src.User.FirstName} {src.User.LastName}".Trim();
+        dest.ZooPartnerName = src.ZooPartner == null ? string.Empty : src.ZooPartner.Name;
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Review, ReviewResponse>.NewConfig()
-    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
-    .Map(dest => dest.ActivityName, src => src.Activity != null ? src.Activity.Name : string.Empty)
+    .Ignore(dest => dest.UserFullName)
+    .Ignore(dest => dest.ActivityName)
+    .AfterMapping((Review src, ReviewResponse dest) =>
+    {
+        dest.UserFullName = src.User == null
+            ? string.Empty
+            : $"{src.User.FirstName} {src.User.LastName}".Trim();
+        dest.ActivityName = src.Activity == null ? string.Empty : src.Activity.Name;
+    })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Badge, BadgeResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<UserBadge, UserBadgeResponse>.NewConfig()

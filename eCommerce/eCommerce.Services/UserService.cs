@@ -18,11 +18,23 @@ namespace eCommerce.Services
 {
     public class UserService : BaseCRUDService<User, UserResponse, UserSearch, UserInsertRequest, UserUpdateRequest>, IUserService
     {
+        private const string AdminRole = "Admin";
+        private const string CustomerRole = "Customer";
+
         private readonly ICryptoService _cryptoService;
-        public UserService(ECommerceDbContext dbContext, MapsterMapper.IMapper mapper, IValidator<UserInsertRequest> insertValidator, IValidator<UserUpdateRequest> updateValidator, ICryptoService cryptoService)
+        private readonly IAuthenticatedUserAccessor _userAccessor;
+
+        public UserService(
+            ECommerceDbContext dbContext,
+            MapsterMapper.IMapper mapper,
+            IValidator<UserInsertRequest> insertValidator,
+            IValidator<UserUpdateRequest> updateValidator,
+            ICryptoService cryptoService,
+            IAuthenticatedUserAccessor userAccessor)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _cryptoService = cryptoService;
+            _userAccessor = userAccessor;
         }
 
 
@@ -76,16 +88,24 @@ namespace eCommerce.Services
             // Check if email or username already exists
             if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new InvalidOperationException($"Email '{request.Email}' is already in use.");
+                throw new ClinetException($"Email '{request.Email}' is already in use.");
             }
 
             if (await _dbContext.Users.AnyAsync(u => u.Username == request.Username))
             {
-                throw new InvalidOperationException($"Username '{request.Username}' is already in use.");
+                throw new ClinetException($"Username '{request.Username}' is already in use.");
             }
 
             var entity = MapInsertRequestToEntity(request);
             entity.CreatedAt = DateTime.UtcNow;
+            if (!entity.UserRoles.Any())
+            {
+                entity.UserRoles.Add(new UserRole
+                {
+                    RoleId = await GetCustomerRoleIdAsync(),
+                    DateAssigned = DateTime.UtcNow
+                });
+            }
 
             _dbContext.Users.Add(entity);
             await _dbContext.SaveChangesAsync();
@@ -94,8 +114,23 @@ namespace eCommerce.Services
         }
 
 
+        public override async Task<UserResponse> GetByIdAsync(int id)
+        {
+            if (!CanAccessUser(id))
+            {
+                throw new KeyNotFoundException($"User with id {id} not found.");
+            }
+
+            return await base.GetByIdAsync(id);
+        }
+
         public override async Task<UserResponse> UpdateAsync(int id, UserUpdateRequest request)
         {
+            if (!CanAccessUser(id))
+            {
+                throw new KeyNotFoundException($"User with id {id} not found.");
+            }
+
             await _updateValidator.ValidateAndThrowAsync(request);
 
             var entity = await _dbContext.Users.FindAsync(id);
@@ -104,18 +139,24 @@ namespace eCommerce.Services
                 throw new KeyNotFoundException($"User with id {id} not found.");
             }
 
+            var existingIsActive = entity.IsActive;
+
             // Check if email or username already exists
             if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email && u.Id != id))
             {
-                throw new InvalidOperationException($"Email '{request.Email}' is already in use.");
+                throw new ClinetException($"Email '{request.Email}' is already in use.");
             }
 
             if (await _dbContext.Users.AnyAsync(u => u.Username == request.Username && u.Id != id))
             {
-                throw new InvalidOperationException($"Username '{request.Username}' is already in use.");
+                throw new ClinetException($"Username '{request.Username}' is already in use.");
             }
 
             MapUpdateRequestToEntity(request, entity);
+            if (!_userAccessor.IsInRole(AdminRole))
+            {
+                entity.IsActive = existingIsActive;
+            }
 
             _dbContext.Users.Update(entity);
             await _dbContext.SaveChangesAsync();
@@ -125,11 +166,29 @@ namespace eCommerce.Services
 
         public override async Task DeleteAsync(int id)
         {
+            var currentUserId = _userAccessor.GetUserId();
+            if (currentUserId.HasValue && currentUserId.Value == id)
+            {
+                throw new ClinetException("You cannot delete your own account.");
+            }
+
             var entity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (entity == null)
             {
                 throw new KeyNotFoundException($"User with id {id} not found.");
             }
+
+            if (await HasRelatedRowsAsync(id))
+            {
+                entity.IsActive = false;
+                await _dbContext.SaveChangesAsync();
+                return;
+            }
+
+            var notifications = await _dbContext.Notifications.Where(n => n.UserId == id).ToListAsync();
+            _dbContext.Notifications.RemoveRange(notifications);
+            var badges = await _dbContext.UserBadges.Where(b => b.UserId == id).ToListAsync();
+            _dbContext.UserBadges.RemoveRange(badges);
 
             _dbContext.Users.Remove(entity);
             await _dbContext.SaveChangesAsync();
@@ -175,16 +234,24 @@ namespace eCommerce.Services
 
         public async Task ChangePasswordAsync(UserPasswordChangeRequest request)
         {
-            var user = _dbContext.Users.FirstOrDefault(u => u.Id == request.Id);
+            var userId = _userAccessor.GetUserId()
+                ?? throw new ClinetException("User id claim is missing.");
+
+            if (request.Id != 0 && request.Id != userId)
+            {
+                throw new ClinetException("You can only change your own password.");
+            }
+
+            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
-                throw new Exception("User not found");
+                throw new KeyNotFoundException("User not found");
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
-                throw new Exception("Wrong credential");
+                throw new ClinetException("Wrong credential");
 
             if (!request.NewPassword.Equals(request.ConfirmNewPassword))
-                throw new Exception("Password confimation doen't match new password");
+                throw new ClinetException("Password confirmation doesn't match the new password.");
 
             user.PasswordSalt = _cryptoService.GenerateSlat();
             user.PasswordHash = _cryptoService.GenerateHash(request.NewPassword, user.PasswordSalt);
@@ -192,6 +259,61 @@ namespace eCommerce.Services
 
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
+        }
+
+        private bool CanAccessUser(int userId)
+        {
+            if (_userAccessor.IsInRole(AdminRole))
+            {
+                return true;
+            }
+
+            var currentUserId = _userAccessor.GetUserId();
+            return currentUserId.HasValue && currentUserId.Value == userId;
+        }
+
+        private async Task<int> GetCustomerRoleIdAsync()
+        {
+            var role = await _dbContext.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Name == CustomerRole);
+
+            if (role == null)
+            {
+                throw new ClinetException("Customer role is not configured.");
+            }
+
+            return role.Id;
+        }
+
+        private async Task<bool> HasRelatedRowsAsync(int userId)
+        {
+            if (await _dbContext.Tickets.AnyAsync(t => t.UserId == userId || t.VerifiedByUserId == userId))
+            {
+                return true;
+            }
+
+            if (await _dbContext.Reservations.AnyAsync(r => r.UserId == userId))
+            {
+                return true;
+            }
+
+            if (await _dbContext.Payments.AnyAsync(p => p.UserId == userId))
+            {
+                return true;
+            }
+
+            if (await _dbContext.Adoptions.AnyAsync(a => a.UserId == userId))
+            {
+                return true;
+            }
+
+            if (await _dbContext.Donations.AnyAsync(d => d.UserId == userId))
+            {
+                return true;
+            }
+
+            return await _dbContext.Reviews.AnyAsync(r => r.UserId == userId);
         }
     }
 }

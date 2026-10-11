@@ -77,6 +77,11 @@ namespace eCommerce.Services
                 throw new KeyNotFoundException($"Ticket with id {id} not found.");
             }
 
+            if (entity.Status == TicketStatus.Used || entity.Status == TicketStatus.Cancelled)
+            {
+                throw new ClinetException("A used or cancelled ticket cannot be edited.");
+            }
+
             await base.UpdateAsync(id, request);
             return await GetByIdAsync(id);
         }
@@ -109,10 +114,14 @@ namespace eCommerce.Services
         {
             var existingCode = entity.Code;
             var existingQr = entity.QrCodeData;
+            var existingStatus = entity.Status;
+            var existingPricePerPerson = entity.PricePerPerson;
             base.MapUpdateRequestToEntity(request, entity);
             entity.Code = existingCode;
             entity.QrCodeData = existingQr;
-            entity.TotalPrice = request.PricePerPerson * request.VisitorCount;
+            entity.Status = existingStatus;
+            entity.PricePerPerson = existingPricePerPerson;
+            entity.TotalPrice = existingPricePerPerson * entity.VisitorCount;
         }
 
         protected override IEnumerable<Ticket> ApplyFilters(IEnumerable<Ticket> query, TicketSearchObject? search)

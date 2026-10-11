@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-/// Thrown when the API returns an error body we can show to the user
-/// (e.g. [ClinetException] → HTTP 400 with `message` / `errors` from ExceptionFilter).
 class ApiClientException implements Exception {
   ApiClientException(this.message);
 
@@ -11,11 +9,14 @@ class ApiClientException implements Exception {
   String toString() => message;
 }
 
-/// Parses JSON error payloads from eCommerce.WebAPI [ExceptionFilter].
+class SessionExpiredException extends ApiClientException {
+  SessionExpiredException()
+      : super('Sesija je istekla. Prijavite se ponovo.');
+}
+
 class ApiErrorParser {
   ApiErrorParser._();
 
-  /// Prefer root `message`, then `errors.clientError`, then other error lists.
   static String? messageFromBody(String body) {
     final trimmed = body.trim();
     if (trimmed.isEmpty) {
@@ -29,11 +30,8 @@ class ApiErrorParser {
       final map = Map<String, dynamic>.from(decoded);
 
       final root = map['message'];
-      if (root is String) {
-        final m = root.trim();
-        if (m.isNotEmpty) {
-          return m;
-        }
+      if (root is String && root.trim().isNotEmpty) {
+        return root.trim();
       }
 
       final errors = map['errors'];
@@ -42,8 +40,7 @@ class ApiErrorParser {
         final parts = <String>[];
 
         void addKey(String key) {
-          final v = errMap[key];
-          parts.addAll(_messagesFromValue(v));
+          parts.addAll(_messagesFromValue(errMap[key]));
         }
 
         addKey('clientError');
@@ -66,13 +63,16 @@ class ApiErrorParser {
     }
   }
 
-  static List<String> _messagesFromValue(dynamic v) {
-    if (v is List) {
-      return v.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
+  static List<String> _messagesFromValue(dynamic value) {
+    if (value is List) {
+      return value
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
-    if (v is String) {
-      final s = v.trim();
-      return s.isEmpty ? [] : [s];
+    if (value is String) {
+      final text = value.trim();
+      return text.isEmpty ? [] : [text];
     }
     return [];
   }
