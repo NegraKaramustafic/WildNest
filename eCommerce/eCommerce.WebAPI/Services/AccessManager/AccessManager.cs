@@ -43,6 +43,11 @@ namespace eCommerce.WebAPI.Services.AccessManager
                 throw new Exception("Wrong credential");
             }
 
+            if (!user.IsActive)
+            {
+                throw new ClinetException("User is not active");
+            }
+
             var accessToken = GenerateToken(user);
             var refreshTokenValue = GenerateRefreshToken();
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using eCommerce.Model.Enums;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -12,12 +13,21 @@ namespace eCommerce.Services;
 
 public class ActivityService : BaseReadService<Activity, ActivityResponse, ActivitySearchObject>, IActivityService
 {
+    private const string AdminRole = "Admin";
+
     protected BaseActivityState ActivityState { get; }
 
-    public ActivityService(ECommerceDbContext dbContext, MapsterMapper.IMapper mapper, BaseActivityState activityState)
+    private readonly IAuthenticatedUserAccessor _userAccessor;
+
+    public ActivityService(
+        ECommerceDbContext dbContext,
+        MapsterMapper.IMapper mapper,
+        BaseActivityState activityState,
+        IAuthenticatedUserAccessor userAccessor)
         : base(mapper, dbContext)
     {
         ActivityState = activityState;
+        _userAccessor = userAccessor;
     }
 
     protected override Task<IQueryable<Activity>> IncludeRelatedEntitiesAsync(ActivitySearchObject? search, IQueryable<Activity> query = null!)
@@ -28,6 +38,11 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
     protected override IEnumerable<Activity> ApplyFilters(IEnumerable<Activity> query, ActivitySearchObject? search)
     {
+        if (!_userAccessor.IsInRole(AdminRole))
+        {
+            query = query.Where(a => a.Status == ActivityStatus.Active);
+        }
+
         if (search != null)
         {
             if (search.Type.HasValue)
@@ -128,7 +143,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
             .Include(a => a.Animal)
             .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (entity == null)
+        if (entity == null || !CanViewActivity(entity))
         {
             throw new KeyNotFoundException($"Activity with id {id} not found.");
         }
@@ -136,5 +151,10 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var response = _mapper.Map<ActivityResponse>(entity);
         response.AllowedActions = await GetAllowedActionsAsync(id);
         return response;
+    }
+
+    private bool CanViewActivity(Activity entity)
+    {
+        return entity.Status == ActivityStatus.Active || _userAccessor.IsInRole(AdminRole);
     }
 }

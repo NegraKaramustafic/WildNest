@@ -34,7 +34,7 @@ public abstract class BaseReadController<TResponse, TSearch, TService> : Control
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TResponse>> GetById(int id)
+    public virtual async Task<ActionResult<TResponse>> GetById(int id)
     {
         try
         {

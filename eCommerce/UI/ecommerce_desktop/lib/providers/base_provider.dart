@@ -1,194 +1,136 @@
 import 'dart:convert';
 
+import 'package:ecommerce_desktop/config/api_config.dart';
 import 'package:ecommerce_desktop/models/search_result.dart';
+import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:http/http.dart';
 
-import '../utils/api_client_exception.dart';
-
 abstract class BaseProvider<T> with ChangeNotifier {
-  static String? _baseUrl;
-  String _endpoint = "";
+  final String endpoint;
 
-  BaseProvider(String endpoint) {
-    _endpoint = endpoint;
-    _baseUrl = const String.fromEnvironment("baseUrl",
-        defaultValue: "http://localhost:5126/");
-  }
+  BaseProvider(this.endpoint);
+
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<SearchResult<T>> get({dynamic filter}) async {
-    var url = "$_baseUrl$_endpoint";
+    var url = '$baseUrl$endpoint';
     if (filter != null) {
-      var queryString = getQueryString(filter);
-      url = "$url?$queryString";
+      final queryString = getQueryString(filter);
+      if (queryString.isNotEmpty) {
+        url = '$url?$queryString';
+      }
     }
 
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
+    final response = await http.get(Uri.parse(url), headers: createHeaders());
+    await validateResponse(response);
+    final data = jsonDecode(response.body);
 
-    var response = await http.get(uri, headers: headers);
-
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-
-      var result = SearchResult<T>();
-
-      result.totalCount = data['totalCount'];
-      result.items = List<T>.from(data["items"].map((e) => fromJson(e)));
-
-
-      return result;
-    } else {
-      throw new Exception("Unknown error");
-    }
-    // print("response: ${response.request} ${response.statusCode}, ${response.body}");
-  }
-
-  Future<T> getById(int id) async {
-    var url = "$_baseUrl$_endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    http.Response response = await http.get(uri, headers: headers);
-    print(
-      "response: ${response.request} ${response.statusCode}, ${response.body}",
-    );
-    validateResponse(response);
-    var data = jsonDecode(response.body);
-
-    return fromJson(data);
+    final result = SearchResult<T>();
+    result.totalCount = data['totalCount'];
+    result.items = List<T>.from((data['items'] as List).map((e) => fromJson(e)));
+    return result;
   }
 
   Future<T> insert(dynamic request) async {
-    var url = "$_baseUrl$_endpoint";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    var jsonRequest = jsonEncode(request);
-    var response = await http.post(uri, headers: headers, body: jsonRequest);
-
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw new Exception("Unknown error");
-    }
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: createHeaders(),
+      body: jsonEncode(request),
+    );
+    await validateResponse(response);
+    return fromJson(jsonDecode(response.body));
   }
 
   Future<T> update(int id, [dynamic request]) async {
-    var url = "$_baseUrl$_endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    var jsonRequest = jsonEncode(request);
-    var response = await http.put(uri, headers: headers, body: jsonRequest);
-
-    if (isValidResponse(response)) {
-      var data = jsonDecode(response.body);
-      return fromJson(data);
-    } else {
-      throw new Exception("Unknown error");
-    }
+    final response = await http.put(
+      Uri.parse('$baseUrl$endpoint/$id'),
+      headers: createHeaders(),
+      body: jsonEncode(request),
+    );
+    await validateResponse(response);
+    return fromJson(jsonDecode(response.body));
   }
 
-  Future remove(int id) async {
-    var url = "$_baseUrl$_endpoint/$id";
-    var uri = Uri.parse(url);
-    var headers = createHeaders();
-
-    var response = await http.delete(uri, headers: headers);
-
-    if (isValidResponse(response)) {
-      return;
-    } else {
-      throw new Exception("Unknown error");
-    }
+  Future<void> remove(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl$endpoint/$id'),
+      headers: createHeaders(),
+    );
+    await validateResponse(response);
   }
 
-  T fromJson(data) {
-    throw Exception("Method not implemented");
+  T fromJson(dynamic data) {
+    throw Exception('Method not implemented');
   }
 
-  bool isValidResponse(Response response) {
-    if (response.statusCode < 299) {
-      return true;
-    } else if (response.statusCode == 401) {
-      throw new Exception("Unauthorized");
-    } else {
-      print(response.body);
-      throw new Exception("Something bad happened please try again");
-    }
-  }
-
-  /// Throws [ApiClientException] with a message from the API when status is not successful.
-  void validateResponse(Response response) {
+  Future<void> validateResponse(Response response) async {
     if (response.statusCode < 299) {
       return;
     }
     if (response.statusCode == 401) {
-      throw ApiClientException(
-        'Your session has expired. Please sign in again.',
-      );
+      await AuthProvider.instance?.handleUnauthorized();
+      throw SessionExpiredException();
     }
 
     final parsed = ApiErrorParser.messageFromBody(response.body);
-    if (response.statusCode >= 500) {
-      throw ApiClientException(
-        parsed ?? 'Server error. Please try again later.',
-      );
+    if (response.statusCode == 404) {
+      throw ApiClientException(parsed ?? 'Zapis nije pronađen.');
     }
-
-    // 400 Bad Request — business rules (ClinetException), validation, etc.
+    if (response.statusCode >= 500) {
+      throw ApiClientException(parsed ?? 'Greška na serveru. Pokušajte ponovo.');
+    }
     throw ApiClientException(
-      parsed ?? 'Request could not be completed. Please try again.',
+      parsed ?? 'Zahtjev nije moguće izvršiti. Pokušajte ponovo.',
     );
   }
 
   Map<String, String> createHeaders() {
-    String accesstoken = AuthProvider.accesstoken ?? "";
-
-    String basicAuth =
-        "Bearer $accesstoken";
-
-    var headers = {
-      "Content-Type": "application/json",
-      "Authorization": basicAuth
-    };
-
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    final token = AuthProvider.accesstoken;
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
     return headers;
   }
 
-  String getQueryString(Map params,
-      {String prefix = '&', bool inRecursion = false}) {
-    String query = '';
+  String getQueryString(
+    Map params, {
+    String prefix = '',
+    bool inRecursion = false,
+  }) {
+    var query = '';
     params.forEach((key, value) {
+      if (value == null) {
+        return;
+      }
+      var currentKey = key;
       if (inRecursion) {
-        if (key is int) {
-          key = '[$key]';
-        } else if (value is List || value is Map) {
-          key = '.$key';
-        } else {
-          key = '.$key';
-        }
+        currentKey = key is int ? '[$key]' : '.$key';
       }
       if (value is String || value is int || value is double || value is bool) {
-        var encoded = value;
-        if (value is String) {
-          encoded = Uri.encodeComponent(value);
+        if (value is String && value.isEmpty) {
+          return;
         }
-        query += '$prefix$key=$encoded';
+        final encoded = value is String ? Uri.encodeComponent(value) : value;
+        final separator = query.isEmpty && prefix.isEmpty ? '' : '&';
+        query += '$separator$prefix$currentKey=$encoded';
       } else if (value is DateTime) {
-        query += '$prefix$key=${value.toIso8601String()}';
+        final separator = query.isEmpty && prefix.isEmpty ? '' : '&';
+        query += '$separator$prefix$currentKey=${value.toIso8601String()}';
       } else if (value is List || value is Map) {
-        if (value is List) value = value.asMap();
-        value.forEach((k, v) {
-          query +=
-              getQueryString({k: v}, prefix: '$prefix$key', inRecursion: true);
+        final nested = value is List ? value.asMap() : value;
+        nested.forEach((k, v) {
+          query += getQueryString(
+            {k: v},
+            prefix: '$prefix$currentKey',
+            inRecursion: true,
+          );
         });
       }
     });
-    return query;
+    return query.startsWith('&') ? query.substring(1) : query;
   }
 }

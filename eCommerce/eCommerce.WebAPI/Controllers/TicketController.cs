@@ -16,6 +16,33 @@ public class TicketController : BaseCRUDController<TicketResponse, TicketSearchO
     {
     }
 
+    [HttpPut("{id}")]
+    [Authorize]
+    [Authorization("Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public override async Task<ActionResult<TicketResponse>> Update(int id, [FromBody] TicketUpdateRequest request)
+    {
+        var result = await _service.UpdateAsync(id, request);
+        return result;
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    [Authorization("Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public override async Task<IActionResult> Delete(int id)
+    {
+        await _service.DeleteAsync(id);
+        return NoContent();
+    }
+
     [HttpPost("{id}/cancel")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
