@@ -1,4 +1,5 @@
 import 'package:ecommerce_mobile/layouts/main_shell.dart';
+import 'package:ecommerce_mobile/layouts/staff_shell.dart';
 import 'package:ecommerce_mobile/providers/activity_provider.dart';
 import 'package:ecommerce_mobile/providers/adoption_provider.dart';
 import 'package:ecommerce_mobile/providers/animal_category_provider.dart';
@@ -77,6 +78,9 @@ class _AuthGate extends StatelessWidget {
         }
         if (!auth.isAuthenticated) {
           return const LoginScreen();
+        }
+        if (auth.isAdmin) {
+          return const StaffShell();
         }
         return const MainShell();
       },

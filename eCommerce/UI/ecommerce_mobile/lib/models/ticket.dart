@@ -15,6 +15,8 @@ class Ticket {
   final TicketStatus status;
   final int? paymentId;
   final DateTime? createdAt;
+  final DateTime? verifiedAt;
+  final String? verifiedByFullName;
   final String? warning;
 
   Ticket({
@@ -30,6 +32,8 @@ class Ticket {
     this.status = TicketStatus.pendingPayment,
     this.paymentId,
     this.createdAt,
+    this.verifiedAt,
+    this.verifiedByFullName,
     this.warning,
   });
 
@@ -47,6 +51,8 @@ class Ticket {
       status: parseTicketStatus(json['status']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
       createdAt: parseDateTime(json['createdAt']),
+      verifiedAt: parseDateTime(json['verifiedAt']),
+      verifiedByFullName: json['verifiedByFullName'] as String?,
       warning: json['warning'] as String?,
     );
   }
@@ -68,6 +74,21 @@ class Ticket {
         return 'Cancelled';
       case TicketStatus.pendingPayment:
         return 'Pending';
+    }
+  }
+}
+
+enum TicketVerificationMethod {
+  manualCode,
+  qrScan;
+
+  /// Wire value for `POST api/Ticket/verify`.
+  String get apiValue {
+    switch (this) {
+      case TicketVerificationMethod.manualCode:
+        return 'ManualCode';
+      case TicketVerificationMethod.qrScan:
+        return 'QrScan';
     }
   }
 }
