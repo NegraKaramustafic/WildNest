@@ -36,12 +36,35 @@ class AuthProvider extends ChangeNotifier {
   String? get refreshtoken => _refreshtoken;
 
   int? get currentUserId {
+    final raw = _claim(const ['Id', 'id', 'nameid', 'sub']);
+    if (raw == null) return null;
+    return int.tryParse(raw);
+  }
+
+  /// JWT role claim. The API writes `Role`; some tokens use `role`.
+  String? get role => _claim(const ['Role', 'role']);
+
+  bool get isAdmin => role?.toLowerCase() == 'admin';
+
+  /// Staff member name from the token, available after login and after [initialize].
+  String? get displayName {
+    final name = [
+      _claim(const ['FirstName', 'firstName', 'given_name']),
+      _claim(const ['LastName', 'lastName', 'family_name']),
+    ].whereType<String>().join(' ').trim();
+    return name.isEmpty ? null : name;
+  }
+
+  String? _claim(List<String> keys) {
     final decoded = _accessTokenDecoded;
     if (decoded == null) return null;
-    final raw =
-        decoded['Id'] ?? decoded['id'] ?? decoded['nameid'] ?? decoded['sub'];
-    if (raw is int) return raw;
-    return int.tryParse(raw?.toString() ?? '');
+    for (final key in keys) {
+      final raw = decoded[key];
+      final value = raw is List && raw.isNotEmpty ? raw.first : raw;
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty) return text;
+    }
+    return null;
   }
 
   Future<void> initialize() async {

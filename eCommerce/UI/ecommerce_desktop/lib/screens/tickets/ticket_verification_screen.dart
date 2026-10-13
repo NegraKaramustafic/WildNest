@@ -161,14 +161,6 @@ class TicketVerifyResultView extends StatelessWidget {
           title: 'Ulaznica je uspješno verificirana',
           message: 'Kod je prihvaćen i ulaznica je označena kao iskorištena.',
         ),
-        if (verified.warning != null && verified.warning!.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _ResultCard(
-            tone: _ResultTone.warning,
-            title: 'Upozorenje',
-            message: verified.warning!,
-          ),
-        ],
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(18),
@@ -201,7 +193,7 @@ class TicketVerifyResultView extends StatelessWidget {
   }
 }
 
-enum _ResultTone { success, warning, error }
+enum _ResultTone { success, error }
 
 class _ResultCard extends StatelessWidget {
   const _ResultCard({
@@ -226,11 +218,6 @@ class _ResultCard extends StatelessWidget {
         border = AppColors.successBorder;
         foreground = AppColors.successText;
         icon = Icons.check_circle_outline;
-      case _ResultTone.warning:
-        background = AppColors.warningBg;
-        border = AppColors.warningBorder;
-        foreground = AppColors.warningText;
-        icon = Icons.warning_amber_outlined;
       case _ResultTone.error:
         background = AppColors.errorBg;
         border = AppColors.errorBorder;

@@ -201,6 +201,8 @@ namespace eCommerce.Services
                 throw new ClinetException("Ticket payment is not completed.");
             }
 
+            EnsureVisitIsToday(entity.VisitDate);
+
             var verifierId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
 
@@ -211,14 +213,24 @@ namespace eCommerce.Services
             await _dbContext.SaveChangesAsync();
 
             var response = await GetByIdAsync(entity.Id);
-            var today = DateOnly.FromDateTime(DateTime.Now);
-            if (entity.VisitDate != today)
-            {
-                response.Warning = "Ticket is not valid for today";
-            }
-
             await _notificationEvents.NotifyTicketVerifiedAsync(response);
             return response;
+        }
+
+        private static DateOnly Today() => DateOnly.FromDateTime(DateTime.Now);
+
+        private static void EnsureVisitIsToday(DateOnly visitDate)
+        {
+            var today = Today();
+            if (visitDate < today)
+            {
+                throw new ClinetException($"Ticket expired. It was valid for {visitDate:dd.MM.yyyy}.");
+            }
+
+            if (visitDate > today)
+            {
+                throw new ClinetException($"Ticket is valid for {visitDate:dd.MM.yyyy}, not today.");
+            }
         }
 
         private bool CanAccessTicket(int ticketUserId)
