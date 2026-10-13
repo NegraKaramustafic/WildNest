@@ -8,6 +8,7 @@ namespace eCommerce.Model.Responses
         public int ActivityId { get; set; }
         public string ActivityName { get; set; } = string.Empty;
         public decimal ActivityPrice { get; set; }
+        public int ActivityCapacity { get; set; }
         public DateOnly Date { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }

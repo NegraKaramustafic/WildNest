@@ -1,6 +1,8 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
 import 'package:ecommerce_desktop/screens/placeholder_page.dart';
+import 'package:ecommerce_desktop/screens/schedules/schedules_screen.dart';
 import 'package:ecommerce_desktop/screens/tickets/ticket_verification_screen.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +66,10 @@ class _AdminShellState extends State<AdminShell> {
     switch (_section) {
       case AdminSection.animals:
         return const AnimalsScreen();
+      case AdminSection.activities:
+        return const ActivitiesScreen();
+      case AdminSection.schedules:
+        return const SchedulesScreen();
       case AdminSection.tickets:
         return const TicketVerificationScreen();
       default:
