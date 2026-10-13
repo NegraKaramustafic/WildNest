@@ -64,6 +64,17 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         return query;
     }
 
+    public override async Task<PageResult<ActivityResponse>> GetAllAsync(ActivitySearchObject? search = null)
+    {
+        var page = await base.GetAllAsync(search);
+        foreach (var item in page.Items)
+        {
+            item.AllowedActions = ActivityState.GetActivityState(item.Status).GetAllowedActions();
+        }
+
+        return page;
+    }
+
     public Task<ActivityResponse> InsertAsync(ActivityInsertRequest request)
     {
         var state = ActivityState.GetActivityState(nameof(InitialActivityState));

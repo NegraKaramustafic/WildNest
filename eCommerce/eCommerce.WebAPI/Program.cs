@@ -65,10 +65,12 @@ TypeAdapterConfig<Activity, ActivityResponse>.NewConfig()
 TypeAdapterConfig<Schedule, ScheduleResponse>.NewConfig()
     .Ignore(dest => dest.ActivityName)
     .Ignore(dest => dest.ActivityPrice)
+    .Ignore(dest => dest.ActivityCapacity)
     .AfterMapping((Schedule src, ScheduleResponse dest) =>
     {
         dest.ActivityName = src.Activity == null ? string.Empty : src.Activity.Name;
         dest.ActivityPrice = src.Activity == null ? 0m : src.Activity.Price;
+        dest.ActivityCapacity = src.Activity == null ? 0 : src.Activity.Capacity;
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Ticket, TicketResponse>.NewConfig()
