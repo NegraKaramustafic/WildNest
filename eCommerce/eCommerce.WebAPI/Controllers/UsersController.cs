@@ -1,13 +1,14 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eCommerce.WebAPI.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public class UsersController : BaseCRUDController<UserResponse, UserSearch, UserInsertRequest, UserUpdateRequest, IUserService>
@@ -16,8 +17,7 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
     {
     }
 
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public override Task<PageResult<UserResponse>> GetAll([FromQuery] UserSearch? search)
     {
         return base.GetAll(search);
@@ -34,8 +34,7 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
     }
 
     [HttpPost]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,8 +65,7 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

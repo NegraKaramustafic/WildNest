@@ -128,6 +128,21 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final token = _accessToken;
+    if (token != null && token.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('${ApiConfig.baseUrl}Access/Logout'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+      } catch (_) {
+        // Network failure must not block clearing the local session.
+      }
+    }
+
     _clearMemory();
     _isAuthenticated = false;
     await _clearStoredTokens();

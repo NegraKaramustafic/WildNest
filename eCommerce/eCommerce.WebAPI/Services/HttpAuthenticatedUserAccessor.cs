@@ -39,7 +39,6 @@ public class HttpAuthenticatedUserAccessor : IAuthenticatedUserAccessor
             return false;
         }
 
-        var userRole = user.FindFirstValue(ClaimNames.Role) ?? user.FindFirstValue("role");
-        return userRole != null && userRole == role;
+        return user.IsInRole(role);
     }
 }

@@ -1,13 +1,14 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eCommerce.WebAPI.Controllers;
 
+[Authorize]
 [Route("api/Activity")]
 public class ActivityController : BaseCRUDController<ActivityResponse, ActivitySearchObject, ActivityInsertRequest, ActivityUpdateRequest, IActivityService>
 {
@@ -16,8 +17,7 @@ public class ActivityController : BaseCRUDController<ActivityResponse, ActivityS
     }
 
     [HttpPost]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -29,8 +29,7 @@ public class ActivityController : BaseCRUDController<ActivityResponse, ActivityS
     }
 
     [HttpPut("{id}")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,8 +42,7 @@ public class ActivityController : BaseCRUDController<ActivityResponse, ActivityS
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -56,8 +54,7 @@ public class ActivityController : BaseCRUDController<ActivityResponse, ActivityS
     }
 
     [HttpPost("{id}/activate")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -69,8 +66,7 @@ public class ActivityController : BaseCRUDController<ActivityResponse, ActivityS
     }
 
     [HttpPost("{id}/deactivate")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -1186,6 +1186,11 @@ namespace eCommerce.Services.Migrations
                     b.Property<string>("ProfileImageBase64")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SecurityStamp")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1206,6 +1211,7 @@ namespace eCommerce.Services.Migrations
                             LastName = "Admin",
                             PasswordHash = "5kRBQg4Ufcx4hAknG7P9zhfLPvY=",
                             PasswordSalt = "FmvmUwPsJyRRffhNRQvbrA==",
+                            SecurityStamp = "seedstamp000000000000000000000001",
                             Username = "admin1"
                         },
                         new
@@ -1218,6 +1224,7 @@ namespace eCommerce.Services.Migrations
                             LastName = "Admin",
                             PasswordHash = "GBoyh1WP+OMgGjqRj6vK6L1+oGc=",
                             PasswordSalt = "0AXpKx6xRp9xM42jCf/PiA==",
+                            SecurityStamp = "seedstamp000000000000000000000002",
                             Username = "admin2"
                         },
                         new
@@ -1230,6 +1237,7 @@ namespace eCommerce.Services.Migrations
                             LastName = "Admin",
                             PasswordHash = "x6JHKCTQywdAzTcZxGWFvrKPORM=",
                             PasswordSalt = "IwhTfKQNgyqWfOlTqCDXrg==",
+                            SecurityStamp = "seedstamp000000000000000000000003",
                             Username = "admin3"
                         },
                         new
@@ -1242,6 +1250,7 @@ namespace eCommerce.Services.Migrations
                             LastName = "Customer",
                             PasswordHash = "E0fA2/f9GZvIRRt/cgqQemG/Cog=",
                             PasswordSalt = "TiJxWTJcd7sBSiWNbhK9Vw==",
+                            SecurityStamp = "seedstamp000000000000000000000004",
                             Username = "customer1"
                         },
                         new
@@ -1254,6 +1263,7 @@ namespace eCommerce.Services.Migrations
                             LastName = "Customer",
                             PasswordHash = "Ov4LxpWKXXV9dwMYvBgqODdzIt0=",
                             PasswordSalt = "KtWF6g7SemBqs4nVWV4Ziw==",
+                            SecurityStamp = "seedstamp000000000000000000000005",
                             Username = "customer2"
                         });
                 });

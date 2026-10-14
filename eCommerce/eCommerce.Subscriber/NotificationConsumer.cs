@@ -20,15 +20,18 @@ namespace eCommerce.Subscriber
         private readonly ILogger<NotificationConsumer> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly NotificationEmailSender _emailSender;
+        private readonly RabbitMqSettings _settings;
 
         public NotificationConsumer(
             ILogger<NotificationConsumer> logger,
             IServiceScopeFactory scopeFactory,
-            NotificationEmailSender emailSender)
+            NotificationEmailSender emailSender,
+            RabbitMqSettings settings)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
             _emailSender = emailSender;
+            _settings = settings;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -72,7 +75,7 @@ namespace eCommerce.Subscriber
 
         private async Task ConsumeUntilDisconnectedAsync(CancellationToken stoppingToken)
         {
-            var settings = RabbitMqSettings.FromEnvironment();
+            var settings = _settings;
             var factory = new ConnectionFactory
             {
                 HostName = settings.HostName,

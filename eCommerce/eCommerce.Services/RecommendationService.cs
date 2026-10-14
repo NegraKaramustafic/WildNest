@@ -1,4 +1,5 @@
 using eCommerce.Model.Enums;
+using eCommerce.Model;
 using eCommerce.Model.Exceptions;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
@@ -12,7 +13,6 @@ namespace eCommerce.Services
 {
     public class RecommendationService : IRecommendationService
     {
-        private const string AdminRole = "Admin";
 
         private readonly ECommerceDbContext _dbContext;
         private readonly IAuthenticatedUserAccessor _userAccessor;
@@ -95,7 +95,7 @@ namespace eCommerce.Services
 
         public async Task<RecommendationRetrainResponse> RetrainAsync()
         {
-            if (!_userAccessor.IsInRole(AdminRole))
+            if (!_userAccessor.IsInRole(Roles.Admin))
             {
                 throw new UnauthorizedAccessException("Only administrators can retrain the recommendation model.");
             }

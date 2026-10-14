@@ -1,13 +1,14 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eCommerce.WebAPI.Controllers;
 
+[Authorize]
 [Route("api/AnimalCategory")]
 public class AnimalCategoryController : BaseReadController<AnimalCategoryResponse, AnimalCategorySearchObject, IAnimalCategoryService>
 {
@@ -16,8 +17,7 @@ public class AnimalCategoryController : BaseReadController<AnimalCategoryRespons
     }
 
     [HttpPost]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -29,8 +29,7 @@ public class AnimalCategoryController : BaseReadController<AnimalCategoryRespons
     }
 
     [HttpPut("{id}")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,8 +42,7 @@ public class AnimalCategoryController : BaseReadController<AnimalCategoryRespons
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

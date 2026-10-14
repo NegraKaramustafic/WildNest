@@ -10,10 +10,10 @@ namespace eCommerce.Subscriber
         private readonly ILogger<NotificationEmailSender> _logger;
         private readonly SmtpSettings _settings;
 
-        public NotificationEmailSender(ILogger<NotificationEmailSender> logger)
+        public NotificationEmailSender(ILogger<NotificationEmailSender> logger, SmtpSettings settings)
         {
             _logger = logger;
-            _settings = SmtpSettings.FromEnvironment();
+            _settings = settings;
         }
 
         public async Task SendAsync(NotificationMessage message, string? email, CancellationToken cancellationToken)

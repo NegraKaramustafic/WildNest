@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Enums;
@@ -13,7 +14,6 @@ namespace eCommerce.Services;
 
 public class ActivityService : BaseReadService<Activity, ActivityResponse, ActivitySearchObject>, IActivityService
 {
-    private const string AdminRole = "Admin";
 
     protected BaseActivityState ActivityState { get; }
 
@@ -38,7 +38,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
     protected override IEnumerable<Activity> ApplyFilters(IEnumerable<Activity> query, ActivitySearchObject? search)
     {
-        if (!_userAccessor.IsInRole(AdminRole))
+        if (!_userAccessor.IsInRole(Roles.Admin))
         {
             query = query.Where(a => a.Status == ActivityStatus.Active);
         }
@@ -166,6 +166,6 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
     private bool CanViewActivity(Activity entity)
     {
-        return entity.Status == ActivityStatus.Active || _userAccessor.IsInRole(AdminRole);
+        return entity.Status == ActivityStatus.Active || _userAccessor.IsInRole(Roles.Admin);
     }
 }

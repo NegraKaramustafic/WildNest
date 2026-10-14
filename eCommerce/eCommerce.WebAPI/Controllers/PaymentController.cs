@@ -1,8 +1,8 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,7 +38,8 @@ public class PaymentController : BaseCRUDController<PaymentResponse, PaymentSear
     }
 
     /// <summary>
-    /// Stripe webhook endpoint. Signature is verified with STRIPE_WEBHOOK_SECRET. Do not call this from the client.
+    /// Stripe webhook. AllowAnonymous because Stripe does not send a user JWT.
+    /// The call is authenticated by Stripe signature validation using STRIPE_WEBHOOK_SECRET.
     /// </summary>
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -57,7 +58,7 @@ public class PaymentController : BaseCRUDController<PaymentResponse, PaymentSear
     /// Ticket and Reservation cancel flows also call this automatically.
     /// </summary>
     [HttpPost("{id}/refund")]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

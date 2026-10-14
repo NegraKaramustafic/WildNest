@@ -8,6 +8,7 @@ using eCommerce.Services.Recommendation;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ReservationStateMachine;
 using eCommerce.Services.Validators;
+using eCommerce.WebAPI.Configuration;
 using eCommerce.WebAPI.Filters;
 using eCommerce.WebAPI.Services;
 using eCommerce.WebAPI.Services.AccessManager;
@@ -15,20 +16,57 @@ using FluentValidation;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text;
 
 EnvFileLoader.Load();
-_ = RabbitMqSettings.FromEnvironment();
-var stripeSettings = StripeSettings.FromEnvironment();
+
+JwtSettings jwtSettings;
+RabbitMqSettings rabbitSettings;
+StripeSettings stripeSettings;
+CorsSettings corsSettings;
+ZooClock zooClock;
+string connectionString;
+try
+{
+    connectionString = EnvVariables.Require("ConnectionStrings__DefaultConnection");
+    jwtSettings = JwtSettings.FromEnvironment();
+    rabbitSettings = RabbitMqSettings.FromEnvironment();
+    stripeSettings = StripeSettings.FromEnvironment();
+    corsSettings = CorsSettings.FromEnvironment();
+    zooClock = ZooClock.FromEnvironment();
+}
+catch (InvalidOperationException ex)
+{
+    using var startupLoggerFactory = LoggerFactory.Create(logging =>
+    {
+        logging.AddSimpleConsole(options =>
+        {
+            options.SingleLine = true;
+            options.TimestampFormat = "HH:mm:ss ";
+        });
+    });
+    startupLoggerFactory.CreateLogger("Startup").LogCritical(
+        "Startup aborted because required configuration is missing or invalid: {Message}",
+        ex.Message);
+    throw;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton(rabbitSettings);
+builder.Services.AddSingleton(stripeSettings);
+builder.Services.AddSingleton(corsSettings);
+builder.Services.AddSingleton(zooClock);
+builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
 builder.Services.AddScoped<IAuthenticatedUserAccessor, HttpAuthenticatedUserAccessor>();
 
 builder.Services.AddControllers(
@@ -36,7 +74,6 @@ builder.Services.AddControllers(
 );
 
 // Add Entity Framework Core DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ECommerceDbContext>(options =>
     options.UseSqlServer(connectionString)
 );
@@ -165,7 +202,6 @@ builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
-builder.Services.AddSingleton(stripeSettings);
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
 builder.Services.AddScoped<IAdoptionService, AdoptionService>();
@@ -206,8 +242,55 @@ builder.Services.AddScoped<IValidator<ReviewUpdateRequest>, ReviewUpdateValidato
 builder.Services.AddScoped<IValidator<BadgeInsertRequest>, BadgeInsertValidator>();
 builder.Services.AddScoped<IValidator<BadgeUpdateRequest>, BadgeUpdateValidator>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WildNest", policy =>
+    {
+        policy.WithOrigins(corsSettings.AllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddOpenApi();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(
+        options =>
+        {
+            options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Version = "v1",
+                Title = "Zoo API",
+                Description = "API for managing zoo animals, activities, tickets, reservations, and related services"
+            });
+
+            var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
+
+            var jwtSecurityScheme = new OpenApiSecurityScheme
+            {
+                BearerFormat = "JWT",
+                Name = "JWT Authentication",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                Reference = new OpenApiReference
+                {
+                    Id = JwtBearerDefaults.AuthenticationScheme,
+                    Type = ReferenceType.SecurityScheme
+                }
+            };
+
+            options.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        { jwtSecurityScheme, Array.Empty<string>() }
+                    });
+        });
+}
 
 builder.Services.AddAuthentication(options => // dodavanje authentfikacije i autorizacije u projekat
 {
@@ -218,73 +301,76 @@ builder.Services.AddAuthentication(options => // dodavanje authentfikacije i aut
 {
     o.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = builder.Configuration["JwtToken:Issuer"],
-        ValidAudience = builder.Configuration["JwtToken:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtToken:SecretKey"] ?? string.Empty)),
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = ClaimNames.Role,
+        NameClaimType = ClaimNames.Id
+    };
+    o.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = SecurityStampTokenValidator.ValidateAsync
     };
 });
 builder.Services.AddAuthorization();
 
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(
-    options =>
-    {
-        options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-        {
-            Version = "v1",
-            Title = "Zoo API",
-            Description = "API for managing zoo animals, activities, tickets, reservations, and related services"
-        });
-
-        var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
-
-        var jwtSecurityScheme = new OpenApiSecurityScheme
-        {
-            BearerFormat = "JWT",
-            Name = "JWT Authentication",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = JwtBearerDefaults.AuthenticationScheme,
-            Reference = new OpenApiReference
-            {
-                Id = JwtBearerDefaults.AuthenticationScheme,
-                Type = ReferenceType.SecurityScheme
-            }
-        };
-
-        options.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-        options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    { jwtSecurityScheme, Array.Empty<string>() }
-                });
-    });
-
 var app = builder.Build();
 
+app.Logger.LogInformation(
+    "Configuration loaded from environment. Zoo time zone: {TimeZone}. CORS origins: {Origins}.",
+    zooClock.TimeZoneId,
+    string.Join(", ", corsSettings.AllowedOrigins));
+
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
-
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+app.UseCors("WildNest");
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+await MigrateDatabaseAsync(app);
+
 app.MapControllers();
 
 app.Run();
+
+static async Task MigrateDatabaseAsync(WebApplication app)
+{
+    const int maxAttempts = 20;
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
+            logger.LogInformation("Applying database migrations (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
+            await db.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied.");
+            return;
+        }
+        catch (Exception ex) when (attempt < maxAttempts)
+        {
+            logger.LogWarning(
+                ex,
+                "SQL Server is not ready for migrations (attempt {Attempt}/{MaxAttempts}). Retrying in 3 seconds.",
+                attempt,
+                maxAttempts);
+            await Task.Delay(TimeSpan.FromSeconds(3));
+        }
+    }
+}

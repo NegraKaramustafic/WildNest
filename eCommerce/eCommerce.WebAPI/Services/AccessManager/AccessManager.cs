@@ -4,6 +4,7 @@ using eCommerce.Model.Exceptions;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
+using eCommerce.WebAPI.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,16 +16,23 @@ namespace eCommerce.WebAPI.Services.AccessManager
     public class AccessManager : IAccessManager
     {
         private readonly IUserService _userService;
-        private readonly IConfiguration _configuration;
+        private readonly JwtSettings _jwtSettings;
         private readonly ICryptoService _cryptoService;
         private readonly IRefreshTokenService _refreshTokenService;
+        private readonly IAuthenticatedUserAccessor _userAccessor;
 
-        public AccessManager(IUserService userService, IConfiguration configuration, ICryptoService cryptoService, IRefreshTokenService refreshTokenService)
+        public AccessManager(
+            IUserService userService,
+            JwtSettings jwtSettings,
+            ICryptoService cryptoService,
+            IRefreshTokenService refreshTokenService,
+            IAuthenticatedUserAccessor userAccessor)
         {
             _userService = userService;
-            _configuration = configuration;
+            _jwtSettings = jwtSettings;
             _cryptoService = cryptoService;
             _refreshTokenService = refreshTokenService;
+            _userAccessor = userAccessor;
         }
 
         public async Task<UserLoginResponse> LoginAsync(UserLoginRequest request)
@@ -48,7 +56,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
                 throw new ClinetException("User is not active");
             }
 
-            var accessToken = GenerateToken(user);
+            var accessToken = await GenerateTokenAsync(user);
             var refreshTokenValue = GenerateRefreshToken();
 
             var refreshToken = new RefreshToken
@@ -100,7 +108,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
 
             await _refreshTokenService.DeleteAllUserRefreshTokensAsync(user.Id);
 
-            var accessToken = GenerateToken(user);
+            var accessToken = await GenerateTokenAsync(user);
             var refreshTokenValue = GenerateRefreshToken();
 
             var token = new RefreshToken
@@ -120,14 +128,18 @@ namespace eCommerce.WebAPI.Services.AccessManager
 
         }
 
-        private string GenerateToken(UserResponse user)
+        public async Task LogoutAsync()
         {
-            string secretKeyString = _configuration["JwtToken:SecretKey"] ?? string.Empty;
-            var issuer = _configuration["JwtToken:Issuer"];
-            var audience = _configuration["JwtToken:Audience"];
-            var durationInMinutes = int.Parse(_configuration["JwtToken:DurationInMinutes"] ?? "1");
+            var userId = _userAccessor.GetUserId()
+                ?? throw new UnauthorizedAccessException("User id claim is missing.");
 
-            var secretKey = Encoding.ASCII.GetBytes(secretKeyString);
+            await _userService.RevokeSessionsAsync(userId);
+        }
+
+        private async Task<string> GenerateTokenAsync(UserResponse user)
+        {
+            var securityStamp = await _userService.GetSecurityStampAsync(user.Id);
+            var secretKey = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -138,11 +150,12 @@ namespace eCommerce.WebAPI.Services.AccessManager
                     new Claim(ClaimNames.LastName, user.LastName ?? string.Empty),
                     new Claim(ClaimNames.Email, user.Email ?? string.Empty),
                     new Claim(ClaimNames.Role, user.Role ?? "user"),
-                    new Claim(ClaimNames.IsActive, user.IsActive.ToString())
+                    new Claim(ClaimNames.IsActive, user.IsActive.ToString()),
+                    new Claim(ClaimNames.SecurityStamp, securityStamp)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(durationInMinutes),
-                Issuer = issuer,
-                Audience = audience,
+                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.DurationInMinutes),
+                Issuer = _jwtSettings.Issuer,
+                Audience = _jwtSettings.Audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256Signature)
             };
 

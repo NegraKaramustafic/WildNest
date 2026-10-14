@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using eCommerce.Model;
 using System.Linq;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -9,7 +10,6 @@ namespace eCommerce.Services
 {
     public class UserBadgeService : BaseReadService<UserBadge, UserBadgeResponse, UserBadgeSearchObject>, IUserBadgeService
     {
-        private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
 
@@ -45,7 +45,7 @@ namespace eCommerce.Services
 
         public override async Task<PageResult<UserBadgeResponse>> GetAllAsync(UserBadgeSearchObject? search = null)
         {
-            if (!_userAccessor.IsInRole(AdminRole) && search?.UserId.HasValue == true)
+            if (!_userAccessor.IsInRole(Roles.Admin) && search?.UserId.HasValue == true)
             {
                 var userId = _userAccessor.GetUserId();
                 if (!userId.HasValue || search.UserId.Value != userId.Value)
@@ -59,7 +59,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<UserBadge> ApplyFilters(IEnumerable<UserBadge> query, UserBadgeSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -79,7 +79,7 @@ namespace eCommerce.Services
 
         private bool CanAccessUserBadge(int badgeUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }

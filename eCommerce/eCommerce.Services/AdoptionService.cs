@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Enums;
@@ -14,7 +15,6 @@ namespace eCommerce.Services
 {
     public class AdoptionService : BaseCRUDService<Adoption, AdoptionResponse, AdoptionSearchObject, AdoptionInsertRequest, AdoptionUpdateRequest>, IAdoptionService
     {
-        private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly IPaymentService _paymentService;
@@ -127,7 +127,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<Adoption> ApplyFilters(IEnumerable<Adoption> query, AdoptionSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -187,7 +187,7 @@ namespace eCommerce.Services
 
         private bool CanAccessAdoption(int adoptionUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }
