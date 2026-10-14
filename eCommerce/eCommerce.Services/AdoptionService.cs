@@ -50,7 +50,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new KeyNotFoundException($"Adoption with id {id} not found.");
+                throw new NotFoundException($"Adoption with id {id} not found.");
             }
 
             return _mapper.Map<AdoptionResponse>(entity);
@@ -62,7 +62,7 @@ namespace eCommerce.Services
             var animal = await _dbContext.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == request.AnimalId);
             if (animal == null)
             {
-                throw new KeyNotFoundException($"Animal with id {request.AnimalId} not found.");
+                throw new NotFoundException($"Animal with id {request.AnimalId} not found.");
             }
 
             if (!animal.AdoptionPrice.HasValue)
@@ -83,7 +83,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new KeyNotFoundException($"Adoption with id {id} not found.");
+                throw new NotFoundException($"Adoption with id {id} not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -95,7 +95,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new KeyNotFoundException($"Adoption with id {id} not found.");
+                throw new NotFoundException($"Adoption with id {id} not found.");
             }
 
             await base.DeleteAsync(id);
@@ -171,7 +171,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new KeyNotFoundException($"Adoption with id {id} not found.");
+                throw new NotFoundException($"Adoption with id {id} not found.");
             }
 
             if (entity.Status == AdoptionStatus.Cancelled)
@@ -184,6 +184,7 @@ namespace eCommerce.Services
                 entity.Status = AdoptionStatus.Cancelled;
                 if (entity.PaymentId.HasValue)
                 {
+                    // A completed adoption payment is a non-refundable contribution by design.
                     await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value, refundIfCompleted: false);
                 }
 

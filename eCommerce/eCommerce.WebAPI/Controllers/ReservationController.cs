@@ -23,15 +23,8 @@ public class ReservationController : BaseCRUDController<ReservationResponse, Res
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReservationResponse>> Confirm(int id)
     {
-        try
-        {
-            var result = await _service.ConfirmAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.ConfirmAsync(id);
+        return Ok(result);
     }
 
     [HttpPost("{id}/cancel")]
@@ -40,15 +33,8 @@ public class ReservationController : BaseCRUDController<ReservationResponse, Res
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReservationResponse>> Cancel(int id)
     {
-        try
-        {
-            var result = await _service.CancelAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.CancelAsync(id);
+        return Ok(result);
     }
 
     [HttpPost("{id}/complete")]
@@ -58,15 +44,8 @@ public class ReservationController : BaseCRUDController<ReservationResponse, Res
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ReservationResponse>> Complete(int id)
     {
-        try
-        {
-            var result = await _service.CompleteAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.CompleteAsync(id);
+        return Ok(result);
     }
 
     [HttpGet("{id}/AllowedActions")]
@@ -74,14 +53,7 @@ public class ReservationController : BaseCRUDController<ReservationResponse, Res
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<string>>> GetAllowedActions(int id)
     {
-        try
-        {
-            var result = await _service.GetAllowedActionsAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.GetAllowedActionsAsync(id);
+        return Ok(result);
     }
 }

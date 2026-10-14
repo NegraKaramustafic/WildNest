@@ -23,7 +23,10 @@ namespace eCommerce.Services.Database
         [ForeignKey("AnimalId")]
         public Animal? Animal { get; set; }
 
-        public ActivityType Type { get; set; }
+        public int ActivityTypeId { get; set; }
+
+        [ForeignKey(nameof(ActivityTypeId))]
+        public ActivityType? ActivityType { get; set; }
 
         public TimeSpan Duration { get; set; }
 

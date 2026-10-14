@@ -19,7 +19,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Reservation with id {id} not found.");
+                throw new NotFoundException($"Reservation with id {id} not found.");
             }
 
             if (!entity.PaymentId.HasValue
@@ -38,7 +38,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Reservation with id {id} not found.");
+                throw new NotFoundException($"Reservation with id {id} not found.");
             }
 
             entity.Status = ReservationStatus.Cancelled;

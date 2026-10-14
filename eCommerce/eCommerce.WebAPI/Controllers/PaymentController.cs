@@ -26,15 +26,8 @@ public class PaymentController : BaseCRUDController<PaymentResponse, PaymentSear
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaymentCheckoutResponse>> Checkout([FromBody] PaymentCheckoutRequest request)
     {
-        try
-        {
-            var result = await _service.CreateCheckoutAsync(request);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.CreateCheckoutAsync(request);
+        return Ok(result);
     }
 
     /// <summary>
@@ -64,14 +57,7 @@ public class PaymentController : BaseCRUDController<PaymentResponse, PaymentSear
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PaymentResponse>> Refund(int id)
     {
-        try
-        {
-            var result = await _service.RefundAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.RefundAsync(id);
+        return Ok(result);
     }
 }

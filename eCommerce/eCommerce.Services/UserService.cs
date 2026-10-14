@@ -127,7 +127,7 @@ namespace eCommerce.Services
         {
             if (!CanAccessUser(id))
             {
-                throw new KeyNotFoundException($"User with id {id} not found.");
+                throw new NotFoundException($"User with id {id} not found.");
             }
 
             return await base.GetByIdAsync(id);
@@ -137,7 +137,7 @@ namespace eCommerce.Services
         {
             if (!CanAccessUser(id))
             {
-                throw new KeyNotFoundException($"User with id {id} not found.");
+                throw new NotFoundException($"User with id {id} not found.");
             }
 
             await _updateValidator.ValidateAndThrowAsync(request);
@@ -145,7 +145,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Users.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"User with id {id} not found.");
+                throw new NotFoundException($"User with id {id} not found.");
             }
 
             var existingIsActive = entity.IsActive;
@@ -194,7 +194,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"User with id {id} not found.");
+                throw new NotFoundException($"User with id {id} not found.");
             }
 
             var softDeleted = false;
@@ -275,7 +275,7 @@ namespace eCommerce.Services
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
-                throw new KeyNotFoundException("User not found");
+                throw new NotFoundException("User not found");
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
                 throw new ClientException("Wrong credential");
@@ -313,7 +313,7 @@ namespace eCommerce.Services
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                throw new KeyNotFoundException("User not found");
+                throw new NotFoundException("User not found");
             }
 
             await RotateSecurityStampAsync(user);

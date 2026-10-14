@@ -1,40 +1,34 @@
-import 'package:ecommerce_mobile/models/activity.dart';
+import 'package:ecommerce_mobile/theme/app_colors.dart';
+import 'package:flutter/material.dart';
 
-String activityEmoji(Activity activity) {
-  final haystack =
-      '${activity.name} ${activity.animalName ?? ''} ${activity.typeLabel}'
-          .toLowerCase();
+class ActivityVisual extends StatelessWidget {
+  const ActivityVisual({
+    super.key,
+    required this.imageUrl,
+    this.iconSize = 28,
+  });
 
-  if (haystack.contains('snorkel') ||
-      haystack.contains('marine') ||
-      haystack.contains('ocean')) {
-    return '🤿';
+  final String? imageUrl;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, _, _) => _fallback(),
+      );
+    }
+    return _fallback();
   }
-  if (haystack.contains('photo') || haystack.contains('camera')) return '📷';
-  if (haystack.contains('nocturnal') || haystack.contains('night')) return '🌙';
-  if (haystack.contains('elephant')) return '🐘';
-  if (haystack.contains('red panda')) return '🐾';
-  if (haystack.contains('panda')) return '🐼';
-  if (haystack.contains('lemur') || haystack.contains('monkey')) return '🐒';
-  if (haystack.contains('leopard')) return '🐆';
-  if (haystack.contains('lion')) return '🦁';
-  if (haystack.contains('macaw') ||
-      haystack.contains('bird') ||
-      haystack.contains('parrot')) {
-    return '🦜';
-  }
-  if (haystack.contains('keeper')) return '🐼';
 
-  switch (activity.type) {
-    case ActivityType.feeding:
-      return '🥬';
-    case ActivityType.safari:
-      return '🌙';
-    case ActivityType.workshop:
-      return '📷';
-    case ActivityType.adventure:
-      return '🧭';
-    case ActivityType.experience:
-      return '🌿';
+  Widget _fallback() {
+    return Center(
+      child: Icon(Icons.local_activity_outlined, size: iconSize, color: AppColors.sage),
+    );
   }
 }

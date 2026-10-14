@@ -36,14 +36,7 @@ public abstract class BaseReadController<TResponse, TSearch, TService> : Control
     [HttpGet("{id}")]
     public virtual async Task<ActionResult<TResponse>> GetById(int id)
     {
-        try
-        {
-            var result = await _service.GetByIdAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.GetByIdAsync(id);
+        return Ok(result);
     }
 }

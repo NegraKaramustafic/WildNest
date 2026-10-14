@@ -5,9 +5,9 @@ namespace eCommerce.Model.SearchObjects
     public class ActivitySearchObject : BaseSearchObject
     {
         /// <summary>
-        /// Filter activities by type.
+        /// Filter activities by activity type id.
         /// </summary>
-        public ActivityType? Type { get; set; }
+        public int? ActivityTypeId { get; set; }
 
         /// <summary>
         /// Filter activities by status.

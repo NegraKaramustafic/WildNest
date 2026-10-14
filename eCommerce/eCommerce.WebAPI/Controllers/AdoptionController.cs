@@ -21,14 +21,7 @@ public class AdoptionController : BaseCRUDController<AdoptionResponse, AdoptionS
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AdoptionResponse>> Cancel(int id)
     {
-        try
-        {
-            var result = await _service.CancelAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.CancelAsync(id);
+        return Ok(result);
     }
 }

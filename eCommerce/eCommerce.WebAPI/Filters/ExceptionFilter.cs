@@ -35,6 +35,12 @@ namespace eCommerce.WebAPI.Filters
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 _logger.LogWarning("Client rule: {Message}", ce.Message);
             }
+            else if (context.Exception is NotFoundException notFound)
+            {
+                context.ModelState.AddModelError("notFound", notFound.Message);
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                _logger.LogWarning("Not found: {Message}", notFound.Message);
+            }
             else if (context.Exception is UnauthorizedAccessException ua)
             {
                 context.ModelState.AddModelError("forbidden", ua.Message);
@@ -57,7 +63,7 @@ namespace eCommerce.WebAPI.Filters
             // Single human-readable line for mobile/clients; "clientError" is used for ClientException.
             var allMessages = list.Values.SelectMany(v => v).Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
             var message = allMessages.FirstOrDefault()
-                ?? (context.Exception is ClientException ? context.Exception.Message : null)
+                ?? (context.Exception is ClientException or NotFoundException ? context.Exception.Message : null)
                 ?? "Request could not be processed.";
 
             context.Result = new JsonResult(new

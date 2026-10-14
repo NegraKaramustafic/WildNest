@@ -1,5 +1,3 @@
-using eCommerce.Model.Enums;
-
 namespace eCommerce.Model.Responses
 {
     public class RecommendationResponse
@@ -19,7 +17,9 @@ namespace eCommerce.Model.Responses
 
         public string Name { get; set; } = string.Empty;
 
-        public ActivityType Type { get; set; }
+        public int ActivityTypeId { get; set; }
+
+        public string ActivityTypeName { get; set; } = string.Empty;
 
         public int? AnimalId { get; set; }
 

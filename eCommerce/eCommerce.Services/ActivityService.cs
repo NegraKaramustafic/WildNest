@@ -9,6 +9,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services;
 
@@ -32,7 +33,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
     protected override Task<IQueryable<Activity>> IncludeRelatedEntitiesAsync(ActivitySearchObject? search, IQueryable<Activity> query = null!)
     {
-        query = query.Include(a => a.Animal);
+        query = query.Include(a => a.Animal).Include(a => a.ActivityType);
         return base.IncludeRelatedEntitiesAsync(search, query);
     }
 
@@ -45,9 +46,9 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
         if (search != null)
         {
-            if (search.Type.HasValue)
+            if (search.ActivityTypeId.HasValue)
             {
-                query = query.Where(a => a.Type == search.Type.Value);
+                query = query.Where(a => a.ActivityTypeId == search.ActivityTypeId.Value);
             }
 
             if (search.Status.HasValue)
@@ -92,7 +93,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -104,7 +105,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -116,7 +117,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -128,7 +129,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -146,7 +147,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -158,11 +159,12 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities
             .AsNoTracking()
             .Include(a => a.Animal)
+            .Include(a => a.ActivityType)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (entity == null || !CanViewActivity(entity))
         {
-            throw new KeyNotFoundException($"Activity with id {id} not found.");
+            throw new NotFoundException($"Activity with id {id} not found.");
         }
 
         var response = _mapper.Map<ActivityResponse>(entity);

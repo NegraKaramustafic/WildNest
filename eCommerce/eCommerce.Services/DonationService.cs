@@ -8,6 +8,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services
 {
@@ -45,7 +46,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new KeyNotFoundException($"Donation with id {id} not found.");
+                throw new NotFoundException($"Donation with id {id} not found.");
             }
 
             return _mapper.Map<DonationResponse>(entity);
@@ -55,7 +56,7 @@ namespace eCommerce.Services
         {
             if (!await _dbContext.ZooPartners.AnyAsync(partner => partner.Id == request.ZooPartnerId))
             {
-                throw new KeyNotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
+                throw new NotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
             }
 
             var created = await base.InsertAsync(request);
@@ -67,7 +68,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Donations.FindAsync(id);
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new KeyNotFoundException($"Donation with id {id} not found.");
+                throw new NotFoundException($"Donation with id {id} not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -79,7 +80,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Donations.FindAsync(id);
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new KeyNotFoundException($"Donation with id {id} not found.");
+                throw new NotFoundException($"Donation with id {id} not found.");
             }
 
             await base.DeleteAsync(id);

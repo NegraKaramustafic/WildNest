@@ -275,7 +275,7 @@ class _RecommendedActivityTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    reasons.isEmpty ? item.typeLabel : reasons,
+                    reasons.isEmpty ? item.activityTypeName : reasons,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: AppColors.textMuted, fontSize: 12),

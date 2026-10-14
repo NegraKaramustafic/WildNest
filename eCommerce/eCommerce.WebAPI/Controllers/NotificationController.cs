@@ -28,15 +28,8 @@ public class NotificationController : BaseReadController<NotificationResponse, N
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<NotificationResponse>> MarkRead(int id)
     {
-        try
-        {
-            var result = await _service.MarkReadAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.MarkReadAsync(id);
+        return Ok(result);
     }
 
     [HttpPut("read-all")]

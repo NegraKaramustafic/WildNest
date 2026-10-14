@@ -11,6 +11,7 @@ namespace eCommerce.Services.Database
             SeedUserRoles(modelBuilder);
             SeedAnimalCategories(modelBuilder);
             SeedAnimals(modelBuilder);
+            SeedActivityTypes(modelBuilder);
             SeedActivities(modelBuilder);
             SeedSchedules(modelBuilder);
             SeedZooPartners(modelBuilder);
@@ -303,6 +304,17 @@ namespace eCommerce.Services.Database
             );
         }
 
+        private void SeedActivityTypes(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ActivityType>().HasData(
+                new { Id = ActivityTypeSeedIds.Feeding, Name = "Feeding", Description = (string?)null },
+                new { Id = ActivityTypeSeedIds.Safari, Name = "Safari", Description = (string?)null },
+                new { Id = ActivityTypeSeedIds.Workshop, Name = "Workshop", Description = (string?)null },
+                new { Id = ActivityTypeSeedIds.Experience, Name = "Experience", Description = (string?)null },
+                new { Id = ActivityTypeSeedIds.Adventure, Name = "Adventure", Description = (string?)null }
+            );
+        }
+
         private void SeedActivities(ModelBuilder modelBuilder)
         {
             var createdAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc);
@@ -314,7 +326,7 @@ namespace eCommerce.Services.Database
                     Name = "Elephant Feeding Experience",
                     Description = "Help keepers prepare fruit for Kavi and join a guided feeding session with our Asian elephant.",
                     AnimalId = 1,
-                    Type = eCommerce.Model.Enums.ActivityType.Feeding,
+                    ActivityTypeId = ActivityTypeSeedIds.Feeding,
                     Duration = new TimeSpan(1, 30, 0),
                     Price = 25.00m,
                     Capacity = 15,
@@ -328,7 +340,7 @@ namespace eCommerce.Services.Database
                     Name = "Nocturnal Safari Walk",
                     Description = "A guided evening walk through the park to spot nocturnal animals as they become active.",
                     AnimalId = (int?)null,
-                    Type = eCommerce.Model.Enums.ActivityType.Safari,
+                    ActivityTypeId = ActivityTypeSeedIds.Safari,
                     Duration = new TimeSpan(2, 0, 0),
                     Price = 30.00m,
                     Capacity = 20,
@@ -342,7 +354,7 @@ namespace eCommerce.Services.Database
                     Name = "Bird Photography Workshop",
                     Description = "Learn composition and lighting tips while photographing macaws and other birds in the aviary.",
                     AnimalId = (int?)null,
-                    Type = eCommerce.Model.Enums.ActivityType.Workshop,
+                    ActivityTypeId = ActivityTypeSeedIds.Workshop,
                     Duration = new TimeSpan(2, 0, 0),
                     Price = 40.00m,
                     Capacity = 12,
@@ -356,7 +368,7 @@ namespace eCommerce.Services.Database
                     Name = "Panda Keeper for a Day",
                     Description = "Spend a full day with keepers caring for Bao, from breakfast bamboo to enclosure enrichment.",
                     AnimalId = (int?)null,
-                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    ActivityTypeId = ActivityTypeSeedIds.Experience,
                     Duration = new TimeSpan(7, 0, 0),
                     Price = 120.00m,
                     Capacity = 4,
@@ -370,7 +382,7 @@ namespace eCommerce.Services.Database
                     Name = "Red Panda Snack Time",
                     Description = "Join keepers as they prepare fruit and bamboo snacks for Zara and watch her forage in the treetops.",
                     AnimalId = 2,
-                    Type = eCommerce.Model.Enums.ActivityType.Feeding,
+                    ActivityTypeId = ActivityTypeSeedIds.Feeding,
                     Duration = new TimeSpan(1, 0, 0),
                     Price = 20.00m,
                     Capacity = 12,
@@ -384,7 +396,7 @@ namespace eCommerce.Services.Database
                     Name = "Lemur Morning Meet",
                     Description = "Meet Milo and his troop at sunrise, then help scatter grapes and browse during their morning forage.",
                     AnimalId = 3,
-                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    ActivityTypeId = ActivityTypeSeedIds.Experience,
                     Duration = new TimeSpan(1, 0, 0),
                     Price = 18.00m,
                     Capacity = 10,
@@ -398,7 +410,7 @@ namespace eCommerce.Services.Database
                     Name = "Snow Leopard Twilight Safari",
                     Description = "A quiet late-afternoon walk to Luna's mountain habitat as she becomes active on the rocky ledges.",
                     AnimalId = 4,
-                    Type = eCommerce.Model.Enums.ActivityType.Safari,
+                    ActivityTypeId = ActivityTypeSeedIds.Safari,
                     Duration = new TimeSpan(1, 30, 0),
                     Price = 35.00m,
                     Capacity = 16,
@@ -412,7 +424,7 @@ namespace eCommerce.Services.Database
                     Name = "Lion Savanna Adventure",
                     Description = "Guided adventure through the savanna habitat with a close-up look at Nala and her pride's daily routine.",
                     AnimalId = 7,
-                    Type = eCommerce.Model.Enums.ActivityType.Adventure,
+                    ActivityTypeId = ActivityTypeSeedIds.Adventure,
                     Duration = new TimeSpan(2, 0, 0),
                     Price = 45.00m,
                     Capacity = 14,
@@ -426,7 +438,7 @@ namespace eCommerce.Services.Database
                     Name = "Macaw Voice Workshop",
                     Description = "Learn how scarlet macaws communicate, then practice call-and-response with Rio in the aviary.",
                     AnimalId = 6,
-                    Type = eCommerce.Model.Enums.ActivityType.Workshop,
+                    ActivityTypeId = ActivityTypeSeedIds.Workshop,
                     Duration = new TimeSpan(1, 30, 0),
                     Price = 28.00m,
                     Capacity = 10,
@@ -440,7 +452,7 @@ namespace eCommerce.Services.Database
                     Name = "Panda Enrichment Hour",
                     Description = "Help design and place puzzle feeders for Bao, then watch him work out how to reach the bamboo.",
                     AnimalId = 5,
-                    Type = eCommerce.Model.Enums.ActivityType.Experience,
+                    ActivityTypeId = ActivityTypeSeedIds.Experience,
                     Duration = new TimeSpan(1, 0, 0),
                     Price = 32.00m,
                     Capacity = 8,

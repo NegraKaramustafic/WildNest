@@ -2,6 +2,7 @@ using eCommerce.Model.Enums;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
@@ -17,7 +18,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Reservation with id {id} not found.");
+                throw new NotFoundException($"Reservation with id {id} not found.");
             }
 
             entity.Status = ReservationStatus.Completed;
@@ -30,7 +31,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Reservation with id {id} not found.");
+                throw new NotFoundException($"Reservation with id {id} not found.");
             }
 
             entity.Status = ReservationStatus.Cancelled;

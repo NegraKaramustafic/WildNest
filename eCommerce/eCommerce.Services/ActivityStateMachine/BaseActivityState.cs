@@ -3,6 +3,8 @@ using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
+using FluentValidation;
+using FluentValidation.Results;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,11 +82,32 @@ namespace eCommerce.Services.ActivityStateMachine
             return new List<string>();
         }
 
+        protected async Task EnsureActivityTypeExistsAsync(int activityTypeId)
+        {
+            var exists = await DbContext.ActivityTypes
+                .AsNoTracking()
+                .AnyAsync(type => type.Id == activityTypeId);
+            if (!exists)
+            {
+                throw new ValidationException(new[]
+                {
+                    new ValidationFailure(
+                        nameof(ActivityInsertRequest.ActivityTypeId),
+                        "Odabrani tip aktivnosti ne postoji.")
+                });
+            }
+        }
+
         protected async Task<ActivityResponse> MapResponseAsync(Activity entity)
         {
             if (entity.AnimalId.HasValue && entity.Animal == null)
             {
                 await DbContext.Entry(entity).Reference(a => a.Animal).LoadAsync();
+            }
+
+            if (entity.ActivityType == null)
+            {
+                await DbContext.Entry(entity).Reference(a => a.ActivityType).LoadAsync();
             }
 
             return Mapper.Map<ActivityResponse>(entity);

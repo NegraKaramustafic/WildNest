@@ -1,10 +1,10 @@
-import 'package:ecommerce_mobile/models/activity.dart';
 import 'package:ecommerce_mobile/utils/json_parsers.dart';
 
 class RecommendationItem {
   final int activityId;
   final String name;
-  final ActivityType type;
+  final int activityTypeId;
+  final String activityTypeName;
   final int? animalId;
   final String? animalName;
   final String? imageUrl;
@@ -17,7 +17,8 @@ class RecommendationItem {
   RecommendationItem({
     required this.activityId,
     required this.name,
-    this.type = ActivityType.experience,
+    this.activityTypeId = 0,
+    this.activityTypeName = '',
     this.animalId,
     this.animalName,
     this.imageUrl,
@@ -33,7 +34,8 @@ class RecommendationItem {
     return RecommendationItem(
       activityId: asInt(json['activityId']),
       name: asString(json['name']),
-      type: parseActivityType(json['type']),
+      activityTypeId: asInt(json['activityTypeId']),
+      activityTypeName: asString(json['activityTypeName']),
       animalId: json['animalId'] == null ? null : asInt(json['animalId']),
       animalName: json['animalName'] as String?,
       imageUrl: json['imageUrl'] as String?,
@@ -52,21 +54,6 @@ class RecommendationItem {
               .toList()
           : const [],
     );
-  }
-
-  String get typeLabel {
-    switch (type) {
-      case ActivityType.feeding:
-        return 'Feeding';
-      case ActivityType.safari:
-        return 'Safari';
-      case ActivityType.workshop:
-        return 'Workshop';
-      case ActivityType.experience:
-        return 'Experience';
-      case ActivityType.adventure:
-        return 'Adventure';
-    }
   }
 
   String? get primaryReason {

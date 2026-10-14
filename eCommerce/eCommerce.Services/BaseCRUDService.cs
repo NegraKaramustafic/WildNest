@@ -3,6 +3,7 @@ using eCommerce.Services.Database;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services
 {
@@ -70,7 +71,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<TEntity>().FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
             }
 
             MapUpdateRequestToEntity(request, entity);
@@ -91,7 +92,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<TEntity>().FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
             }
 
             _dbContext.Set<TEntity>().Remove(entity);

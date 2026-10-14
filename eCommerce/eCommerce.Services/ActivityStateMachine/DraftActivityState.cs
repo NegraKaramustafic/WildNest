@@ -3,6 +3,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services.ActivityStateMachine
 {
@@ -18,9 +19,11 @@ namespace eCommerce.Services.ActivityStateMachine
             var entity = await DbContext.Activities.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {id} not found.");
+                throw new NotFoundException($"Activity with id {id} not found.");
             }
 
+            await EnsureActivityTypeExistsAsync(request.ActivityTypeId);
+            entity.ActivityType = null;
             Mapper.Map(request, entity);
             await DbContext.SaveChangesAsync();
             return await MapResponseAsync(entity);
@@ -31,7 +34,7 @@ namespace eCommerce.Services.ActivityStateMachine
             var entity = await DbContext.Activities.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {id} not found.");
+                throw new NotFoundException($"Activity with id {id} not found.");
             }
 
             entity.Status = ActivityStatus.Active;
@@ -44,7 +47,7 @@ namespace eCommerce.Services.ActivityStateMachine
             var entity = await DbContext.Activities.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {id} not found.");
+                throw new NotFoundException($"Activity with id {id} not found.");
             }
 
             DbContext.Activities.Remove(entity);

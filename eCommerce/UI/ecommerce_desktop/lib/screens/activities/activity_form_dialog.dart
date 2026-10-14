@@ -1,4 +1,5 @@
 import 'package:ecommerce_desktop/models/activity.dart';
+import 'package:ecommerce_desktop/models/activity_type.dart';
 import 'package:ecommerce_desktop/models/animal.dart';
 import 'package:ecommerce_desktop/providers/activity_provider.dart';
 import 'package:ecommerce_desktop/providers/animal_provider.dart';
@@ -19,17 +20,37 @@ class ActivityFormResult {
 Future<ActivityFormResult?> showActivityFormDialog(
   BuildContext context, {
   Activity? activity,
+  required List<ActivityType> types,
 }) {
+  if (types.isEmpty) {
+    return showDialog<ActivityFormResult>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nema tipova aktivnosti'),
+        content: const Text(
+          'Dodajte tip aktivnosti prije unosa aktivnosti.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('U redu'),
+          ),
+        ],
+      ),
+    );
+  }
+
   return showDialog<ActivityFormResult>(
     context: context,
-    builder: (_) => ActivityFormDialog(activity: activity),
+    builder: (_) => ActivityFormDialog(activity: activity, types: types),
   );
 }
 
 class ActivityFormDialog extends StatefulWidget {
-  const ActivityFormDialog({super.key, this.activity});
+  const ActivityFormDialog({super.key, this.activity, required this.types});
 
   final Activity? activity;
+  final List<ActivityType> types;
 
   @override
   State<ActivityFormDialog> createState() => _ActivityFormDialogState();
@@ -45,8 +66,9 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   late final TextEditingController _imageUrl;
 
   List<Animal> _animals = [];
+  late List<ActivityType> _types;
   int? _animalId;
-  ActivityType _type = ActivityType.experience;
+  int? _activityTypeId;
   bool _loadingAnimals = true;
   bool _saving = false;
   String? _error;
@@ -70,7 +92,20 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
     );
     _imageUrl = TextEditingController(text: activity?.imageUrl ?? '');
     _animalId = activity?.animalId;
-    _type = activity?.type ?? ActivityType.experience;
+    _types = List<ActivityType>.of(widget.types);
+    _activityTypeId = activity?.activityTypeId;
+    if (_activityTypeId != null && _types.every((type) => type.id != _activityTypeId)) {
+      _types = [
+        ActivityType(
+          id: _activityTypeId!,
+          name: activity?.activityTypeName.isNotEmpty == true
+              ? activity!.activityTypeName
+              : 'Tip aktivnosti',
+        ),
+        ..._types,
+      ];
+    }
+    _activityTypeId ??= _types.first.id;
     _loadAnimals();
   }
 
@@ -139,7 +174,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
       'name': _name.text.trim(),
       'description': blankToNull(_description.text),
       'animalId': _animalId,
-      'type': activityTypeApiValue(_type),
+      'activityTypeId': _activityTypeId,
       'duration': minutesToTimeSpan(minutes),
       'price': _parseNumber(_price.text),
       'capacity': int.parse(_capacity.text.trim()),
@@ -282,16 +317,20 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   }
 
   Widget _typeField() {
-    return DropdownButtonFormField<ActivityType>(
-      initialValue: _type,
+    final selected = _types.any((type) => type.id == _activityTypeId) ? _activityTypeId : null;
+    return DropdownButtonFormField<int>(
+      key: ValueKey('activity-type-$selected'),
+      initialValue: selected,
+      isExpanded: true,
       decoration: const InputDecoration(labelText: 'Tip'),
       items: [
-        for (final type in ActivityType.values)
-          DropdownMenuItem(value: type, child: Text(activityTypeLabel(type))),
+        for (final type in _types)
+          DropdownMenuItem(value: type.id, child: Text(type.name)),
       ],
       onChanged: (value) {
-        if (value != null) setState(() => _type = value);
+        if (value != null) setState(() => _activityTypeId = value);
       },
+      validator: (value) => value == null ? 'Tip je obavezan.' : null,
     );
   }
 

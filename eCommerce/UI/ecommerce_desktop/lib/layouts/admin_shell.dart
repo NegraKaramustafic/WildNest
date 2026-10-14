@@ -1,5 +1,6 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
+import 'package:ecommerce_desktop/screens/activities/activity_types_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
 import 'package:ecommerce_desktop/screens/placeholder_page.dart';
 import 'package:ecommerce_desktop/screens/schedules/schedules_screen.dart';
@@ -12,6 +13,7 @@ enum AdminSection {
   dashboard('Kontrolna ploča', Icons.dashboard_outlined),
   animals('Životinje', Icons.pets_outlined),
   activities('Aktivnosti', Icons.local_activity_outlined),
+  activityTypes('Tipovi aktivnosti', Icons.label_outline),
   schedules('Termini', Icons.calendar_month_outlined),
   reservations('Rezervacije', Icons.event_available_outlined),
   donations('Donacije', Icons.favorite_border),
@@ -68,6 +70,8 @@ class _AdminShellState extends State<AdminShell> {
         return const AnimalsScreen();
       case AdminSection.activities:
         return const ActivitiesScreen();
+      case AdminSection.activityTypes:
+        return const ActivityTypesScreen();
       case AdminSection.schedules:
         return const SchedulesScreen();
       case AdminSection.tickets:

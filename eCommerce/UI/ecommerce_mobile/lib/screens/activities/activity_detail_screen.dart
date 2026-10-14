@@ -207,24 +207,10 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                       height: 200,
                       width: double.infinity,
                       color: AppColors.mint,
-                      child: activity.imageUrl != null &&
-                              activity.imageUrl!.isNotEmpty
-                          ? Image.network(
-                              activity.imageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Center(
-                                child: Text(
-                                  activityEmoji(activity),
-                                  style: const TextStyle(fontSize: 96),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(
-                                activityEmoji(activity),
-                                style: const TextStyle(fontSize: 96),
-                              ),
-                            ),
+                      child: ActivityVisual(
+                        imageUrl: activity.imageUrl,
+                        iconSize: 72,
+                      ),
                     ),
                   ),
                 ),
@@ -257,6 +243,11 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          if (activity.activityTypeName.trim().isNotEmpty)
+                            _InfoChip(
+                              icon: Icons.local_activity_outlined,
+                              label: activity.activityTypeName,
+                            ),
                           _InfoChip(
                             icon: Icons.schedule,
                             label: formatDurationHours(activity.duration),

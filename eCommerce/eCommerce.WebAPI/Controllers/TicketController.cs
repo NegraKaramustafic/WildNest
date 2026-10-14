@@ -47,15 +47,8 @@ public class TicketController : BaseCRUDController<TicketResponse, TicketSearchO
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TicketResponse>> Cancel(int id)
     {
-        try
-        {
-            var result = await _service.CancelAsync(id);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.CancelAsync(id);
+        return Ok(result);
     }
 
     [HttpPost("verify")]
@@ -65,14 +58,7 @@ public class TicketController : BaseCRUDController<TicketResponse, TicketSearchO
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TicketResponse>> Verify([FromBody] TicketVerifyRequest request)
     {
-        try
-        {
-            var result = await _service.VerifyAsync(request);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.VerifyAsync(request);
+        return Ok(result);
     }
 }

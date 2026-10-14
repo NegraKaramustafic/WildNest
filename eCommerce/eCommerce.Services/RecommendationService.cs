@@ -216,6 +216,7 @@ namespace eCommerce.Services
             var activities = await _dbContext.Activities
                 .AsNoTracking()
                 .Include(a => a.Animal)
+                .Include(a => a.ActivityType)
                 .Where(a => a.Status == ActivityStatus.Active)
                 .ToListAsync();
 
@@ -254,7 +255,7 @@ namespace eCommerce.Services
                 .GroupBy(r => r.Schedule.ActivityId)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            var userTypes = new HashSet<ActivityType>();
+            var userTypes = new HashSet<int>();
             var userAnimalIds = new HashSet<int>();
             var userCategoryIds = new HashSet<int>();
 
@@ -311,12 +312,12 @@ namespace eCommerce.Services
         }
 
         private static void AddUserAffinity(
-            HashSet<ActivityType> types,
+            HashSet<int> types,
             HashSet<int> animalIds,
             HashSet<int> categoryIds,
             Activity activity)
         {
-            types.Add(activity.Type);
+            types.Add(activity.ActivityTypeId);
             if (activity.AnimalId.HasValue)
             {
                 animalIds.Add(activity.AnimalId.Value);
@@ -338,7 +339,10 @@ namespace eCommerce.Services
 
             var avgRating = stats.Count > 0 ? stats.Avg : 0;
             var ratingForScore = stats.Count > 0 ? stats.Avg : context.GlobalMeanRating;
-            var typeAffinity = context.UserTypes.Contains(activity.Type);
+            var typeAffinity = context.UserTypes.Contains(activity.ActivityTypeId);
+            var typeName = string.IsNullOrWhiteSpace(activity.ActivityType?.Name)
+                ? "this type"
+                : activity.ActivityType.Name;
             var animalAffinity = activity.AnimalId.HasValue && context.UserAnimalIds.Contains(activity.AnimalId.Value);
             var categoryAffinity = activity.Animal != null && context.UserCategoryIds.Contains(activity.Animal.CategoryId);
             var adoptionBoost = activity.AnimalId.HasValue && context.UserAdoptedAnimalIds.Contains(activity.AnimalId.Value);
@@ -360,7 +364,7 @@ namespace eCommerce.Services
                     $"Highly rated — {avgRating:0.0}/5 from {stats.Count} review{(stats.Count == 1 ? "" : "s")}",
                     RecommendationWeights.AvgRating * (ratingForScore / 5.0)),
                 (RecommendationWeights.SameType,
-                    $"You previously chose a {activity.Type} activity",
+                    $"You previously chose a {typeName} activity",
                     typeAffinity ? RecommendationWeights.TypeAffinity : 0),
                 (RecommendationWeights.SameAnimal,
                     $"Features {activity.Animal?.Name}, which you've already engaged with",
@@ -399,7 +403,8 @@ namespace eCommerce.Services
             {
                 ActivityId = activity.Id,
                 Name = activity.Name,
-                Type = activity.Type,
+                ActivityTypeId = activity.ActivityTypeId,
+                ActivityTypeName = activity.ActivityType?.Name ?? string.Empty,
                 AnimalId = activity.AnimalId,
                 AnimalName = activity.Animal?.Name,
                 ImageUrl = activity.ImageUrl,
@@ -483,7 +488,7 @@ namespace eCommerce.Services
 
             public required Dictionary<int, int> Popularity { get; init; }
 
-            public required HashSet<ActivityType> UserTypes { get; init; }
+            public required HashSet<int> UserTypes { get; init; }
 
             public required HashSet<int> UserAnimalIds { get; init; }
 

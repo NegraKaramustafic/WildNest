@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:ecommerce_desktop/models/activity.dart';
+import 'package:ecommerce_desktop/models/activity_type.dart';
 import 'package:ecommerce_desktop/providers/activity_provider.dart';
+import 'package:ecommerce_desktop/providers/activity_type_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_form_dialog.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
@@ -26,7 +28,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   int _page = 1;
   int _total = 0;
 
-  ActivityType? _type;
+  List<ActivityType> _activityTypes = [];
+  int? _activityTypeId;
   ActivityStatus? _status;
 
   bool _loading = true;
@@ -36,7 +39,41 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   @override
   void initState() {
     super.initState();
+    _loadTypes();
     _load();
+  }
+
+  Future<void> _loadTypes() async {
+    try {
+      final types = await context.read<ActivityTypeProvider>().getAll();
+      if (!mounted) return;
+      setState(() {
+        _activityTypes = types;
+        if (_activityTypeId != null && types.every((type) => type.id != _activityTypeId)) {
+          _activityTypeId = null;
+        }
+      });
+    } on SessionExpiredException {
+      return;
+    } catch (_) {}
+  }
+
+  Future<List<ActivityType>?> _requireTypes() async {
+    try {
+      final types = await context.read<ActivityTypeProvider>().getAll();
+      if (!mounted) return null;
+      setState(() => _activityTypes = types);
+      if (types.isEmpty) {
+        _showError('Nema tipova aktivnosti. Dodajte tip aktivnosti prije unosa aktivnosti.');
+        return null;
+      }
+      return types;
+    } on SessionExpiredException {
+      return null;
+    } catch (e) {
+      if (mounted) _showError(_message(e));
+      return null;
+    }
   }
 
   @override
@@ -58,7 +95,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       final result = await provider.get(
         filter: {
           'Name': _searchController.text.trim(),
-          'Type': _type == null ? null : activityTypeApiValue(_type!),
+          'ActivityTypeId': _activityTypeId,
           'Status': _status == null ? null : activityStatusApiValue(_status!),
           'Page': _page,
           'PageSize': _pageSize,
@@ -97,7 +134,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Future<void> _add() async {
-    final result = await showActivityFormDialog(context);
+    final types = await _requireTypes();
+    if (types == null || !mounted) return;
+    final result = await showActivityFormDialog(context, types: types);
     if (result == null || !mounted) return;
     if (result.created != null) {
       await _offerActivate(result.created!);
@@ -139,7 +178,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Future<void> _edit(Activity activity) async {
-    final result = await showActivityFormDialog(context, activity: activity);
+    final types = await _requireTypes();
+    if (types == null || !mounted) return;
+    final result = await showActivityFormDialog(context, activity: activity, types: types);
     if (result != null && mounted) await _load();
   }
 
@@ -278,19 +319,22 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Widget _typeFilter() {
-    return DropdownButtonFormField<ActivityType?>(
-      key: ValueKey('type-$_type'),
-      initialValue: _type,
+    final selected = _activityTypes.any((type) => type.id == _activityTypeId)
+        ? _activityTypeId
+        : null;
+    return DropdownButtonFormField<int?>(
+      key: ValueKey('type-$selected-${_activityTypes.length}'),
+      initialValue: selected,
       isExpanded: true,
       decoration: const InputDecoration(labelText: 'Tip', isDense: true),
       items: [
         const DropdownMenuItem(value: null, child: Text('Svi tipovi')),
-        for (final type in ActivityType.values)
-          DropdownMenuItem(value: type, child: Text(activityTypeLabel(type))),
+        for (final type in _activityTypes)
+          DropdownMenuItem(value: type.id, child: Text(type.name)),
       ],
       onChanged: (value) {
         setState(() {
-          _type = value;
+          _activityTypeId = value;
           _page = 1;
         });
         _load();
@@ -517,7 +561,7 @@ class _ActivityRow extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(flex: 2, child: Text(activityTypeLabel(activity.type))),
+          Expanded(flex: 2, child: Text(activity.activityTypeName)),
           Expanded(
             flex: 2,
             child: Text(
