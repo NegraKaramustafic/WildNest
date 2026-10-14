@@ -10,6 +10,8 @@ namespace eCommerce.Services.Database
         [Key]
         public int Id { get; set; }
 
+        public Guid MessageId { get; set; }
+
         public int UserId { get; set; }
 
         [ForeignKey("UserId")]

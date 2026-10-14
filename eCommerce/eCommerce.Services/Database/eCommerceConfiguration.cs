@@ -172,6 +172,10 @@ namespace eCommerce.Services.Database
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notification>()
+                .HasIndex(n => n.MessageId)
+                .IsUnique();
+
+            modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.IsRead });
         }
     }

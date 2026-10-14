@@ -570,6 +570,9 @@ namespace eCommerce.Services.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int?>("RelatedEntityId")
                         .HasColumnType("int");
 
@@ -589,6 +592,9 @@ namespace eCommerce.Services.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MessageId")
+                        .IsUnique();
 
                     b.HasIndex("UserId", "IsRead");
 

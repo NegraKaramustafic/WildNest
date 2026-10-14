@@ -146,6 +146,7 @@ namespace eCommerce.Services
         {
             await _publisher.PublishAsync(new NotificationMessage
             {
+                MessageId = Guid.NewGuid(),
                 UserId = userId,
                 Title = title,
                 Message = message,

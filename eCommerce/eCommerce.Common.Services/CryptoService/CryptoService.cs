@@ -20,12 +20,7 @@ namespace eCommerce.Common.Services.CryptoService
 
         public string GenerateSlat()
         {
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                byte[] saltBytes = new byte[16];
-                rng.GetBytes(saltBytes);
-                return Convert.ToBase64String(saltBytes);
-            }
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
         }
 
         public bool Verify(string hash, string salt, string password)
