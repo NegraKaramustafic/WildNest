@@ -1,4 +1,5 @@
 using eCommerce.Common.Services.CryptoService;
+using eCommerce.Model;
 using eCommerce.Model.Access;
 using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
@@ -18,11 +19,9 @@ namespace eCommerce.Services
 {
     public class UserService : BaseCRUDService<User, UserResponse, UserSearch, UserInsertRequest, UserUpdateRequest>, IUserService
     {
-        private const string AdminRole = "Admin";
-        private const string CustomerRole = "Customer";
-
         private readonly ICryptoService _cryptoService;
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly ISecurityStampCache _securityStampCache;
 
         public UserService(
             ECommerceDbContext dbContext,
@@ -30,11 +29,13 @@ namespace eCommerce.Services
             IValidator<UserInsertRequest> insertValidator,
             IValidator<UserUpdateRequest> updateValidator,
             ICryptoService cryptoService,
-            IAuthenticatedUserAccessor userAccessor)
+            IAuthenticatedUserAccessor userAccessor,
+            ISecurityStampCache securityStampCache)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _cryptoService = cryptoService;
             _userAccessor = userAccessor;
+            _securityStampCache = securityStampCache;
         }
 
 
@@ -75,6 +76,7 @@ namespace eCommerce.Services
             var salt = _cryptoService.GenerateSlat();
             entity.PasswordSalt = salt;
             entity.PasswordHash = _cryptoService.GenerateHash(request.Password, salt);
+            entity.SecurityStamp = NewSecurityStamp();
 
             return entity;
         }
@@ -153,13 +155,23 @@ namespace eCommerce.Services
             }
 
             MapUpdateRequestToEntity(request, entity);
-            if (!_userAccessor.IsInRole(AdminRole))
+            if (!_userAccessor.IsInRole(Roles.Admin))
             {
                 entity.IsActive = existingIsActive;
             }
 
+            var deactivated = existingIsActive && !entity.IsActive;
+            if (deactivated)
+            {
+                RotateSecurityStamp(entity);
+            }
+
             _dbContext.Users.Update(entity);
             await _dbContext.SaveChangesAsync();
+            if (deactivated)
+            {
+                _securityStampCache.Invalidate(entity.Id);
+            }
 
             return _mapper.Map<UserResponse>(entity);
         }
@@ -181,7 +193,9 @@ namespace eCommerce.Services
             if (await HasRelatedRowsAsync(id))
             {
                 entity.IsActive = false;
+                RotateSecurityStamp(entity);
                 await _dbContext.SaveChangesAsync();
+                _securityStampCache.Invalidate(entity.Id);
                 return;
             }
 
@@ -255,15 +269,54 @@ namespace eCommerce.Services
 
             user.PasswordSalt = _cryptoService.GenerateSlat();
             user.PasswordHash = _cryptoService.GenerateHash(request.NewPassword, user.PasswordSalt);
-
+            RotateSecurityStamp(user);
 
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
+            _securityStampCache.Invalidate(user.Id);
         }
+
+        public async Task<string> GetSecurityStampAsync(int userId)
+        {
+            var stamp = await _dbContext.Users
+                .AsNoTracking()
+                .Where(user => user.Id == userId)
+                .Select(user => user.SecurityStamp)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(stamp))
+            {
+                throw new ClinetException("User security stamp is missing.");
+            }
+
+            return stamp;
+        }
+
+        public async Task RevokeSessionsAsync(int userId)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+
+            RotateSecurityStamp(user);
+            await _dbContext.SaveChangesAsync();
+            _securityStampCache.Invalidate(userId);
+        }
+
+        private void RotateSecurityStamp(User user)
+        {
+            user.SecurityStamp = NewSecurityStamp();
+            var tokens = _dbContext.RefreshTokens.Where(token => token.UserId == user.Id);
+            _dbContext.RefreshTokens.RemoveRange(tokens);
+        }
+
+        private static string NewSecurityStamp() => Guid.NewGuid().ToString("N");
 
         private bool CanAccessUser(int userId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }
@@ -276,7 +329,7 @@ namespace eCommerce.Services
         {
             var role = await _dbContext.Roles
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Name == CustomerRole);
+                .FirstOrDefaultAsync(r => r.Name == Roles.Customer);
 
             if (role == null)
             {

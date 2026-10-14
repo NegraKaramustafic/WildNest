@@ -1,3 +1,4 @@
+using eCommerce.Common.Services;
 using Stripe;
 
 namespace eCommerce.Services
@@ -31,26 +32,14 @@ namespace eCommerce.Services
         public static StripeSettings FromEnvironment()
         {
             var settings = new StripeSettings(
-                Require("STRIPE_SECRET_KEY"),
-                Require("STRIPE_WEBHOOK_SECRET"),
-                Require("STRIPE_CURRENCY").ToLowerInvariant(),
-                Require("STRIPE_SUCCESS_URL"),
-                Require("STRIPE_CANCEL_URL"));
+                EnvVariables.Require("STRIPE_SECRET_KEY"),
+                EnvVariables.Require("STRIPE_WEBHOOK_SECRET"),
+                EnvVariables.Require("STRIPE_CURRENCY").ToLowerInvariant(),
+                EnvVariables.Require("STRIPE_SUCCESS_URL"),
+                EnvVariables.Require("STRIPE_CANCEL_URL"));
 
             StripeConfiguration.ApiKey = settings.SecretKey;
             return settings;
-        }
-
-        private static string Require(string name)
-        {
-            var value = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidOperationException(
-                    $"{name} is not set. Add it to the .env file (see .env.example).");
-            }
-
-            return value.Trim();
         }
     }
 }

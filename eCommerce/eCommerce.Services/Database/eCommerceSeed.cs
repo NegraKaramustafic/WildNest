@@ -25,7 +25,7 @@ namespace eCommerce.Services.Database
                 new
                 {
                     Id = 1,
-                    Name = "Admin",
+                    Name = global::eCommerce.Model.Roles.Admin,
                     Description = "Administrator role with full permissions",
                     IsActive = true,
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc)
@@ -33,7 +33,7 @@ namespace eCommerce.Services.Database
                 new
                 {
                     Id = 2,
-                    Name = "Customer",
+                    Name = global::eCommerce.Model.Roles.Customer,
                     Description = "Default customer role",
                     IsActive = true,
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc)
@@ -55,6 +55,7 @@ namespace eCommerce.Services.Database
                     PasswordHash = "5kRBQg4Ufcx4hAknG7P9zhfLPvY=", // Test123
                     PasswordSalt = "FmvmUwPsJyRRffhNRQvbrA==",
                     IsActive = true,
+                    SecurityStamp = "seedstamp000000000000000000000001",
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc),
                     LastLoginAt = (DateTime?)null,
                     PhoneNumber = (string?)null
@@ -69,6 +70,7 @@ namespace eCommerce.Services.Database
                     PasswordHash = "GBoyh1WP+OMgGjqRj6vK6L1+oGc=", // Test123
                     PasswordSalt = "0AXpKx6xRp9xM42jCf/PiA==",
                     IsActive = true,
+                    SecurityStamp = "seedstamp000000000000000000000002",
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc),
                     LastLoginAt = (DateTime?)null,
                     PhoneNumber = (string?)null
@@ -83,6 +85,7 @@ namespace eCommerce.Services.Database
                     PasswordHash = "x6JHKCTQywdAzTcZxGWFvrKPORM=", // Test123
                     PasswordSalt = "IwhTfKQNgyqWfOlTqCDXrg==",
                     IsActive = true,
+                    SecurityStamp = "seedstamp000000000000000000000003",
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc),
                     LastLoginAt = (DateTime?)null,
                     PhoneNumber = (string?)null
@@ -97,6 +100,7 @@ namespace eCommerce.Services.Database
                     PasswordHash = "E0fA2/f9GZvIRRt/cgqQemG/Cog=", // Test123
                     PasswordSalt = "TiJxWTJcd7sBSiWNbhK9Vw==",
                     IsActive = true,
+                    SecurityStamp = "seedstamp000000000000000000000004",
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc),
                     LastLoginAt = (DateTime?)null,
                     PhoneNumber = (string?)null
@@ -111,6 +115,7 @@ namespace eCommerce.Services.Database
                     PasswordHash = "Ov4LxpWKXXV9dwMYvBgqODdzIt0=", // Test123
                     PasswordSalt = "KtWF6g7SemBqs4nVWV4Ziw==",
                     IsActive = true,
+                    SecurityStamp = "seedstamp000000000000000000000005",
                     CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, DateTimeKind.Utc),
                     LastLoginAt = (DateTime?)null,
                     PhoneNumber = (string?)null

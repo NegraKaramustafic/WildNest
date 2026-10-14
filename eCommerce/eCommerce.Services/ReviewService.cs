@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Exceptions;
@@ -14,7 +15,6 @@ namespace eCommerce.Services
 {
     public class ReviewService : BaseCRUDService<Review, ReviewResponse, ReviewSearchObject, ReviewInsertRequest, ReviewUpdateRequest>, IReviewService
     {
-        private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly RecommendationModelCache _recommendationModelCache;
@@ -141,7 +141,7 @@ namespace eCommerce.Services
 
         private bool CanModifyReview(int reviewUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }

@@ -1,8 +1,8 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +17,7 @@ public class BadgeController : BaseReadController<BadgeResponse, BadgeSearchObje
     }
 
     [HttpPost]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BadgeResponse>> Create([FromBody] BadgeInsertRequest request)
@@ -27,7 +27,7 @@ public class BadgeController : BaseReadController<BadgeResponse, BadgeSearchObje
     }
 
     [HttpPut("{id}")]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -38,7 +38,7 @@ public class BadgeController : BaseReadController<BadgeResponse, BadgeSearchObje
     }
 
     [HttpDelete("{id}")]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)

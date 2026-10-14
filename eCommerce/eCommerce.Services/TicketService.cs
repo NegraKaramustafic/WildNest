@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -15,7 +16,6 @@ namespace eCommerce.Services
 {
     public class TicketService : BaseCRUDService<Ticket, TicketResponse, TicketSearchObject, TicketInsertRequest, TicketUpdateRequest>, ITicketService
     {
-        private const string AdminRole = "Admin";
         private const string CodeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         private const int CodeLength = 6;
         private const int MaxCodeAttempts = 20;
@@ -23,6 +23,7 @@ namespace eCommerce.Services
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly INotificationEventService _notificationEvents;
         private readonly IPaymentService _paymentService;
+        private readonly ZooClock _zooClock;
 
         public TicketService(
             ECommerceDbContext dbContext,
@@ -31,12 +32,14 @@ namespace eCommerce.Services
             IValidator<TicketUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
             INotificationEventService notificationEvents,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            ZooClock zooClock)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _userAccessor = userAccessor;
             _notificationEvents = notificationEvents;
             _paymentService = paymentService;
+            _zooClock = zooClock;
         }
 
         protected override async Task<IQueryable<Ticket>> IncludeRelatedEntitiesAsync(TicketSearchObject? search, IQueryable<Ticket> query = null!)
@@ -126,7 +129,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<Ticket> ApplyFilters(IEnumerable<Ticket> query, TicketSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -217,9 +220,9 @@ namespace eCommerce.Services
             return response;
         }
 
-        private static DateOnly Today() => DateOnly.FromDateTime(DateTime.Now);
+        private DateOnly Today() => _zooClock.Today;
 
-        private static void EnsureVisitIsToday(DateOnly visitDate)
+        private void EnsureVisitIsToday(DateOnly visitDate)
         {
             var today = Today();
             if (visitDate < today)
@@ -235,7 +238,7 @@ namespace eCommerce.Services
 
         private bool CanAccessTicket(int ticketUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }

@@ -1,3 +1,5 @@
+using eCommerce.Common.Services;
+
 namespace eCommerce.Subscriber
 {
     public sealed class SmtpSettings
@@ -23,33 +25,33 @@ namespace eCommerce.Subscriber
 
         public static SmtpSettings FromEnvironment()
         {
-            var host = Environment.GetEnvironmentVariable("SMTP_HOST");
-            if (string.IsNullOrWhiteSpace(host))
+            var host = EnvVariables.Optional("SMTP_HOST");
+            if (host == null)
             {
                 return new SmtpSettings(null, 0, null, null, null, true);
             }
 
-            var portText = Environment.GetEnvironmentVariable("SMTP_PORT");
-            if (string.IsNullOrWhiteSpace(portText) || !int.TryParse(portText, out var port) || port <= 0)
+            var portText = EnvVariables.Optional("SMTP_PORT");
+            if (portText == null || !int.TryParse(portText, out var port) || port <= 0)
             {
                 throw new InvalidOperationException("SMTP_PORT must be a positive integer when SMTP_HOST is set.");
             }
 
-            var from = Environment.GetEnvironmentVariable("SMTP_FROM");
-            if (string.IsNullOrWhiteSpace(from))
+            var from = EnvVariables.Optional("SMTP_FROM");
+            if (from == null)
             {
                 throw new InvalidOperationException("SMTP_FROM must be set when SMTP_HOST is set.");
             }
 
-            var enableSslText = Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL");
+            var enableSslText = EnvVariables.Optional("SMTP_ENABLE_SSL");
             var enableSsl = !string.Equals(enableSslText, "false", StringComparison.OrdinalIgnoreCase);
 
             return new SmtpSettings(
-                host.Trim(),
+                host,
                 port,
-                Environment.GetEnvironmentVariable("SMTP_USERNAME"),
-                Environment.GetEnvironmentVariable("SMTP_PASSWORD"),
-                from.Trim(),
+                EnvVariables.Optional("SMTP_USERNAME"),
+                EnvVariables.Optional("SMTP_PASSWORD"),
+                from,
                 enableSsl);
         }
     }

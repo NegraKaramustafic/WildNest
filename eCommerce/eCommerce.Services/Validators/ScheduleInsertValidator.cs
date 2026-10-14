@@ -7,13 +7,13 @@ namespace eCommerce.Services.Validators
 {
     public class ScheduleInsertValidator : AbstractValidator<ScheduleInsertRequest>
     {
-        public ScheduleInsertValidator(ECommerceDbContext dbContext)
+        public ScheduleInsertValidator(ECommerceDbContext dbContext, ZooClock zooClock)
         {
             RuleFor(x => x.ActivityId)
                 .GreaterThan(0).WithMessage("Aktivnost je obavezna.");
 
             RuleFor(x => x.Date)
-                .Must(date => date != default && date >= DateOnly.FromDateTime(DateTime.Today))
+                .Must(date => date != default && date >= zooClock.Today)
                 .WithMessage("Datum ne može biti u prošlosti.");
 
             RuleFor(x => x.EndTime)

@@ -12,7 +12,7 @@ namespace eCommerce.WebAPI.Controllers;
 /// <typeparam name="TResponse">The response model type</typeparam>
 /// <typeparam name="TSearch">The search/filter object type</typeparam>
 /// <typeparam name="TService">The service interface type implementing IBaseReadService</typeparam>
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public abstract class BaseReadController<TResponse, TSearch, TService> : ControllerBase

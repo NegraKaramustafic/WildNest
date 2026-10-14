@@ -15,16 +15,19 @@ namespace eCommerce.Services
     public class ScheduleService : BaseCRUDService<Schedule, ScheduleResponse, ScheduleSearchObject, ScheduleInsertRequest, ScheduleUpdateRequest>, IScheduleService
     {
         private readonly IReservationService _reservationService;
+        private readonly ZooClock _zooClock;
 
         public ScheduleService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<ScheduleInsertRequest> insertValidator,
             IValidator<ScheduleUpdateRequest> updateValidator,
-            IReservationService reservationService)
+            IReservationService reservationService,
+            ZooClock zooClock)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _reservationService = reservationService;
+            _zooClock = zooClock;
         }
 
         protected override async Task<IQueryable<Schedule>> IncludeRelatedEntitiesAsync(ScheduleSearchObject? search, IQueryable<Schedule> query = null!)
@@ -142,7 +145,7 @@ namespace eCommerce.Services
         protected override Schedule MapInsertRequestToEntity(ScheduleInsertRequest request)
         {
             var activity = GetActiveActivity(request.ActivityId);
-            if (request.Date < DateOnly.FromDateTime(DateTime.Today))
+            if (request.Date < _zooClock.Today)
             {
                 throw new ClinetException("Datum ne može biti u prošlosti.");
             }

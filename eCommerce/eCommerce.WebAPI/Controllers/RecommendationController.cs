@@ -1,6 +1,6 @@
+using eCommerce.Model;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
-using eCommerce.WebAPI.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,7 +40,7 @@ public class RecommendationController : ControllerBase
     /// Retrains the MatrixFactorization model from current Review and Reservation rows. Admin only.
     /// </summary>
     [HttpPost("retrain")]
-    [Authorization("Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<RecommendationRetrainResponse>> Retrain()

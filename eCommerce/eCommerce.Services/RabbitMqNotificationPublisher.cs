@@ -18,10 +18,10 @@ namespace eCommerce.Services
         private readonly SemaphoreSlim _connectionGate = new(1, 1);
         private IConnection? _connection;
 
-        public RabbitMqNotificationPublisher(ILogger<RabbitMqNotificationPublisher> logger)
+        public RabbitMqNotificationPublisher(ILogger<RabbitMqNotificationPublisher> logger, RabbitMqSettings settings)
         {
             _logger = logger;
-            _settings = RabbitMqSettings.FromEnvironment();
+            _settings = settings;
             _factory = new ConnectionFactory
             {
                 HostName = _settings.HostName,

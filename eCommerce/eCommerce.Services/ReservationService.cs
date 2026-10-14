@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Requests;
@@ -13,7 +14,6 @@ namespace eCommerce.Services;
 
 public class ReservationService : BaseReadService<Reservation, ReservationResponse, ReservationSearchObject>, IReservationService
 {
-    private const string AdminRole = "Admin";
 
     private readonly IAuthenticatedUserAccessor _userAccessor;
     private readonly INotificationEventService _notificationEvents;
@@ -50,7 +50,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     protected override IEnumerable<Reservation> ApplyFilters(IEnumerable<Reservation> query, ReservationSearchObject? search)
     {
-        if (_userAccessor.IsInRole(AdminRole))
+        if (_userAccessor.IsInRole(Roles.Admin))
         {
             if (search?.UserId.HasValue == true)
             {
@@ -184,7 +184,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     private bool CanAccessReservation(int reservationUserId)
     {
-        if (_userAccessor.IsInRole(AdminRole))
+        if (_userAccessor.IsInRole(Roles.Admin))
         {
             return true;
         }
@@ -195,7 +195,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     private void EnsureAdmin()
     {
-        if (!_userAccessor.IsInRole(AdminRole))
+        if (!_userAccessor.IsInRole(Roles.Admin))
         {
             throw new KeyNotFoundException("Reservation not found.");
         }

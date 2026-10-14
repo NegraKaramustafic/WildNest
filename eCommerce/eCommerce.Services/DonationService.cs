@@ -1,4 +1,5 @@
 using System;
+using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Requests;
@@ -12,7 +13,6 @@ namespace eCommerce.Services
 {
     public class DonationService : BaseCRUDService<Donation, DonationResponse, DonationSearchObject, DonationInsertRequest, DonationUpdateRequest>, IDonationService
     {
-        private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
 
@@ -111,7 +111,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<Donation> ApplyFilters(IEnumerable<Donation> query, DonationSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -136,7 +136,7 @@ namespace eCommerce.Services
 
         private bool CanAccessDonation(int donationUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }

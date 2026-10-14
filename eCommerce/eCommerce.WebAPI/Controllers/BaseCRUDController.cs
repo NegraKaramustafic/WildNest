@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using eCommerce.Services;
 using eCommerce.Model.SearchObjects;
@@ -12,6 +13,7 @@ namespace eCommerce.WebAPI.Controllers;
 /// <typeparam name="TInsertRequest">The insert request model type</typeparam>
 /// <typeparam name="TUpdateRequest">The update request model type</typeparam>
 /// <typeparam name="TService">The service interface type implementing CRUD operations</typeparam>
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 public abstract class BaseCRUDController<TResponse, TSearch, TInsertRequest, TUpdateRequest, TService>

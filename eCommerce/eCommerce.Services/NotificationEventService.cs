@@ -1,4 +1,5 @@
 using eCommerce.Model.Enums;
+using eCommerce.Model;
 using eCommerce.Model.Messages;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
@@ -8,7 +9,6 @@ namespace eCommerce.Services
 {
     public class NotificationEventService : INotificationEventService
     {
-        private const string AdminRole = "Admin";
 
         private readonly INotificationPublisher _publisher;
         private readonly ECommerceDbContext _dbContext;
@@ -158,7 +158,7 @@ namespace eCommerce.Services
         private Task<List<int>> GetAdminUserIdsAsync()
         {
             return _dbContext.UserRoles
-                .Where(ur => ur.Role.Name == AdminRole)
+                .Where(ur => ur.Role.Name == Roles.Admin)
                 .Select(ur => ur.UserId)
                 .Distinct()
                 .ToListAsync();

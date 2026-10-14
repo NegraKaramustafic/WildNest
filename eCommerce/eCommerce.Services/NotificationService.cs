@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using eCommerce.Model;
 using System.Linq;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -9,7 +10,6 @@ namespace eCommerce.Services
 {
     public class NotificationService : BaseReadService<Notification, NotificationResponse, NotificationSearchObject>, INotificationService
     {
-        private const string AdminRole = "Admin";
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
 
@@ -47,7 +47,7 @@ namespace eCommerce.Services
         {
             search ??= new NotificationSearchObject();
 
-            if (!_userAccessor.IsInRole(AdminRole) && search.UserId.HasValue)
+            if (!_userAccessor.IsInRole(Roles.Admin) && search.UserId.HasValue)
             {
                 var userId = _userAccessor.GetUserId();
                 if (!userId.HasValue || search.UserId.Value != userId.Value)
@@ -66,7 +66,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<Notification> ApplyFilters(IEnumerable<Notification> query, NotificationSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -152,7 +152,7 @@ namespace eCommerce.Services
                 return currentUserId;
             }
 
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return requestedUserId.Value;
             }
@@ -173,7 +173,7 @@ namespace eCommerce.Services
 
         private bool CanAccessNotification(int notificationUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }

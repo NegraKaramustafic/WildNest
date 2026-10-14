@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using eCommerce.Model;
 using System.Linq;
 using eCommerce.Model.Enums;
 using eCommerce.Model.Exceptions;
@@ -16,7 +17,6 @@ namespace eCommerce.Services
 {
     public class PaymentService : BaseCRUDService<Database.Payment, PaymentResponse, PaymentSearchObject, PaymentInsertRequest, PaymentUpdateRequest>, IPaymentService
     {
-        private const string AdminRole = "Admin";
         private const string MetadataPaymentId = "paymentId";
         private const string MetadataEntityType = "relatedEntityType";
         private const string MetadataEntityId = "relatedEntityId";
@@ -115,7 +115,7 @@ namespace eCommerce.Services
 
         protected override IEnumerable<Database.Payment> ApplyFilters(IEnumerable<Database.Payment> query, PaymentSearchObject? search)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 if (search?.UserId.HasValue == true)
                 {
@@ -829,7 +829,7 @@ namespace eCommerce.Services
 
         private bool CanAccessPayment(int? paymentUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }
@@ -840,7 +840,7 @@ namespace eCommerce.Services
 
         private bool CanAccessOwnedRecord(int ownerUserId)
         {
-            if (_userAccessor.IsInRole(AdminRole))
+            if (_userAccessor.IsInRole(Roles.Admin))
             {
                 return true;
             }
@@ -851,7 +851,7 @@ namespace eCommerce.Services
 
         private void EnsureAdmin()
         {
-            if (!_userAccessor.IsInRole(AdminRole))
+            if (!_userAccessor.IsInRole(Roles.Admin))
             {
                 throw new UnauthorizedAccessException("Only an administrator can perform this payment action.");
             }

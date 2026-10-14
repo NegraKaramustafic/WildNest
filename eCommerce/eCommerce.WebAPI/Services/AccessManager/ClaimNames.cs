@@ -8,5 +8,6 @@
         public static readonly string Email = "Email";
         public static readonly string Role = "Role";
         public static readonly string IsActive = "IsActive";
+        public static readonly string SecurityStamp = "SecurityStamp";
     }
 }

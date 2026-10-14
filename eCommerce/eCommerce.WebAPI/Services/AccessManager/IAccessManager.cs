@@ -6,5 +6,6 @@ namespace eCommerce.WebAPI.Services.AccessManager
     {
         Task<UserLoginResponse> LoginAsync(UserLoginRequest request);
         Task<UserLoginResponse> LoginWithRefreshTokenAsync(RefreshAccessTokenRequest request);
+        Task LogoutAsync();
     }
 }

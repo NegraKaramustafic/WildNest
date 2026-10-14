@@ -31,6 +31,13 @@ namespace eCommerce.Services.Database
         public string PasswordSalt { get; set; } = string.Empty;
         
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Rotated on logout, password change, and deactivation so previously issued access tokens no longer match.
+        /// </summary>
+        [Required]
+        [MaxLength(64)]
+        public string SecurityStamp { get; set; } = string.Empty;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
