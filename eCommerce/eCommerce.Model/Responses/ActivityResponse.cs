@@ -9,7 +9,8 @@ namespace eCommerce.Model.Responses
         public string? Description { get; set; }
         public int? AnimalId { get; set; }
         public string? AnimalName { get; set; }
-        public ActivityType Type { get; set; }
+        public int ActivityTypeId { get; set; }
+        public string ActivityTypeName { get; set; } = string.Empty;
         public TimeSpan Duration { get; set; }
         public decimal Price { get; set; }
         public int Capacity { get; set; }

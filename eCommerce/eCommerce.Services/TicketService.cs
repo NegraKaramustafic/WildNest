@@ -60,7 +60,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new KeyNotFoundException($"Ticket with id {id} not found.");
+                throw new NotFoundException($"Ticket with id {id} not found.");
             }
 
             return _mapper.Map<TicketResponse>(entity);
@@ -83,7 +83,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new KeyNotFoundException($"Ticket with id {id} not found.");
+                throw new NotFoundException($"Ticket with id {id} not found.");
             }
 
             if (entity.Status == TicketStatus.Used || entity.Status == TicketStatus.Cancelled)
@@ -100,7 +100,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new KeyNotFoundException($"Ticket with id {id} not found.");
+                throw new NotFoundException($"Ticket with id {id} not found.");
             }
 
             await base.DeleteAsync(id);
@@ -195,7 +195,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Ticket with code {code} not found.");
+                throw new NotFoundException($"Ticket with code {code} not found.");
             }
 
             if (entity.Status == TicketStatus.Used)
@@ -281,7 +281,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new KeyNotFoundException($"Ticket with id {id} not found.");
+                throw new NotFoundException($"Ticket with id {id} not found.");
             }
 
             if (entity.Status == TicketStatus.Cancelled)

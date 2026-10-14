@@ -56,7 +56,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Payments.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
             if (entity == null || !CanAccessPayment(entity.UserId))
             {
-                throw new KeyNotFoundException($"Payment with id {id} not found.");
+                throw new NotFoundException($"Payment with id {id} not found.");
             }
 
             return _mapper.Map<PaymentResponse>(entity);
@@ -73,7 +73,7 @@ namespace eCommerce.Services
             var entity = await GetEntityOrThrowAsync(id);
             if (!CanAccessPayment(entity.UserId))
             {
-                throw new KeyNotFoundException($"Payment with id {id} not found.");
+                throw new NotFoundException($"Payment with id {id} not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -86,7 +86,7 @@ namespace eCommerce.Services
             var entity = await GetEntityOrThrowAsync(id);
             if (!CanAccessPayment(entity.UserId))
             {
-                throw new KeyNotFoundException($"Payment with id {id} not found.");
+                throw new NotFoundException($"Payment with id {id} not found.");
             }
 
             await base.DeleteAsync(id);
@@ -704,7 +704,7 @@ namespace eCommerce.Services
                         var ticket = await _dbContext.Tickets.FindAsync(id);
                         if (ticket == null || !CanAccessOwnedRecord(ticket.UserId))
                         {
-                            throw new KeyNotFoundException($"Ticket with id {id} not found.");
+                            throw new NotFoundException($"Ticket with id {id} not found.");
                         }
 
                         if (ticket.Status is TicketStatus.Cancelled or TicketStatus.Used)
@@ -725,7 +725,7 @@ namespace eCommerce.Services
                         var reservation = await _dbContext.Reservations.FindAsync(id);
                         if (reservation == null || !CanAccessOwnedRecord(reservation.UserId))
                         {
-                            throw new KeyNotFoundException($"Reservation with id {id} not found.");
+                            throw new NotFoundException($"Reservation with id {id} not found.");
                         }
 
                         if (reservation.Status is ReservationStatus.Cancelled or ReservationStatus.Completed)
@@ -746,7 +746,7 @@ namespace eCommerce.Services
                         var adoption = await _dbContext.Adoptions.FindAsync(id);
                         if (adoption == null || !CanAccessOwnedRecord(adoption.UserId))
                         {
-                            throw new KeyNotFoundException($"Adoption with id {id} not found.");
+                            throw new NotFoundException($"Adoption with id {id} not found.");
                         }
 
                         if (adoption.Status == AdoptionStatus.Cancelled)
@@ -767,7 +767,7 @@ namespace eCommerce.Services
                         var donation = await _dbContext.Donations.FindAsync(id);
                         if (donation == null || !CanAccessOwnedRecord(donation.UserId))
                         {
-                            throw new KeyNotFoundException($"Donation with id {id} not found.");
+                            throw new NotFoundException($"Donation with id {id} not found.");
                         }
 
                         return new PayableRecord(
@@ -873,7 +873,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Payments.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Payment with id {id} not found.");
+                throw new NotFoundException($"Payment with id {id} not found.");
             }
 
             return entity;

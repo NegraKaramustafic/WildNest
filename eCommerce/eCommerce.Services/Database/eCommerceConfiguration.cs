@@ -25,10 +25,20 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(a => a.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<ActivityType>()
+                .HasIndex(t => t.Name)
+                .IsUnique();
+
             modelBuilder.Entity<Activity>()
                 .HasOne(a => a.Animal)
                 .WithMany()
                 .HasForeignKey(a => a.AnimalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Activity>()
+                .HasOne(a => a.ActivityType)
+                .WithMany(t => t.Activities)
+                .HasForeignKey(a => a.ActivityTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Schedule>()

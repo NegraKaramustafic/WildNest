@@ -7,6 +7,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services
 {
@@ -32,7 +33,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Animal with id {id} not found.");
+                throw new NotFoundException($"Animal with id {id} not found.");
             }
 
             return _mapper.Map<AnimalResponse>(entity);
@@ -56,7 +57,7 @@ namespace eCommerce.Services
         {
             if (!await _dbContext.AnimalCategories.AnyAsync(category => category.Id == categoryId))
             {
-                throw new KeyNotFoundException($"AnimalCategory with id {categoryId} not found.");
+                throw new NotFoundException($"AnimalCategory with id {categoryId} not found.");
             }
         }
 

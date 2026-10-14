@@ -92,11 +92,16 @@ TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
     .AfterMapping((Animal src, AnimalResponse dest) =>
         dest.CategoryName = src.Category == null ? string.Empty : src.Category.Name)
     .IgnoreNullValues(true);
+TypeAdapterConfig<ActivityType, ActivityTypeResponse>.NewConfig()
+    .Ignore(dest => dest.ActivityCount)
+    .IgnoreNullValues(true);
 TypeAdapterConfig<Activity, ActivityResponse>.NewConfig()
     .Ignore(dest => dest.AnimalName!)
+    .Ignore(dest => dest.ActivityTypeName)
     .AfterMapping((Activity src, ActivityResponse dest) =>
     {
         dest.AnimalName = src.Animal == null ? null : src.Animal.Name;
+        dest.ActivityTypeName = src.ActivityType == null ? string.Empty : src.ActivityType.Name;
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Schedule, ScheduleResponse>.NewConfig()
@@ -199,6 +204,7 @@ builder.Services.AddScoped<IAccessManager, AccessManager>();
 builder.Services.AddScoped<ICryptoService, CryptoService>();
 
 builder.Services.AddScoped<IAnimalCategoryService, AnimalCategoryService>();
+builder.Services.AddScoped<IActivityTypeService, ActivityTypeService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
@@ -220,6 +226,8 @@ builder.Services.AddScoped<IValidator<UserInsertRequest>, UserInsertValidator>()
 builder.Services.AddScoped<IValidator<UserUpdateRequest>, UserUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryInsertRequest>, AnimalCategoryInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryUpdateRequest>, AnimalCategoryUpdateValidator>();
+builder.Services.AddScoped<IValidator<ActivityTypeInsertRequest>, ActivityTypeInsertValidator>();
+builder.Services.AddScoped<IValidator<ActivityTypeUpdateRequest>, ActivityTypeUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalInsertRequest>, AnimalInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalUpdateRequest>, AnimalUpdateValidator>();
 builder.Services.AddScoped<IValidator<ScheduleInsertRequest>, ScheduleInsertValidator>();

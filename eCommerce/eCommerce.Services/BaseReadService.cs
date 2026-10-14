@@ -75,7 +75,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
             }
 
             return _mapper.Map<TResponse>(entity);

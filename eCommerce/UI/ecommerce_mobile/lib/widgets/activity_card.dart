@@ -44,23 +44,7 @@ class ActivityCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
               ),
               clipBehavior: Clip.antiAlias,
-              child: activity.imageUrl != null && activity.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      activity.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Center(
-                        child: Text(
-                          activityEmoji(activity),
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Text(
-                        activityEmoji(activity),
-                        style: const TextStyle(fontSize: 28),
-                      ),
-                    ),
+              child: ActivityVisual(imageUrl: activity.imageUrl, iconSize: 28),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -119,7 +103,7 @@ class ActivityCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      activity.typeLabel,
+                      activity.activityTypeName,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

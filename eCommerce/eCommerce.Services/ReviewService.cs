@@ -50,7 +50,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Review with id {id} not found.");
+                throw new NotFoundException($"Review with id {id} not found.");
             }
 
             return _mapper.Map<ReviewResponse>(entity);
@@ -84,7 +84,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Reviews.FindAsync(id);
             if (entity == null || !CanModifyReview(entity.UserId))
             {
-                throw new KeyNotFoundException($"Review with id {id} not found.");
+                throw new NotFoundException($"Review with id {id} not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -97,7 +97,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Reviews.FindAsync(id);
             if (entity == null || !CanModifyReview(entity.UserId))
             {
-                throw new KeyNotFoundException($"Review with id {id} not found.");
+                throw new NotFoundException($"Review with id {id} not found.");
             }
 
             await base.DeleteAsync(id);

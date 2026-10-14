@@ -9,6 +9,7 @@ using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
 using eCommerce.Services.ReservationStateMachine;
 using Microsoft.EntityFrameworkCore;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services;
 
@@ -97,7 +98,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
         if (entity == null || !CanAccessReservation(entity.UserId))
         {
-            throw new KeyNotFoundException($"Reservation with id {id} not found.");
+            throw new NotFoundException($"Reservation with id {id} not found.");
         }
 
         var response = _mapper.Map<ReservationResponse>(entity);
@@ -192,7 +193,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         var entity = await _dbContext.Reservations.FindAsync(id);
         if (entity == null || !CanAccessReservation(entity.UserId))
         {
-            throw new KeyNotFoundException($"Reservation with id {id} not found.");
+            throw new NotFoundException($"Reservation with id {id} not found.");
         }
 
         return entity;
@@ -213,7 +214,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     {
         if (!_userAccessor.IsInRole(Roles.Admin))
         {
-            throw new KeyNotFoundException("Reservation not found.");
+            throw new NotFoundException("Reservation not found.");
         }
     }
 }

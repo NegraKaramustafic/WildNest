@@ -30,6 +30,9 @@ namespace eCommerce.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ActivityTypeId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("AnimalId")
                         .HasColumnType("int");
 
@@ -61,10 +64,9 @@ namespace eCommerce.Services.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ActivityTypeId");
 
                     b.HasIndex("AnimalId");
 
@@ -74,6 +76,7 @@ namespace eCommerce.Services.Migrations
                         new
                         {
                             Id = 1,
+                            ActivityTypeId = 1,
                             AnimalId = 1,
                             Capacity = 15,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -81,48 +84,48 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
                             Name = "Elephant Feeding Experience",
                             Price = 25.00m,
-                            Status = 1,
-                            Type = 0
+                            Status = 1
                         },
                         new
                         {
                             Id = 2,
+                            ActivityTypeId = 2,
                             Capacity = 20,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "A guided evening walk through the park to spot nocturnal animals as they become active.",
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
                             Name = "Nocturnal Safari Walk",
                             Price = 30.00m,
-                            Status = 1,
-                            Type = 1
+                            Status = 1
                         },
                         new
                         {
                             Id = 3,
+                            ActivityTypeId = 3,
                             Capacity = 12,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Learn composition and lighting tips while photographing macaws and other birds in the aviary.",
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
                             Name = "Bird Photography Workshop",
                             Price = 40.00m,
-                            Status = 1,
-                            Type = 2
+                            Status = 1
                         },
                         new
                         {
                             Id = 4,
+                            ActivityTypeId = 4,
                             Capacity = 4,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Spend a full day with keepers caring for Bao, from breakfast bamboo to enclosure enrichment.",
                             Duration = new TimeSpan(0, 7, 0, 0, 0),
                             Name = "Panda Keeper for a Day",
                             Price = 120.00m,
-                            Status = 0,
-                            Type = 3
+                            Status = 0
                         },
                         new
                         {
                             Id = 5,
+                            ActivityTypeId = 1,
                             AnimalId = 2,
                             Capacity = 12,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -130,12 +133,12 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
                             Name = "Red Panda Snack Time",
                             Price = 20.00m,
-                            Status = 1,
-                            Type = 0
+                            Status = 1
                         },
                         new
                         {
                             Id = 6,
+                            ActivityTypeId = 4,
                             AnimalId = 3,
                             Capacity = 10,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -143,12 +146,12 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
                             Name = "Lemur Morning Meet",
                             Price = 18.00m,
-                            Status = 1,
-                            Type = 3
+                            Status = 1
                         },
                         new
                         {
                             Id = 7,
+                            ActivityTypeId = 2,
                             AnimalId = 4,
                             Capacity = 16,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -156,12 +159,12 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
                             Name = "Snow Leopard Twilight Safari",
                             Price = 35.00m,
-                            Status = 1,
-                            Type = 1
+                            Status = 1
                         },
                         new
                         {
                             Id = 8,
+                            ActivityTypeId = 5,
                             AnimalId = 7,
                             Capacity = 14,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -169,12 +172,12 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
                             Name = "Lion Savanna Adventure",
                             Price = 45.00m,
-                            Status = 1,
-                            Type = 4
+                            Status = 1
                         },
                         new
                         {
                             Id = 9,
+                            ActivityTypeId = 3,
                             AnimalId = 6,
                             Capacity = 10,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -182,12 +185,12 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
                             Name = "Macaw Voice Workshop",
                             Price = 28.00m,
-                            Status = 1,
-                            Type = 2
+                            Status = 1
                         },
                         new
                         {
                             Id = 10,
+                            ActivityTypeId = 4,
                             AnimalId = 5,
                             Capacity = 8,
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -195,8 +198,59 @@ namespace eCommerce.Services.Migrations
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
                             Name = "Panda Enrichment Hour",
                             Price = 32.00m,
-                            Status = 1,
-                            Type = 3
+                            Status = 1
+                        });
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.ActivityType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ActivityTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Feeding"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Safari"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Workshop"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Experience"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Adventure"
                         });
                 });
 
@@ -1435,10 +1489,18 @@ namespace eCommerce.Services.Migrations
 
             modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
                 {
+                    b.HasOne("eCommerce.Services.Database.ActivityType", "ActivityType")
+                        .WithMany("Activities")
+                        .HasForeignKey("ActivityTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("eCommerce.Services.Database.Animal", "Animal")
                         .WithMany()
                         .HasForeignKey("AnimalId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ActivityType");
 
                     b.Navigation("Animal");
                 });
@@ -1660,6 +1722,11 @@ namespace eCommerce.Services.Migrations
             modelBuilder.Entity("eCommerce.Services.Database.Activity", b =>
                 {
                     b.Navigation("Schedules");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.ActivityType", b =>
+                {
+                    b.Navigation("Activities");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.AnimalCategory", b =>

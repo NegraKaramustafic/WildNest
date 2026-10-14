@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using eCommerce.Model.Enums;
 
 namespace eCommerce.Model.Requests
 {
@@ -15,7 +14,8 @@ namespace eCommerce.Model.Requests
         public int? AnimalId { get; set; }
 
         [Required]
-        public ActivityType Type { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Tip aktivnosti je obavezan.")]
+        public int ActivityTypeId { get; set; }
 
         [Required]
         public TimeSpan Duration { get; set; }

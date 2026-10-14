@@ -2,6 +2,7 @@ using eCommerce.Model.Enums;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
+using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services.ActivityStateMachine
 {
@@ -17,7 +18,7 @@ namespace eCommerce.Services.ActivityStateMachine
             var entity = await DbContext.Activities.FindAsync(id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {id} not found.");
+                throw new NotFoundException($"Activity with id {id} not found.");
             }
 
             entity.Status = ActivityStatus.Inactive;

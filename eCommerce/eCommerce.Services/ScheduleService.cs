@@ -48,7 +48,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Schedule with id {id} not found.");
+                throw new NotFoundException($"Schedule with id {id} not found.");
             }
 
             return _mapper.Map<ScheduleResponse>(entity);
@@ -102,7 +102,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Schedule with id {id} not found.");
+                throw new NotFoundException($"Schedule with id {id} not found.");
             }
 
             if (request.ActivityId != entity.ActivityId)
@@ -165,7 +165,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                throw new KeyNotFoundException($"Schedule with id {id} not found.");
+                throw new NotFoundException($"Schedule with id {id} not found.");
             }
 
             var statuses = await _dbContext.Reservations
@@ -240,7 +240,7 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == activityId);
             if (activity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {activityId} not found.");
+                throw new NotFoundException($"Activity with id {activityId} not found.");
             }
 
             if (activity.Status != ActivityStatus.Active)
@@ -256,7 +256,7 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.AsNoTracking().FirstOrDefaultAsync(item => item.Id == activityId);
             if (activity == null)
             {
-                throw new KeyNotFoundException($"Activity with id {activityId} not found.");
+                throw new NotFoundException($"Activity with id {activityId} not found.");
             }
 
             EnsureCapacityValue(capacityLeft, activity.Capacity);

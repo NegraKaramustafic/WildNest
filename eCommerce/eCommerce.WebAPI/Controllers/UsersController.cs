@@ -53,15 +53,8 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public override async Task<ActionResult<UserResponse>> Update(int id, [FromBody] UserUpdateRequest request)
     {
-        try
-        {
-            var result = await _service.UpdateAsync(id, request);
-            return result;
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        var result = await _service.UpdateAsync(id, request);
+        return result;
     }
 
     [HttpDelete("{id}")]
@@ -84,14 +77,7 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangePassword([FromBody] UserPasswordChangeRequest request)
     {
-        try
-        {
-            await _service.ChangePasswordAsync(request);
-            return Ok();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        await _service.ChangePasswordAsync(request);
+        return Ok();
     }
 }

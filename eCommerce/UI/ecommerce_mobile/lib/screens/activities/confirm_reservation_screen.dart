@@ -96,11 +96,10 @@ class _ConfirmReservationScreenState extends State<ConfirmReservationScreen> {
                             color: AppColors.mint,
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Center(
-                            child: Text(
-                              activityEmoji(widget.activity),
-                              style: const TextStyle(fontSize: 26),
-                            ),
+                          clipBehavior: Clip.antiAlias,
+                          child: ActivityVisual(
+                            imageUrl: widget.activity.imageUrl,
+                            iconSize: 26,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -115,6 +114,13 @@ class _ConfirmReservationScreenState extends State<ConfirmReservationScreen> {
                                   fontSize: 16,
                                 ),
                               ),
+                              if (widget.activity.activityTypeName.trim().isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.activity.activityTypeName,
+                                  style: const TextStyle(color: AppColors.textMuted),
+                                ),
+                              ],
                               const SizedBox(height: 4),
                               Text(
                                 formatClock(widget.schedule.startTime),

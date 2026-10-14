@@ -14,6 +14,7 @@ namespace eCommerce.Services.Database
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<AnimalCategory> AnimalCategories { get; set; }
         public DbSet<Animal> Animals { get; set; }
+        public DbSet<ActivityType> ActivityTypes { get; set; }
         public DbSet<Activity> Activities { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
