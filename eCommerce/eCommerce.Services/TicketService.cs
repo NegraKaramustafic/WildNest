@@ -68,8 +68,14 @@ namespace eCommerce.Services
 
         public override async Task<TicketResponse> InsertAsync(TicketInsertRequest request)
         {
-            var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            await _insertValidator.ValidateAndThrowAsync(request);
+            var entity = MapInsertRequestToEntity(request);
+            entity.Code = await GenerateUniqueCodeAsync();
+            entity.QrCodeData = entity.Code;
+            entity.CreatedAt = DateTime.UtcNow;
+            _dbContext.Tickets.Add(entity);
+            await _dbContext.SaveChangesAsync();
+            return await GetByIdAsync(entity.Id);
         }
 
         public override async Task<TicketResponse> UpdateAsync(int id, TicketUpdateRequest request)
@@ -82,7 +88,7 @@ namespace eCommerce.Services
 
             if (entity.Status == TicketStatus.Used || entity.Status == TicketStatus.Cancelled)
             {
-                throw new ClinetException("A used or cancelled ticket cannot be edited.");
+                throw new ClientException("A used or cancelled ticket cannot be edited.");
             }
 
             await base.UpdateAsync(id, request);
@@ -108,8 +114,6 @@ namespace eCommerce.Services
             entity.PricePerPerson = ZooPricing.ZooEntryPricePerPerson;
             entity.TotalPrice = entity.PricePerPerson * request.VisitorCount;
             entity.Status = TicketStatus.PendingPayment;
-            entity.Code = GenerateUniqueCode();
-            entity.QrCodeData = entity.Code;
             return entity;
         }
 
@@ -127,7 +131,7 @@ namespace eCommerce.Services
             entity.TotalPrice = existingPricePerPerson * entity.VisitorCount;
         }
 
-        protected override IEnumerable<Ticket> ApplyFilters(IEnumerable<Ticket> query, TicketSearchObject? search)
+        protected override IQueryable<Ticket> ApplyFilters(IQueryable<Ticket> query, TicketSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -171,12 +175,17 @@ namespace eCommerce.Services
             return query;
         }
 
+        protected override IQueryable<Ticket> ApplyDefaultOrder(IQueryable<Ticket> query)
+        {
+            return query.OrderByDescending(t => t.CreatedAt).ThenByDescending(t => t.Id);
+        }
+
         public async Task<TicketResponse> VerifyAsync(TicketVerifyRequest request)
         {
             var code = request.Code?.Trim().ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(code))
             {
-                throw new ClinetException("Code is required.");
+                throw new ClientException("Code is required.");
             }
 
             var entity = await _dbContext.Tickets
@@ -191,17 +200,17 @@ namespace eCommerce.Services
 
             if (entity.Status == TicketStatus.Used)
             {
-                throw new ClinetException("Ticket already used");
+                throw new ClientException("Ticket already used");
             }
 
             if (entity.Status == TicketStatus.Cancelled)
             {
-                throw new ClinetException("Ticket is cancelled");
+                throw new ClientException("Ticket is cancelled");
             }
 
             if (entity.Status == TicketStatus.PendingPayment || !await HasCompletedPaymentAsync(entity.PaymentId))
             {
-                throw new ClinetException("Ticket payment is not completed.");
+                throw new ClientException("Ticket payment is not completed.");
             }
 
             EnsureVisitIsToday(entity.VisitDate);
@@ -227,12 +236,12 @@ namespace eCommerce.Services
             var today = Today();
             if (visitDate < today)
             {
-                throw new ClinetException($"Ticket expired. It was valid for {visitDate:dd.MM.yyyy}.");
+                throw new ClientException($"Ticket expired. It was valid for {visitDate:dd.MM.yyyy}.");
             }
 
             if (visitDate > today)
             {
-                throw new ClinetException($"Ticket is valid for {visitDate:dd.MM.yyyy}, not today.");
+                throw new ClientException($"Ticket is valid for {visitDate:dd.MM.yyyy}, not today.");
             }
         }
 
@@ -247,7 +256,7 @@ namespace eCommerce.Services
             return userId.HasValue && userId.Value == ticketUserId;
         }
 
-        private string GenerateUniqueCode()
+        private async Task<string> GenerateUniqueCodeAsync()
         {
             for (var attempt = 0; attempt < MaxCodeAttempts; attempt++)
             {
@@ -258,7 +267,7 @@ namespace eCommerce.Services
                 }
 
                 var code = $"WN-{new string(suffix)}";
-                if (!_dbContext.Tickets.Any(t => t.Code == code))
+                if (!await _dbContext.Tickets.AnyAsync(t => t.Code == code))
                 {
                     return code;
                 }
@@ -277,21 +286,24 @@ namespace eCommerce.Services
 
             if (entity.Status == TicketStatus.Cancelled)
             {
-                throw new ClinetException("Ticket is already cancelled.");
+                throw new ClientException("Ticket is already cancelled.");
             }
 
             if (entity.Status == TicketStatus.Used)
             {
-                throw new ClinetException("A used ticket cannot be cancelled.");
+                throw new ClientException("A used ticket cannot be cancelled.");
             }
 
-            entity.Status = TicketStatus.Cancelled;
-            await _dbContext.SaveChangesAsync();
-
-            if (entity.PaymentId.HasValue)
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
             {
-                await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value);
-            }
+                entity.Status = TicketStatus.Cancelled;
+                if (entity.PaymentId.HasValue)
+                {
+                    await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value);
+                }
+
+                await _dbContext.SaveChangesAsync();
+            });
 
             return await GetByIdAsync(id);
         }

@@ -34,7 +34,7 @@ namespace eCommerce.Services
             entity.CurrentAmount = existingCurrentAmount;
         }
 
-        protected override IEnumerable<ZooPartner> ApplyFilters(IEnumerable<ZooPartner> query, ZooPartnerSearchObject? search)
+        protected override IQueryable<ZooPartner> ApplyFilters(IQueryable<ZooPartner> query, ZooPartnerSearchObject? search)
         {
             if (search != null)
             {
@@ -45,11 +45,17 @@ namespace eCommerce.Services
 
                 if (!string.IsNullOrWhiteSpace(search.Name))
                 {
-                    query = query.Where(p => p.Name.Contains(search.Name, StringComparison.OrdinalIgnoreCase));
+                    var name = search.Name.Trim();
+                    query = query.Where(p => p.Name.Contains(name));
                 }
             }
 
             return query;
+        }
+
+        protected override IQueryable<ZooPartner> ApplyDefaultOrder(IQueryable<ZooPartner> query)
+        {
+            return query.OrderBy(p => p.Name).ThenBy(p => p.Id);
         }
     }
 }

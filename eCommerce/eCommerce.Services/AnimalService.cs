@@ -40,40 +40,27 @@ namespace eCommerce.Services
 
         public override async Task<AnimalResponse> InsertAsync(AnimalInsertRequest request)
         {
+            await EnsureCategoryExistsAsync(request.CategoryId);
             var created = await base.InsertAsync(request);
             return await GetByIdAsync(created.Id);
         }
 
         public override async Task<AnimalResponse> UpdateAsync(int id, AnimalUpdateRequest request)
         {
+            await EnsureCategoryExistsAsync(request.CategoryId);
             await base.UpdateAsync(id, request);
             return await GetByIdAsync(id);
         }
 
-        protected override Animal MapInsertRequestToEntity(AnimalInsertRequest request)
+        private async Task EnsureCategoryExistsAsync(int categoryId)
         {
-            var entity = base.MapInsertRequestToEntity(request);
-            entity.Category = FindCategory(entity.CategoryId)!;
-            return entity;
-        }
-
-        protected override void MapUpdateRequestToEntity(AnimalUpdateRequest request, Animal entity)
-        {
-            base.MapUpdateRequestToEntity(request, entity);
-            entity.Category = FindCategory(entity.CategoryId)!;
-        }
-
-        private AnimalCategory? FindCategory(int categoryId)
-        {
-            if (categoryId <= 0)
+            if (!await _dbContext.AnimalCategories.AnyAsync(category => category.Id == categoryId))
             {
-                return null;
+                throw new KeyNotFoundException($"AnimalCategory with id {categoryId} not found.");
             }
-
-            return _dbContext.Set<AnimalCategory>().Find(categoryId);
         }
 
-        protected override IEnumerable<Animal> ApplyFilters(IEnumerable<Animal> query, AnimalSearchObject? search)
+        protected override IQueryable<Animal> ApplyFilters(IQueryable<Animal> query, AnimalSearchObject? search)
         {
             if (search != null)
             {
@@ -89,13 +76,17 @@ namespace eCommerce.Services
 
                 if (!string.IsNullOrWhiteSpace(search.FTS))
                 {
-                    query = query.Where(a =>
-                        a.Name.Contains(search.FTS, StringComparison.OrdinalIgnoreCase) ||
-                        a.Species.Contains(search.FTS, StringComparison.OrdinalIgnoreCase));
+                    var term = search.FTS.Trim();
+                    query = query.Where(a => a.Name.Contains(term) || a.Species.Contains(term));
                 }
             }
 
             return query;
+        }
+
+        protected override IQueryable<Animal> ApplyDefaultOrder(IQueryable<Animal> query)
+        {
+            return query.OrderBy(a => a.Name).ThenBy(a => a.Id);
         }
     }
 }

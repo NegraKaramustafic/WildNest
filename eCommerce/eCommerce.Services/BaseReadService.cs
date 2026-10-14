@@ -1,18 +1,23 @@
+using System.Reflection;
+using System.Text.RegularExpressions;
+using eCommerce.Model;
+using eCommerce.Model.Exceptions;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
 
 namespace eCommerce.Services
 {
     public abstract class BaseReadService<TEntity, TResponse, TSearch> : IBaseReadService<TResponse, TSearch>
         where TEntity : class
-        where TSearch : BaseSearchObject
+        where TSearch : BaseSearchObject, new()
     {
+        private static readonly Regex SortClausePattern = new(
+            @"^[A-Za-z_][A-Za-z0-9_]*(\s+(asc|desc))?$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         protected readonly MapsterMapper.IMapper _mapper;
         protected readonly ECommerceDbContext _dbContext;
 
@@ -22,69 +27,112 @@ namespace eCommerce.Services
             _dbContext = dbContext;
         }
 
+        protected abstract IQueryable<TEntity> ApplyFilters(IQueryable<TEntity> query, TSearch? search);
 
-        /// <summary>
-        /// Applies search filters to the query. Override in derived classes to implement specific filtering logic.
-        /// </summary>
-        protected abstract IEnumerable<TEntity> ApplyFilters(IEnumerable<TEntity> query, TSearch? search);
+        protected abstract IQueryable<TEntity> ApplyDefaultOrder(IQueryable<TEntity> query);
 
         public virtual async Task<PageResult<TResponse>> GetAllAsync(TSearch? search = null)
         {
-            IEnumerable<TEntity> query = this._dbContext.Set<TEntity>();
+            search ??= new TSearch();
+            EnsureValidPaging(search);
 
-            query = await IncludeRelatedEntitiesAsync(search, query.AsQueryable());
+            IQueryable<TEntity> query = _dbContext.Set<TEntity>().AsNoTracking();
+            query = await IncludeRelatedEntitiesAsync(search, query);
             query = ApplyFilters(query, search);
 
             int? totalCount = null;
-
-            if (search.IncludeTotalCount ?? false)
+            if (search.IncludeTotalCount == true)
             {
-                totalCount = query.Count();
+                totalCount = await query.CountAsync();
             }
 
-            if (!string.IsNullOrWhiteSpace(search.SortBy))
-            {
-                //TODO: parametrize sortBy to prevent SQL injection
-                query = query.AsQueryable().OrderBy(search.SortBy);
-            }
+            query = ApplyOrdering(query, search.SortBy);
 
-            if (search.Page.HasValue)
-            {
-                query = query.Skip((search.Page.Value - 1) * search.PageSize.Value);
-            }
+            var page = search.Page ?? Pagination.DefaultPage;
+            var pageSize = search.PageSize ?? Pagination.DefaultPageSize;
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
 
-            if (search.PageSize.HasValue)
-            {
-                query = query.Take(search.PageSize.Value);
-            }
+            var entities = await query.ToListAsync();
+            var list = entities.Select(item => _mapper.Map<TResponse>(item)).ToList();
 
-            var list = query.Select(item => _mapper.Map<TResponse>(item)).ToList();
-
-            var pageResult = new PageResult<TResponse>
+            return new PageResult<TResponse>
             {
                 Items = list,
                 TotalCount = totalCount
             };
-
-            return await Task.FromResult(pageResult);
         }
 
-        protected virtual async Task<IQueryable<TEntity>> IncludeRelatedEntitiesAsync(TSearch? search, IQueryable<TEntity> query = null)
+        protected virtual Task<IQueryable<TEntity>> IncludeRelatedEntitiesAsync(TSearch? search, IQueryable<TEntity> query = null!)
         {
-            // Override in derived classes to include related entities if necessary
-            return query;
+            return Task.FromResult(query);
         }
-
 
         public virtual async Task<TResponse> GetByIdAsync(int id)
         {
-            var entity = this._dbContext.Set<TEntity>().Find(id);
+            var entity = await _dbContext.Set<TEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item => EF.Property<int>(item, "Id") == id);
+
             if (entity == null)
             {
                 throw new KeyNotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
             }
 
-            return await Task.FromResult(_mapper.Map<TResponse>(entity));
+            return _mapper.Map<TResponse>(entity);
+        }
+
+        private static void EnsureValidPaging(TSearch search)
+        {
+            var page = search.Page ?? Pagination.DefaultPage;
+            var pageSize = search.PageSize ?? Pagination.DefaultPageSize;
+
+            if (page < 1)
+            {
+                throw new ClientException("Page mora biti najmanje 1.");
+            }
+
+            if (pageSize < 1 || pageSize > Pagination.MaxPageSize)
+            {
+                throw new ClientException($"PageSize mora biti između 1 i {Pagination.MaxPageSize}.");
+            }
+
+            search.Page = page;
+            search.PageSize = pageSize;
+        }
+
+        private IQueryable<TEntity> ApplyOrdering(IQueryable<TEntity> query, string? sortBy)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+            {
+                return ApplyDefaultOrder(query);
+            }
+
+            var clauses = sortBy.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (clauses.Length == 0)
+            {
+                throw new ClientException("SortBy is not valid.");
+            }
+
+            var ordering = new List<string>(clauses.Length);
+            foreach (var clause in clauses)
+            {
+                if (!SortClausePattern.IsMatch(clause))
+                {
+                    throw new ClientException("SortBy is not valid.");
+                }
+
+                var parts = clause.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var property = typeof(TEntity).GetProperty(parts[0], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (property == null)
+                {
+                    throw new ClientException("SortBy is not valid.");
+                }
+
+                var direction = parts.Length == 2 ? parts[1].ToLowerInvariant() : "asc";
+                ordering.Add($"{property.Name} {direction}");
+            }
+
+            return query.OrderBy(string.Join(", ", ordering));
         }
     }
 }

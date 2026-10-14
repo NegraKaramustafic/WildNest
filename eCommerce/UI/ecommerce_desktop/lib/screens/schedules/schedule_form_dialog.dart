@@ -74,7 +74,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
         filter: const {
           'Status': 'Active',
           'Page': 1,
-          'PageSize': 200,
+          'PageSize': 100,
         },
       );
       if (!mounted) return;

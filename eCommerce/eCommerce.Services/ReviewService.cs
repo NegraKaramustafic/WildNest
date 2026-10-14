@@ -60,11 +60,11 @@ namespace eCommerce.Services
         {
             var userId = RequireCurrentUserId();
 
-            var alreadyReviewed = _dbContext.Reviews.Any(r =>
+            var alreadyReviewed = await _dbContext.Reviews.AnyAsync(r =>
                 r.UserId == userId && r.ActivityId == request.ActivityId);
             if (alreadyReviewed)
             {
-                throw new ClinetException("You have already reviewed this activity");
+                throw new ClientException("You have already reviewed this activity");
             }
 
             var created = await base.InsertAsync(request);
@@ -115,7 +115,7 @@ namespace eCommerce.Services
             entity.CreatedAt = existingCreatedAt;
         }
 
-        protected override IEnumerable<Review> ApplyFilters(IEnumerable<Review> query, ReviewSearchObject? search)
+        protected override IQueryable<Review> ApplyFilters(IQueryable<Review> query, ReviewSearchObject? search)
         {
             if (search != null)
             {
@@ -131,6 +131,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<Review> ApplyDefaultOrder(IQueryable<Review> query)
+        {
+            return query.OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id);
         }
 
         private int RequireCurrentUserId()

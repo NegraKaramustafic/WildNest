@@ -1,4 +1,4 @@
-﻿using eCommerce.Model.Exceptions;
+using eCommerce.Model.Exceptions;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -26,7 +26,7 @@ namespace eCommerce.Services
 
             if (token == null)
             {
-                throw new ClinetException("Refresh token not found.");
+                throw new ClientException("Refresh token not found.");
             }
 
             return token;

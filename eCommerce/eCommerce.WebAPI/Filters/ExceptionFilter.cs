@@ -29,7 +29,7 @@ namespace eCommerce.WebAPI.Filters
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 _logger.LogWarning(context.Exception, "Validation failed for request.");
             }
-            else if (context.Exception is ClinetException ce)
+            else if (context.Exception is ClientException ce)
             {
                 context.ModelState.AddModelError("clientError", ce.Message);
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -43,7 +43,6 @@ namespace eCommerce.WebAPI.Filters
             }
             else
             {
-                //context.ModelState.AddModelError("serverError", context.Exception.Message);
                 context.ModelState.AddModelError("serverError", "Server side error, please check logs.");
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 _logger.LogError(context.Exception, "Unhandled exception.");
@@ -55,10 +54,10 @@ namespace eCommerce.WebAPI.Filters
                     c => c.Key,
                     c => c.Value!.Errors.Select(z => z.ErrorMessage).ToList());
 
-            // Single human-readable line for mobile/clients; "clientError" is used for ClinetException.
+            // Single human-readable line for mobile/clients; "clientError" is used for ClientException.
             var allMessages = list.Values.SelectMany(v => v).Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
             var message = allMessages.FirstOrDefault()
-                ?? (context.Exception is ClinetException ? context.Exception.Message : null)
+                ?? (context.Exception is ClientException ? context.Exception.Message : null)
                 ?? "Request could not be processed.";
 
             context.Result = new JsonResult(new

@@ -49,7 +49,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     try {
       final provider = context.read<ActivityProvider>();
       final result = await provider.get(
-        filter: const {'Page': 1, 'PageSize': 200},
+        filter: const {'Page': 1, 'PageSize': 100},
       );
       if (!mounted) return;
       setState(() {

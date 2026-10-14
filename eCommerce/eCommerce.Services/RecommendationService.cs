@@ -114,7 +114,7 @@ namespace eCommerce.Services
             var value = limit ?? RecommendationWeights.DefaultLimit;
             if (value < 1 || value > RecommendationWeights.MaxLimit)
             {
-                throw new ClinetException($"limit must be between 1 and {RecommendationWeights.MaxLimit}.");
+                throw new ClientException($"limit must be between 1 and {RecommendationWeights.MaxLimit}.");
             }
 
             return value;
@@ -273,17 +273,20 @@ namespace eCommerce.Services
                 .Select(a => a.AnimalId)
                 .ToHashSet();
 
+            var adoptedIds = adoptedAnimalIds.ToList();
+            var adoptedCategories = adoptedIds.Count == 0
+                ? new Dictionary<int, int>()
+                : await _dbContext.Animals.AsNoTracking()
+                    .Where(a => adoptedIds.Contains(a.Id))
+                    .Select(a => new { a.Id, a.CategoryId })
+                    .ToDictionaryAsync(a => a.Id, a => a.CategoryId);
+
             foreach (var animalId in adoptedAnimalIds)
             {
                 userAnimalIds.Add(animalId);
-                var categoryId = activities.FirstOrDefault(a => a.AnimalId == animalId)?.Animal?.CategoryId
-                    ?? await _dbContext.Animals.AsNoTracking()
-                        .Where(a => a.Id == animalId)
-                        .Select(a => (int?)a.CategoryId)
-                        .FirstOrDefaultAsync();
-                if (categoryId.HasValue)
+                if (adoptedCategories.TryGetValue(animalId, out var categoryId))
                 {
-                    userCategoryIds.Add(categoryId.Value);
+                    userCategoryIds.Add(categoryId);
                 }
             }
 

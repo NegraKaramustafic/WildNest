@@ -39,24 +39,26 @@ namespace eCommerce.Services
         }
 
 
-        protected override IEnumerable<User> ApplyFilters(IEnumerable<User> query, UserSearch? search)
+        protected override IQueryable<User> ApplyFilters(IQueryable<User> query, UserSearch? search)
         {
             if (search != null)
             {
                 if (!string.IsNullOrWhiteSpace(search.Email))
                 {
-                    query = query.Where(u => u.Email.Contains(search.Email, StringComparison.OrdinalIgnoreCase));
+                    var email = search.Email.Trim();
+                    query = query.Where(u => u.Email.Contains(email));
                 }
 
                 if (!string.IsNullOrWhiteSpace(search.Username))
                 {
-                    query = query.Where(u => u.Username.Contains(search.Username, StringComparison.OrdinalIgnoreCase));
+                    var username = search.Username.Trim();
+                    query = query.Where(u => u.Username.Contains(username));
                 }
 
                 if (!string.IsNullOrWhiteSpace(search.Name))
                 {
-                    query = query.Where(u => u.FirstName.Contains(search.Name, StringComparison.OrdinalIgnoreCase)
-                                          || u.LastName.Contains(search.Name, StringComparison.OrdinalIgnoreCase));
+                    var name = search.Name.Trim();
+                    query = query.Where(u => u.FirstName.Contains(name) || u.LastName.Contains(name));
                 }
 
                 if (search.IsActive.HasValue)
@@ -66,6 +68,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<User> ApplyDefaultOrder(IQueryable<User> query)
+        {
+            return query.OrderByDescending(u => u.CreatedAt).ThenByDescending(u => u.Id);
         }
 
         protected override User MapInsertRequestToEntity(UserInsertRequest request)
@@ -90,12 +97,12 @@ namespace eCommerce.Services
             // Check if email or username already exists
             if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email))
             {
-                throw new ClinetException($"Email '{request.Email}' is already in use.");
+                throw new ClientException($"Email '{request.Email}' is already in use.");
             }
 
             if (await _dbContext.Users.AnyAsync(u => u.Username == request.Username))
             {
-                throw new ClinetException($"Username '{request.Username}' is already in use.");
+                throw new ClientException($"Username '{request.Username}' is already in use.");
             }
 
             var entity = MapInsertRequestToEntity(request);
@@ -146,12 +153,12 @@ namespace eCommerce.Services
             // Check if email or username already exists
             if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email && u.Id != id))
             {
-                throw new ClinetException($"Email '{request.Email}' is already in use.");
+                throw new ClientException($"Email '{request.Email}' is already in use.");
             }
 
             if (await _dbContext.Users.AnyAsync(u => u.Username == request.Username && u.Id != id))
             {
-                throw new ClinetException($"Username '{request.Username}' is already in use.");
+                throw new ClientException($"Username '{request.Username}' is already in use.");
             }
 
             MapUpdateRequestToEntity(request, entity);
@@ -163,7 +170,7 @@ namespace eCommerce.Services
             var deactivated = existingIsActive && !entity.IsActive;
             if (deactivated)
             {
-                RotateSecurityStamp(entity);
+                await RotateSecurityStampAsync(entity);
             }
 
             _dbContext.Users.Update(entity);
@@ -181,7 +188,7 @@ namespace eCommerce.Services
             var currentUserId = _userAccessor.GetUserId();
             if (currentUserId.HasValue && currentUserId.Value == id)
             {
-                throw new ClinetException("You cannot delete your own account.");
+                throw new ClientException("You cannot delete your own account.");
             }
 
             var entity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
@@ -190,25 +197,34 @@ namespace eCommerce.Services
                 throw new KeyNotFoundException($"User with id {id} not found.");
             }
 
-            if (await HasRelatedRowsAsync(id))
+            var softDeleted = false;
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
             {
-                entity.IsActive = false;
-                RotateSecurityStamp(entity);
+                if (await HasRelatedRowsAsync(id))
+                {
+                    entity.IsActive = false;
+                    await RotateSecurityStampAsync(entity);
+                    softDeleted = true;
+                }
+                else
+                {
+                    var notifications = await _dbContext.Notifications.Where(n => n.UserId == id).ToListAsync();
+                    _dbContext.Notifications.RemoveRange(notifications);
+                    var badges = await _dbContext.UserBadges.Where(b => b.UserId == id).ToListAsync();
+                    _dbContext.UserBadges.RemoveRange(badges);
+                    _dbContext.Users.Remove(entity);
+                }
+
                 await _dbContext.SaveChangesAsync();
+            });
+
+            if (softDeleted)
+            {
                 _securityStampCache.Invalidate(entity.Id);
-                return;
             }
-
-            var notifications = await _dbContext.Notifications.Where(n => n.UserId == id).ToListAsync();
-            _dbContext.Notifications.RemoveRange(notifications);
-            var badges = await _dbContext.UserBadges.Where(b => b.UserId == id).ToListAsync();
-            _dbContext.UserBadges.RemoveRange(badges);
-
-            _dbContext.Users.Remove(entity);
-            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<UserSensitveResponse?> GetByUsernameAsync(string username)
+        public async Task<UserSensitiveResponse?> GetByUsernameAsync(string username)
         {
             var user = await _dbContext.Users
                 .AsNoTracking()
@@ -216,11 +232,11 @@ namespace eCommerce.Services
                 .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Username == username);
 
-            UserSensitveResponse? response = null;
+            UserSensitiveResponse? response = null;
 
             if (user != null)
             {
-                response = _mapper.Map<UserSensitveResponse>(user);
+                response = _mapper.Map<UserSensitiveResponse>(user);
                 response.Role = user.UserRoles.FirstOrDefault()?.Role.Name;
             }
 
@@ -249,27 +265,27 @@ namespace eCommerce.Services
         public async Task ChangePasswordAsync(UserPasswordChangeRequest request)
         {
             var userId = _userAccessor.GetUserId()
-                ?? throw new ClinetException("User id claim is missing.");
+                ?? throw new ClientException("User id claim is missing.");
 
             if (request.Id != 0 && request.Id != userId)
             {
-                throw new ClinetException("You can only change your own password.");
+                throw new ClientException("You can only change your own password.");
             }
 
-            var user = _dbContext.Users.FirstOrDefault(u => u.Id == userId);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
-                throw new ClinetException("Wrong credential");
+                throw new ClientException("Wrong credential");
 
             if (!request.NewPassword.Equals(request.ConfirmNewPassword))
-                throw new ClinetException("Password confirmation doesn't match the new password.");
+                throw new ClientException("Password confirmation doesn't match the new password.");
 
             user.PasswordSalt = _cryptoService.GenerateSlat();
             user.PasswordHash = _cryptoService.GenerateHash(request.NewPassword, user.PasswordSalt);
-            RotateSecurityStamp(user);
+            await RotateSecurityStampAsync(user);
 
             _dbContext.Users.Update(user);
             await _dbContext.SaveChangesAsync();
@@ -286,7 +302,7 @@ namespace eCommerce.Services
 
             if (string.IsNullOrEmpty(stamp))
             {
-                throw new ClinetException("User security stamp is missing.");
+                throw new ClientException("User security stamp is missing.");
             }
 
             return stamp;
@@ -300,15 +316,15 @@ namespace eCommerce.Services
                 throw new KeyNotFoundException("User not found");
             }
 
-            RotateSecurityStamp(user);
+            await RotateSecurityStampAsync(user);
             await _dbContext.SaveChangesAsync();
             _securityStampCache.Invalidate(userId);
         }
 
-        private void RotateSecurityStamp(User user)
+        private async Task RotateSecurityStampAsync(User user)
         {
             user.SecurityStamp = NewSecurityStamp();
-            var tokens = _dbContext.RefreshTokens.Where(token => token.UserId == user.Id);
+            var tokens = await _dbContext.RefreshTokens.Where(token => token.UserId == user.Id).ToListAsync();
             _dbContext.RefreshTokens.RemoveRange(tokens);
         }
 
@@ -333,7 +349,7 @@ namespace eCommerce.Services
 
             if (role == null)
             {
-                throw new ClinetException("Customer role is not configured.");
+                throw new ClientException("Customer role is not configured.");
             }
 
             return role.Id;

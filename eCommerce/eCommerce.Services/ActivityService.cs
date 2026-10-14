@@ -36,7 +36,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         return base.IncludeRelatedEntitiesAsync(search, query);
     }
 
-    protected override IEnumerable<Activity> ApplyFilters(IEnumerable<Activity> query, ActivitySearchObject? search)
+    protected override IQueryable<Activity> ApplyFilters(IQueryable<Activity> query, ActivitySearchObject? search)
     {
         if (!_userAccessor.IsInRole(Roles.Admin))
         {
@@ -57,11 +57,17 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
             if (!string.IsNullOrWhiteSpace(search.Name))
             {
-                query = query.Where(a => a.Name.Contains(search.Name, StringComparison.OrdinalIgnoreCase));
+                var name = search.Name.Trim();
+                query = query.Where(a => a.Name.Contains(name));
             }
         }
 
         return query;
+    }
+
+    protected override IQueryable<Activity> ApplyDefaultOrder(IQueryable<Activity> query)
+    {
+        return query.OrderBy(a => a.Name).ThenBy(a => a.Id);
     }
 
     public override async Task<PageResult<ActivityResponse>> GetAllAsync(ActivitySearchObject? search = null)

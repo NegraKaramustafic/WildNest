@@ -94,7 +94,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
     try {
       final provider = context.read<AnimalProvider>();
       final result = await provider.get(
-        filter: const {'Page': 1, 'PageSize': 200},
+        filter: const {'Page': 1, 'PageSize': 100},
       );
       if (!mounted) return;
       final items = result.items ?? [];

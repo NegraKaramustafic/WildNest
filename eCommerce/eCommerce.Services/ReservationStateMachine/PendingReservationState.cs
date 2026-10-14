@@ -25,7 +25,7 @@ namespace eCommerce.Services.ReservationStateMachine
             if (!entity.PaymentId.HasValue
                 || !await DbContext.Payments.AnyAsync(p => p.Id == entity.PaymentId.Value && p.Status == PaymentStatus.Completed))
             {
-                throw new ClinetException("Reservation cannot be confirmed until payment is completed.");
+                throw new ClientException("Reservation cannot be confirmed until payment is completed.");
             }
 
             entity.Status = ReservationStatus.Confirmed;
