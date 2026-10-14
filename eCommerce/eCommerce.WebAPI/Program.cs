@@ -32,7 +32,7 @@ ZooClock zooClock;
 string connectionString;
 try
 {
-    connectionString = EnvVariables.Require("ConnectionStrings__DefaultConnection");
+    connectionString = EnvVariables.DefaultConnection();
     jwtSettings = JwtSettings.FromEnvironment();
     rabbitSettings = RabbitMqSettings.FromEnvironment();
     stripeSettings = StripeSettings.FromEnvironment();

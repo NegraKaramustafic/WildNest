@@ -48,7 +48,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
         filter: {
           'Name': _searchController.text.trim(),
           'Page': 1,
-          'PageSize': 200,
+          'PageSize': 100,
           'IncludeTotalCount': true,
         },
       );

@@ -12,7 +12,7 @@ public class ECommerceDbContextFactory : IDesignTimeDbContextFactory<ECommerceDb
     public ECommerceDbContext CreateDbContext(string[] args)
     {
         EnvFileLoader.Load();
-        var connectionString = EnvVariables.Require("ConnectionStrings__DefaultConnection");
+        var connectionString = EnvVariables.DefaultConnection();
         var options = new DbContextOptionsBuilder<ECommerceDbContext>()
             .UseSqlServer(connectionString)
             .Options;

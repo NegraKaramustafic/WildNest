@@ -29,32 +29,32 @@ namespace eCommerce.Services.ReservationStateMachine
 
         public virtual Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)
         {
-            throw new ClinetException("Cannot insert a reservation in its current state.");
+            throw new ClientException("Cannot insert a reservation in its current state.");
         }
 
         public virtual Task<ReservationResponse> UpdateAsync(int id, ReservationUpdateRequest request)
         {
-            throw new ClinetException("Cannot update a reservation in its current state.");
+            throw new ClientException("Cannot update a reservation in its current state.");
         }
 
         public virtual Task<ReservationResponse> ConfirmAsync(int id)
         {
-            throw new ClinetException("Cannot confirm a reservation in its current state.");
+            throw new ClientException("Cannot confirm a reservation in its current state.");
         }
 
         public virtual Task<ReservationResponse> CancelAsync(int id)
         {
-            throw new ClinetException("Cannot cancel a reservation in its current state.");
+            throw new ClientException("Cannot cancel a reservation in its current state.");
         }
 
         public virtual Task<ReservationResponse> CompleteAsync(int id)
         {
-            throw new ClinetException("Cannot complete a reservation in its current state.");
+            throw new ClientException("Cannot complete a reservation in its current state.");
         }
 
         public virtual Task<ReservationResponse> DeleteAsync(int id)
         {
-            throw new ClinetException("Cannot delete a reservation in its current state.");
+            throw new ClientException("Cannot delete a reservation in its current state.");
         }
 
         public BaseReservationState GetReservationState(string stateName)
@@ -72,7 +72,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 case nameof(CancelledReservationState):
                     return ServiceProvider.GetService<CancelledReservationState>()!;
                 default:
-                    throw new ClinetException($"Unknown reservation state: {stateName}");
+                    throw new ClientException($"Unknown reservation state: {stateName}");
             }
         }
 
@@ -84,7 +84,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 ReservationStatus.Confirmed => GetReservationState(nameof(ConfirmedReservationState)),
                 ReservationStatus.Completed => GetReservationState(nameof(CompletedReservationState)),
                 ReservationStatus.Cancelled => GetReservationState(nameof(CancelledReservationState)),
-                _ => throw new ClinetException($"Unknown reservation status: {status}")
+                _ => throw new ClientException($"Unknown reservation status: {status}")
             };
         }
 
@@ -102,7 +102,7 @@ namespace eCommerce.Services.ReservationStateMachine
             }
         }
 
-        protected string GenerateUniqueCode()
+        protected async Task<string> GenerateUniqueCodeAsync()
         {
             for (var attempt = 0; attempt < MaxCodeAttempts; attempt++)
             {
@@ -113,7 +113,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 }
 
                 var code = $"WN-{new string(suffix)}";
-                if (!DbContext.Reservations.Any(r => r.Code == code))
+                if (!await DbContext.Reservations.AnyAsync(r => r.Code == code))
                 {
                     return code;
                 }

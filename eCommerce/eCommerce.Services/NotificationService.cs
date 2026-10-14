@@ -56,15 +56,10 @@ namespace eCommerce.Services
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(search.SortBy))
-            {
-                search.SortBy = "CreatedAt desc";
-            }
-
             return await base.GetAllAsync(search);
         }
 
-        protected override IEnumerable<Notification> ApplyFilters(IEnumerable<Notification> query, NotificationSearchObject? search)
+        protected override IQueryable<Notification> ApplyFilters(IQueryable<Notification> query, NotificationSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -95,6 +90,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<Notification> ApplyDefaultOrder(IQueryable<Notification> query)
+        {
+            return query.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id);
         }
 
         public async Task<int> GetUnreadCountAsync(int? userId)

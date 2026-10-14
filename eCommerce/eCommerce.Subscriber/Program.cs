@@ -12,7 +12,7 @@ RabbitMqSettings rabbitSettings;
 SmtpSettings smtpSettings;
 try
 {
-    connectionString = EnvVariables.Require("ConnectionStrings__DefaultConnection");
+    connectionString = EnvVariables.DefaultConnection();
     rabbitSettings = RabbitMqSettings.FromEnvironment();
     smtpSettings = SmtpSettings.FromEnvironment();
 }

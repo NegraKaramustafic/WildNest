@@ -93,7 +93,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Future<void> _loadCategories() async {
     try {
       final result = await context.read<AnimalCategoryProvider>().get(
-        filter: const {'Page': 1, 'PageSize': 200},
+        filter: const {'Page': 1, 'PageSize': 100},
       );
       if (!mounted) return;
       final items = result.items ?? [];

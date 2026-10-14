@@ -64,7 +64,7 @@ namespace eCommerce.Services
 
         public override Task<PaymentResponse> InsertAsync(PaymentInsertRequest request)
         {
-            throw new ClinetException("Payments are created through POST /api/Payment/checkout. The amount is taken from the related record.");
+            throw new ClientException("Payments are created through POST /api/Payment/checkout. The amount is taken from the related record.");
         }
 
         public override async Task<PaymentResponse> UpdateAsync(int id, PaymentUpdateRequest request)
@@ -113,7 +113,7 @@ namespace eCommerce.Services
             entity.StripeRefundId = existingRefund;
         }
 
-        protected override IEnumerable<Database.Payment> ApplyFilters(IEnumerable<Database.Payment> query, PaymentSearchObject? search)
+        protected override IQueryable<Database.Payment> ApplyFilters(IQueryable<Database.Payment> query, PaymentSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -146,6 +146,11 @@ namespace eCommerce.Services
             return query;
         }
 
+        protected override IQueryable<Database.Payment> ApplyDefaultOrder(IQueryable<Database.Payment> query)
+        {
+            return query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id);
+        }
+
         public async Task<PaymentCheckoutResponse> CreateCheckoutAsync(PaymentCheckoutRequest request)
         {
             var validationResult = await _checkoutValidator.ValidateAsync(request);
@@ -162,7 +167,7 @@ namespace eCommerce.Services
                 {
                     if (existing.Status == PaymentStatus.Completed)
                     {
-                        throw new ClinetException("This record already has a completed payment.");
+                        throw new ClientException("This record already has a completed payment.");
                     }
 
                     if (existing.Status == PaymentStatus.Pending)
@@ -174,7 +179,6 @@ namespace eCommerce.Services
                         }
 
                         existing.Status = PaymentStatus.Failed;
-                        await _dbContext.SaveChangesAsync();
                     }
                 }
             }
@@ -190,10 +194,13 @@ namespace eCommerce.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _dbContext.Payments.Add(payment);
-            await _dbContext.SaveChangesAsync();
-            payable.AssignPaymentId(payment);
-            await _dbContext.SaveChangesAsync();
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
+            {
+                _dbContext.Payments.Add(payment);
+                await _dbContext.SaveChangesAsync();
+                payable.AssignPaymentId(payment);
+                await _dbContext.SaveChangesAsync();
+            });
 
             try
             {
@@ -209,7 +216,7 @@ namespace eCommerce.Services
                 payment.Status = PaymentStatus.Failed;
                 await _dbContext.SaveChangesAsync();
                 _logger.LogError(ex, "Stripe checkout session creation failed for payment {PaymentId}.", payment.Id);
-                throw new ClinetException("Unable to start Stripe checkout. Please try again.");
+                throw new ClientException("Unable to start Stripe checkout. Please try again.");
             }
         }
 
@@ -217,7 +224,7 @@ namespace eCommerce.Services
         {
             if (string.IsNullOrWhiteSpace(json))
             {
-                throw new ClinetException("Webhook payload is empty.");
+                throw new ClientException("Webhook payload is empty.");
             }
 
             Event stripeEvent;
@@ -228,7 +235,7 @@ namespace eCommerce.Services
             catch (StripeException ex)
             {
                 _logger.LogWarning(ex, "Stripe webhook signature verification failed.");
-                throw new ClinetException("Invalid Stripe webhook signature.");
+                throw new ClientException("Invalid Stripe webhook signature.");
             }
 
             if (await EventAlreadyStoredAsync(stripeEvent.Id))
@@ -258,10 +265,9 @@ namespace eCommerce.Services
 
             if (payment.Status == PaymentStatus.Completed)
             {
-                // Adoption passes false: completed adoption payments are non-refundable by design.
                 if (refundIfCompleted)
                 {
-                    await RefundCompletedPaymentAsync(payment);
+                    await RefundCompletedPaymentAsync(payment, persist: false);
                 }
 
                 return;
@@ -270,8 +276,10 @@ namespace eCommerce.Services
             if (payment.Status == PaymentStatus.Pending)
             {
                 await CancelPendingStripeSessionAsync(payment);
-                payment.Status = PaymentStatus.Failed;
-                await _dbContext.SaveChangesAsync();
+                if (payment.Status == PaymentStatus.Pending)
+                {
+                    payment.Status = PaymentStatus.Failed;
+                }
             }
         }
 
@@ -335,9 +343,12 @@ namespace eCommerce.Services
 
             if (await RelatedEntityIsCancelledAsync(payment))
             {
-                payment.Status = PaymentStatus.Completed;
-                await _dbContext.SaveChangesAsync();
-                await RefundCompletedPaymentAsync(payment);
+                await DbTransactions.ExecuteAsync(_dbContext, async () =>
+                {
+                    payment.Status = PaymentStatus.Completed;
+                    await RefundCompletedPaymentAsync(payment, persist: false);
+                    await _dbContext.SaveChangesAsync();
+                });
                 return;
             }
 
@@ -515,7 +526,7 @@ namespace eCommerce.Services
             };
         }
 
-        private async Task RefundCompletedPaymentAsync(Database.Payment payment)
+        private async Task RefundCompletedPaymentAsync(Database.Payment payment, bool persist = true)
         {
             if (payment.Status == PaymentStatus.Refunded)
             {
@@ -524,7 +535,7 @@ namespace eCommerce.Services
 
             if (payment.Status != PaymentStatus.Completed && payment.Status != PaymentStatus.Failed)
             {
-                throw new ClinetException("Only a completed payment can be refunded.");
+                throw new ClientException("Only a completed payment can be refunded.");
             }
 
             if (!string.IsNullOrWhiteSpace(payment.StripePaymentIntentId) && string.IsNullOrWhiteSpace(payment.StripeRefundId))
@@ -545,12 +556,15 @@ namespace eCommerce.Services
                 catch (StripeException ex)
                 {
                     _logger.LogError(ex, "Stripe refund failed for payment {PaymentId}.", payment.Id);
-                    throw new ClinetException("Stripe refund failed. The payment was not marked as refunded.");
+                    throw new ClientException("Stripe refund failed. The payment was not marked as refunded.");
                 }
             }
 
             payment.Status = PaymentStatus.Refunded;
-            await _dbContext.SaveChangesAsync();
+            if (persist)
+            {
+                await _dbContext.SaveChangesAsync();
+            }
         }
 
         private async Task CancelPendingStripeSessionAsync(Database.Payment payment)
@@ -564,8 +578,7 @@ namespace eCommerce.Services
                     if (session.Status == "complete" || session.PaymentStatus == "paid")
                     {
                         payment.Status = PaymentStatus.Completed;
-                        await _dbContext.SaveChangesAsync();
-                        await RefundCompletedPaymentAsync(payment);
+                        await RefundCompletedPaymentAsync(payment, persist: false);
                         return;
                     }
 
@@ -696,7 +709,7 @@ namespace eCommerce.Services
 
                         if (ticket.Status is TicketStatus.Cancelled or TicketStatus.Used)
                         {
-                            throw new ClinetException("This ticket cannot be paid.");
+                            throw new ClientException("This ticket cannot be paid.");
                         }
 
                         return new PayableRecord(
@@ -717,7 +730,7 @@ namespace eCommerce.Services
 
                         if (reservation.Status is ReservationStatus.Cancelled or ReservationStatus.Completed)
                         {
-                            throw new ClinetException("This reservation cannot be paid.");
+                            throw new ClientException("This reservation cannot be paid.");
                         }
 
                         return new PayableRecord(
@@ -738,7 +751,7 @@ namespace eCommerce.Services
 
                         if (adoption.Status == AdoptionStatus.Cancelled)
                         {
-                            throw new ClinetException("This adoption cannot be paid.");
+                            throw new ClientException("This adoption cannot be paid.");
                         }
 
                         return new PayableRecord(
@@ -766,7 +779,7 @@ namespace eCommerce.Services
                     }
 
                 default:
-                    throw new ClinetException("Unsupported related entity type.");
+                    throw new ClientException("Unsupported related entity type.");
             }
         }
 

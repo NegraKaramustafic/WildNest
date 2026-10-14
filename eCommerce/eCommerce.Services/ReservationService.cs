@@ -48,7 +48,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         return base.IncludeRelatedEntitiesAsync(search, query);
     }
 
-    protected override IEnumerable<Reservation> ApplyFilters(IEnumerable<Reservation> query, ReservationSearchObject? search)
+    protected override IQueryable<Reservation> ApplyFilters(IQueryable<Reservation> query, ReservationSearchObject? search)
     {
         if (_userAccessor.IsInRole(Roles.Admin))
         {
@@ -79,6 +79,11 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         }
 
         return query;
+    }
+
+    protected override IQueryable<Reservation> ApplyDefaultOrder(IQueryable<Reservation> query)
+    {
+        return query.OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id);
     }
 
     public override async Task<ReservationResponse> GetByIdAsync(int id)
@@ -137,14 +142,25 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     {
         var entity = await GetAccessibleEntityAsync(id);
         var paymentId = entity.PaymentId;
-        var state = ReservationState.GetReservationState(entity.Status);
-        var cancelled = await state.CancelAsync(id);
-        if (paymentId.HasValue)
+        var ownsTransaction = _dbContext.Database.CurrentTransaction == null;
+        ReservationResponse cancelled = null!;
+        await DbTransactions.ExecuteAsync(_dbContext, async () =>
         {
-            await _paymentService.HandleEntityCancellationAsync(paymentId.Value);
+            var state = ReservationState.GetReservationState(entity.Status);
+            cancelled = await state.CancelAsync(id);
+            if (paymentId.HasValue)
+            {
+                await _paymentService.HandleEntityCancellationAsync(paymentId.Value);
+            }
+
+            await _dbContext.SaveChangesAsync();
+        });
+
+        if (ownsTransaction)
+        {
+            await _notificationEvents.NotifyReservationCancelledAsync(cancelled);
         }
 
-        await _notificationEvents.NotifyReservationCancelledAsync(cancelled);
         return cancelled;
     }
 

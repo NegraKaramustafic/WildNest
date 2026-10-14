@@ -53,7 +53,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
         filter: {
           'FTS': _searchController.text.trim(),
           'Page': 1,
-          'PageSize': 200,
+          'PageSize': 100,
           'IncludeTotalCount': true,
         },
       );

@@ -58,8 +58,24 @@ namespace eCommerce.Services
 
         public override async Task<AdoptionResponse> InsertAsync(AdoptionInsertRequest request)
         {
-            var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            await _insertValidator.ValidateAndThrowAsync(request);
+            var animal = await _dbContext.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == request.AnimalId);
+            if (animal == null)
+            {
+                throw new KeyNotFoundException($"Animal with id {request.AnimalId} not found.");
+            }
+
+            if (!animal.AdoptionPrice.HasValue)
+            {
+                throw new ClientException("This animal is not available for adoption");
+            }
+
+            var entity = MapInsertRequestToEntity(request);
+            entity.MonthlyAmount = animal.AdoptionPrice.Value;
+            entity.StartDate = DateTime.UtcNow;
+            _dbContext.Adoptions.Add(entity);
+            await _dbContext.SaveChangesAsync();
+            return await GetByIdAsync(entity.Id);
         }
 
         public override async Task<AdoptionResponse> UpdateAsync(int id, AdoptionUpdateRequest request)
@@ -87,23 +103,10 @@ namespace eCommerce.Services
 
         protected override Adoption MapInsertRequestToEntity(AdoptionInsertRequest request)
         {
-            var animal = _dbContext.Animals.Find(request.AnimalId);
-            if (animal == null)
-            {
-                throw new KeyNotFoundException($"Animal with id {request.AnimalId} not found.");
-            }
-
-            if (!animal.AdoptionPrice.HasValue)
-            {
-                throw new ClinetException("This animal is not available for adoption");
-            }
-
             var entity = base.MapInsertRequestToEntity(request);
             entity.UserId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
-            entity.MonthlyAmount = animal.AdoptionPrice.Value;
             entity.Status = AdoptionStatus.PendingPayment;
-            entity.StartDate = DateTime.UtcNow;
             entity.PaymentId = null;
             return entity;
         }
@@ -125,7 +128,7 @@ namespace eCommerce.Services
             entity.MonthlyAmount = existingMonthlyAmount;
         }
 
-        protected override IEnumerable<Adoption> ApplyFilters(IEnumerable<Adoption> query, AdoptionSearchObject? search)
+        protected override IQueryable<Adoption> ApplyFilters(IQueryable<Adoption> query, AdoptionSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -158,6 +161,11 @@ namespace eCommerce.Services
             return query;
         }
 
+        protected override IQueryable<Adoption> ApplyDefaultOrder(IQueryable<Adoption> query)
+        {
+            return query.OrderByDescending(a => a.StartDate).ThenByDescending(a => a.Id);
+        }
+
         public async Task<AdoptionResponse> CancelAsync(int id)
         {
             var entity = await _dbContext.Adoptions.FindAsync(id);
@@ -168,19 +176,19 @@ namespace eCommerce.Services
 
             if (entity.Status == AdoptionStatus.Cancelled)
             {
-                throw new ClinetException("Adoption is already cancelled.");
+                throw new ClientException("Adoption is already cancelled.");
             }
 
-            entity.Status = AdoptionStatus.Cancelled;
-            await _dbContext.SaveChangesAsync();
-
-            if (entity.PaymentId.HasValue)
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
             {
-                // Intentional: virtual adoption is a non-refundable contribution.
-                // Cancel expires an unpaid Stripe session, but a completed charge is not refunded
-                // (unlike Ticket/Reservation, which are refundable bookings). Not a missing feature.
-                await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value, refundIfCompleted: false);
-            }
+                entity.Status = AdoptionStatus.Cancelled;
+                if (entity.PaymentId.HasValue)
+                {
+                    await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value, refundIfCompleted: false);
+                }
+
+                await _dbContext.SaveChangesAsync();
+            });
 
             return await GetByIdAsync(id);
         }

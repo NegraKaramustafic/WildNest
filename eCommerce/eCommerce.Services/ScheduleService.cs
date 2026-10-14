@@ -15,6 +15,7 @@ namespace eCommerce.Services
     public class ScheduleService : BaseCRUDService<Schedule, ScheduleResponse, ScheduleSearchObject, ScheduleInsertRequest, ScheduleUpdateRequest>, IScheduleService
     {
         private readonly IReservationService _reservationService;
+        private readonly INotificationEventService _notificationEvents;
         private readonly ZooClock _zooClock;
 
         public ScheduleService(
@@ -23,10 +24,12 @@ namespace eCommerce.Services
             IValidator<ScheduleInsertRequest> insertValidator,
             IValidator<ScheduleUpdateRequest> updateValidator,
             IReservationService reservationService,
+            INotificationEventService notificationEvents,
             ZooClock zooClock)
             : base(dbContext, mapper, insertValidator, updateValidator)
         {
             _reservationService = reservationService;
+            _notificationEvents = notificationEvents;
             _zooClock = zooClock;
         }
 
@@ -53,8 +56,39 @@ namespace eCommerce.Services
 
         public override async Task<ScheduleResponse> InsertAsync(ScheduleInsertRequest request)
         {
-            var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            var validationResult = await _insertValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
+            var activity = await GetActiveActivityAsync(request.ActivityId);
+            if (request.Date < _zooClock.Today)
+            {
+                throw new ClientException("Datum ne može biti u prošlosti.");
+            }
+
+            if (request.EndTime <= request.StartTime)
+            {
+                throw new ClientException("Vrijeme završetka mora biti nakon vremena početka.");
+            }
+
+            if (request.CapacityLeft.HasValue)
+            {
+                EnsureCapacityValue(request.CapacityLeft.Value, activity.Capacity);
+            }
+
+            await EnsureNoActiveOverlapAsync(request.ActivityId, request.Date, request.StartTime, request.EndTime, null, request.Status);
+
+            var entity = base.MapInsertRequestToEntity(request);
+            if (!request.CapacityLeft.HasValue)
+            {
+                entity.CapacityLeft = activity.Capacity;
+            }
+
+            _dbContext.Schedules.Add(entity);
+            await _dbContext.SaveChangesAsync();
+            return await GetByIdAsync(entity.Id);
         }
 
         public override async Task<ScheduleResponse> UpdateAsync(int id, ScheduleUpdateRequest request)
@@ -73,11 +107,11 @@ namespace eCommerce.Services
 
             if (request.ActivityId != entity.ActivityId)
             {
-                GetActiveActivity(request.ActivityId);
+                await GetActiveActivityAsync(request.ActivityId);
             }
 
             var effectiveCapacity = request.CapacityLeft ?? entity.CapacityLeft;
-            EnsureCapacityWithinActivity(request.ActivityId, effectiveCapacity);
+            await EnsureCapacityWithinActivityAsync(request.ActivityId, effectiveCapacity);
 
             var openReservations = await _dbContext.Reservations
                 .Where(r => r.ScheduleId == id && r.Status != ReservationStatus.Cancelled)
@@ -85,7 +119,7 @@ namespace eCommerce.Services
 
             if (openReservations.Count > 0 && ChangesLockedFields(entity, request))
             {
-                throw new ClinetException("Termin ima rezervacije. Aktivnost, datum i vrijeme se ne mogu mijenjati.");
+                throw new ClientException("Termin ima rezervacije. Aktivnost, datum i vrijeme se ne mogu mijenjati.");
             }
 
             var cancelling = request.Status == ScheduleStatus.Cancelled && entity.Status != ScheduleStatus.Cancelled;
@@ -95,22 +129,32 @@ namespace eCommerce.Services
                     r.Status != ReservationStatus.Pending && r.Status != ReservationStatus.Confirmed);
                 if (blocked)
                 {
-                    throw new ClinetException(
+                    throw new ClientException(
                         "Termin ima završene rezervacije. Završenu rezervaciju nije moguće otkazati kroz postojeći tok otkazivanja, pa se termin ne može otkazati.");
                 }
 
-                foreach (var reservation in openReservations)
+                var cancelled = new List<ReservationResponse>();
+                await DbTransactions.ExecuteAsync(_dbContext, async () =>
                 {
-                    await _reservationService.CancelAsync(reservation.Id);
+                    foreach (var reservation in openReservations)
+                    {
+                        cancelled.Add(await _reservationService.CancelAsync(reservation.Id));
+                    }
+
+                    await _dbContext.Entry(entity).ReloadAsync();
+                    entity.Status = ScheduleStatus.Cancelled;
+                    await _dbContext.SaveChangesAsync();
+                });
+
+                foreach (var reservation in cancelled)
+                {
+                    await _notificationEvents.NotifyReservationCancelledAsync(reservation);
                 }
 
-                await _dbContext.Entry(entity).ReloadAsync();
-                entity.Status = ScheduleStatus.Cancelled;
-                await _dbContext.SaveChangesAsync();
                 return await GetByIdAsync(id);
             }
 
-            EnsureNoActiveOverlap(request.ActivityId, request.Date, request.StartTime, request.EndTime, id, request.Status);
+            await EnsureNoActiveOverlapAsync(request.ActivityId, request.Date, request.StartTime, request.EndTime, id, request.Status);
             MapUpdateRequestToEntity(request, entity);
             await _dbContext.SaveChangesAsync();
             return await GetByIdAsync(id);
@@ -131,44 +175,15 @@ namespace eCommerce.Services
 
             if (statuses.Any(status => status != ReservationStatus.Cancelled))
             {
-                throw new ClinetException("Termin ima rezervacije i ne može se obrisati – otkažite ga.");
+                throw new ClientException("Termin ima rezervacije i ne može se obrisati – otkažite ga.");
             }
 
             if (statuses.Count > 0)
             {
-                throw new ClinetException("Termin ima otkazane rezervacije i ne može se obrisati.");
+                throw new ClientException("Termin ima otkazane rezervacije i ne može se obrisati.");
             }
 
             await base.DeleteAsync(id);
-        }
-
-        protected override Schedule MapInsertRequestToEntity(ScheduleInsertRequest request)
-        {
-            var activity = GetActiveActivity(request.ActivityId);
-            if (request.Date < _zooClock.Today)
-            {
-                throw new ClinetException("Datum ne može biti u prošlosti.");
-            }
-
-            if (request.EndTime <= request.StartTime)
-            {
-                throw new ClinetException("Vrijeme završetka mora biti nakon vremena početka.");
-            }
-
-            if (request.CapacityLeft.HasValue)
-            {
-                EnsureCapacityValue(request.CapacityLeft.Value, activity.Capacity);
-            }
-
-            EnsureNoActiveOverlap(request.ActivityId, request.Date, request.StartTime, request.EndTime, null, request.Status);
-
-            var entity = base.MapInsertRequestToEntity(request);
-            if (!request.CapacityLeft.HasValue)
-            {
-                entity.CapacityLeft = activity.Capacity;
-            }
-
-            return entity;
         }
 
         protected override void MapUpdateRequestToEntity(ScheduleUpdateRequest request, Schedule entity)
@@ -182,7 +197,7 @@ namespace eCommerce.Services
             }
         }
 
-        protected override IEnumerable<Schedule> ApplyFilters(IEnumerable<Schedule> query, ScheduleSearchObject? search)
+        protected override IQueryable<Schedule> ApplyFilters(IQueryable<Schedule> query, ScheduleSearchObject? search)
         {
             if (search != null)
             {
@@ -215,9 +230,14 @@ namespace eCommerce.Services
             return query;
         }
 
-        private Activity GetActiveActivity(int activityId)
+        protected override IQueryable<Schedule> ApplyDefaultOrder(IQueryable<Schedule> query)
         {
-            var activity = _dbContext.Activities.Find(activityId);
+            return query.OrderBy(s => s.Date).ThenBy(s => s.StartTime).ThenBy(s => s.Id);
+        }
+
+        private async Task<Activity> GetActiveActivityAsync(int activityId)
+        {
+            var activity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == activityId);
             if (activity == null)
             {
                 throw new KeyNotFoundException($"Activity with id {activityId} not found.");
@@ -225,15 +245,15 @@ namespace eCommerce.Services
 
             if (activity.Status != ActivityStatus.Active)
             {
-                throw new ClinetException("Termin se može kreirati samo za aktivnu aktivnost.");
+                throw new ClientException("Termin se može kreirati samo za aktivnu aktivnost.");
             }
 
             return activity;
         }
 
-        private void EnsureCapacityWithinActivity(int activityId, int capacityLeft)
+        private async Task EnsureCapacityWithinActivityAsync(int activityId, int capacityLeft)
         {
-            var activity = _dbContext.Activities.Find(activityId);
+            var activity = await _dbContext.Activities.AsNoTracking().FirstOrDefaultAsync(item => item.Id == activityId);
             if (activity == null)
             {
                 throw new KeyNotFoundException($"Activity with id {activityId} not found.");
@@ -246,16 +266,16 @@ namespace eCommerce.Services
         {
             if (capacityLeft < 0)
             {
-                throw new ClinetException("Preostali kapacitet ne može biti negativan.");
+                throw new ClientException("Preostali kapacitet ne može biti negativan.");
             }
 
             if (capacityLeft > activityCapacity)
             {
-                throw new ClinetException($"Preostali kapacitet ne može biti veći od kapaciteta aktivnosti ({activityCapacity}).");
+                throw new ClientException($"Preostali kapacitet ne može biti veći od kapaciteta aktivnosti ({activityCapacity}).");
             }
         }
 
-        private void EnsureNoActiveOverlap(
+        private async Task EnsureNoActiveOverlapAsync(
             int activityId,
             DateOnly date,
             TimeOnly startTime,
@@ -268,7 +288,7 @@ namespace eCommerce.Services
                 return;
             }
 
-            var overlaps = _dbContext.Schedules.Any(schedule =>
+            var overlaps = await _dbContext.Schedules.AnyAsync(schedule =>
                 (!excludeScheduleId.HasValue || schedule.Id != excludeScheduleId.Value) &&
                 schedule.ActivityId == activityId &&
                 schedule.Date == date &&
@@ -278,7 +298,7 @@ namespace eCommerce.Services
 
             if (overlaps)
             {
-                throw new ClinetException("Već postoji aktivan termin koji se preklapa za istu aktivnost na isti datum.");
+                throw new ClientException("Već postoji aktivan termin koji se preklapa za istu aktivnost na isti datum.");
             }
         }
 

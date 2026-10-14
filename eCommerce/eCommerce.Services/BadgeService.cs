@@ -20,13 +20,14 @@ namespace eCommerce.Services
         {
         }
 
-        protected override IEnumerable<Badge> ApplyFilters(IEnumerable<Badge> query, BadgeSearchObject? search)
+        protected override IQueryable<Badge> ApplyFilters(IQueryable<Badge> query, BadgeSearchObject? search)
         {
             if (search != null)
             {
                 if (!string.IsNullOrWhiteSpace(search.Name))
                 {
-                    query = query.Where(b => b.Name.Contains(search.Name, StringComparison.OrdinalIgnoreCase));
+                    var name = search.Name.Trim();
+                    query = query.Where(b => b.Name.Contains(name));
                 }
 
                 if (search.Criteria.HasValue)
@@ -36,6 +37,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<Badge> ApplyDefaultOrder(IQueryable<Badge> query)
+        {
+            return query.OrderBy(b => b.Name).ThenBy(b => b.Id);
         }
     }
 }

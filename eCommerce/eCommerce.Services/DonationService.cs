@@ -53,6 +53,11 @@ namespace eCommerce.Services
 
         public override async Task<DonationResponse> InsertAsync(DonationInsertRequest request)
         {
+            if (!await _dbContext.ZooPartners.AnyAsync(partner => partner.Id == request.ZooPartnerId))
+            {
+                throw new KeyNotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
+            }
+
             var created = await base.InsertAsync(request);
             return await GetByIdAsync(created.Id);
         }
@@ -82,11 +87,6 @@ namespace eCommerce.Services
 
         protected override Donation MapInsertRequestToEntity(DonationInsertRequest request)
         {
-            if (_dbContext.ZooPartners.Find(request.ZooPartnerId) == null)
-            {
-                throw new KeyNotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
-            }
-
             var entity = base.MapInsertRequestToEntity(request);
             entity.UserId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
@@ -109,7 +109,7 @@ namespace eCommerce.Services
             entity.PaymentId = existingPaymentId;
         }
 
-        protected override IEnumerable<Donation> ApplyFilters(IEnumerable<Donation> query, DonationSearchObject? search)
+        protected override IQueryable<Donation> ApplyFilters(IQueryable<Donation> query, DonationSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -132,6 +132,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<Donation> ApplyDefaultOrder(IQueryable<Donation> query)
+        {
+            return query.OrderByDescending(d => d.CreatedAt).ThenByDescending(d => d.Id);
         }
 
         private bool CanAccessDonation(int donationUserId)

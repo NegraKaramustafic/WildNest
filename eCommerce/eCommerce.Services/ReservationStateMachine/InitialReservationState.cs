@@ -40,12 +40,12 @@ namespace eCommerce.Services.ReservationStateMachine
 
             if (schedule == null)
             {
-                throw new ClinetException("Schedule not found.");
+                throw new ClientException("Schedule not found.");
             }
 
             if (schedule.CapacityLeft < request.GuestCount)
             {
-                throw new ClinetException("Not enough spots available");
+                throw new ClientException("Not enough spots available");
             }
 
             schedule.CapacityLeft -= request.GuestCount;
@@ -55,7 +55,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 ?? throw new InvalidOperationException("User id claim is missing.");
             entity.Status = ReservationStatus.Pending;
             entity.TotalPrice = request.GuestCount * schedule.Activity.Price;
-            entity.Code = GenerateUniqueCode();
+            entity.Code = await GenerateUniqueCodeAsync();
             entity.CreatedAt = DateTime.UtcNow;
 
             DbContext.Reservations.Add(entity);

@@ -16,17 +16,23 @@ namespace eCommerce.Services
         {
         }
 
-        protected override IEnumerable<AnimalCategory> ApplyFilters(IEnumerable<AnimalCategory> query, AnimalCategorySearchObject? search)
+        protected override IQueryable<AnimalCategory> ApplyFilters(IQueryable<AnimalCategory> query, AnimalCategorySearchObject? search)
         {
             if (search != null)
             {
                 if (!string.IsNullOrWhiteSpace(search.Name))
                 {
-                    query = query.Where(c => c.Name.Contains(search.Name, StringComparison.OrdinalIgnoreCase));
+                    var name = search.Name.Trim();
+                    query = query.Where(c => c.Name.Contains(name));
                 }
             }
 
             return query;
+        }
+
+        protected override IQueryable<AnimalCategory> ApplyDefaultOrder(IQueryable<AnimalCategory> query)
+        {
+            return query.OrderBy(c => c.Name).ThenBy(c => c.Id);
         }
     }
 }

@@ -57,7 +57,7 @@ namespace eCommerce.Services
             return await base.GetAllAsync(search);
         }
 
-        protected override IEnumerable<UserBadge> ApplyFilters(IEnumerable<UserBadge> query, UserBadgeSearchObject? search)
+        protected override IQueryable<UserBadge> ApplyFilters(IQueryable<UserBadge> query, UserBadgeSearchObject? search)
         {
             if (_userAccessor.IsInRole(Roles.Admin))
             {
@@ -75,6 +75,11 @@ namespace eCommerce.Services
             }
 
             return query;
+        }
+
+        protected override IQueryable<UserBadge> ApplyDefaultOrder(IQueryable<UserBadge> query)
+        {
+            return query.OrderByDescending(ub => ub.EarnedAt).ThenByDescending(ub => ub.Id);
         }
 
         private bool CanAccessUserBadge(int badgeUserId)

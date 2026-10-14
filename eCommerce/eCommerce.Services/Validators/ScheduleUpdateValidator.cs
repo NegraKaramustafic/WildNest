@@ -1,6 +1,7 @@
 using eCommerce.Model.Requests;
 using eCommerce.Services.Database;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace eCommerce.Services.Validators
 {
@@ -23,14 +24,16 @@ namespace eCommerce.Services.Validators
                 .GreaterThanOrEqualTo(0).When(x => x.CapacityLeft.HasValue)
                 .WithMessage("Preostali kapacitet ne može biti negativan.");
 
-            RuleFor(x => x).Custom((request, context) =>
+            RuleFor(x => x).CustomAsync(async (request, context, cancellation) =>
             {
                 if (!request.CapacityLeft.HasValue)
                 {
                     return;
                 }
 
-                var activity = dbContext.Activities.Find(request.ActivityId);
+                var activity = await dbContext.Activities
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(item => item.Id == request.ActivityId, cancellation);
                 if (activity != null && request.CapacityLeft.Value > activity.Capacity)
                 {
                     context.AddFailure(
