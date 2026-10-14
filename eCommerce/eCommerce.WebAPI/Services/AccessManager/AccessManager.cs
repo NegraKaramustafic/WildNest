@@ -40,15 +40,9 @@ namespace eCommerce.WebAPI.Services.AccessManager
             var user = await _userService.GetByUsernameAsync(request.Username);
 
 
-            if (user == null)
+            if (user == null || !_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
             {
-                throw new Exception($"User with {request.Username} doesn't exist");
-            }
-
-            var validPassword = _cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password);
-            if (!validPassword)
-            {
-                throw new Exception("Wrong credential");
+                throw new ClinetException("Pogrešno korisničko ime ili lozinka.");
             }
 
             if (!user.IsActive)

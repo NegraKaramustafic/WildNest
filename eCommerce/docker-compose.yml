@@ -48,16 +48,16 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:5126
       RABBITMQ_HOSTNAME: rabbitmq
-      ConnectionStrings__DefaultConnection: Server=sql,1433;Database=230080;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      ConnectionStrings__DefaultConnection: Server=sql,1433;Database=${DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
     ports:
       - "5126:5126"
     depends_on:
       sql:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
-  # Separate subscriber process — consumption must NOT live inside eCommerce.WebAPI.
+  # Separate subscriber process - consumption must NOT live inside eCommerce.WebAPI.
   subscriber:
     image: wildnest-subscriber:1.0.0
     build:
@@ -68,12 +68,12 @@ services:
       - .env
     environment:
       RABBITMQ_HOSTNAME: rabbitmq
-      ConnectionStrings__DefaultConnection: Server=sql,1433;Database=230080;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      ConnectionStrings__DefaultConnection: Server=sql,1433;Database=${DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
     depends_on:
       rabbitmq:
         condition: service_healthy
       sql:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   sqlserver_data:

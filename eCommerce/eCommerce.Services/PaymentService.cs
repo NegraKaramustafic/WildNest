@@ -231,35 +231,13 @@ namespace eCommerce.Services
                 throw new ClinetException("Invalid Stripe webhook signature.");
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-
-            if (await _dbContext.StripeProcessedEvents.AnyAsync(e => e.EventId == stripeEvent.Id))
+            if (await EventAlreadyStoredAsync(stripeEvent.Id))
             {
-                await transaction.CommitAsync();
                 return;
             }
 
-            _dbContext.StripeProcessedEvents.Add(new StripeProcessedEvent
-            {
-                EventId = stripeEvent.Id,
-                EventType = stripeEvent.Type,
-                ProcessedAt = DateTime.UtcNow
-            });
-
-            try
-            {
-                await ApplyWebhookEventAsync(stripeEvent);
-                await _dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-            }
-            catch (DbUpdateException)
-            {
-                await transaction.RollbackAsync();
-                if (!await EventAlreadyStoredAsync(stripeEvent.Id))
-                {
-                    throw;
-                }
-            }
+            await ApplyWebhookEventAsync(stripeEvent);
+            await RecordProcessedEventAsync(stripeEvent);
         }
 
         public async Task<PaymentResponse> RefundAsync(int id)
@@ -363,22 +341,36 @@ namespace eCommerce.Services
                 return;
             }
 
-            payment.Status = PaymentStatus.Completed;
-            var userId = payment.UserId ?? await FindPaymentUserIdAsync(payment.Id);
-            await ApplyPaidSideEffectsAsync(payment);
-            await _dbContext.SaveChangesAsync();
-
-            if (userId.HasValue)
+            PaidCompletion completion;
+            await using (var transaction = await _dbContext.Database.BeginTransactionAsync())
             {
-                await _notificationEvents.NotifyPaymentCompletedAsync(userId.Value, payment.Id, payment.Amount);
-                if (payment.RelatedEntityType is "Reservation" or "Adoption" or "Donation")
+                var claimed = await _dbContext.Payments
+                    .Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Pending)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.Status, PaymentStatus.Completed));
+
+                if (claimed != 1)
                 {
-                    await _badgeAwardService.CheckAndAwardBadgesAsync(userId.Value);
+                    await transaction.RollbackAsync();
+                    _logger.LogInformation(
+                        "Payment {PaymentId} was not pending; another request already completed it. Skipping side effects.",
+                        payment.Id);
+                    return;
                 }
+
+                var statusEntry = _dbContext.Entry(payment).Property(p => p.Status);
+                payment.Status = PaymentStatus.Completed;
+                statusEntry.OriginalValue = PaymentStatus.Completed;
+                statusEntry.IsModified = false;
+
+                completion = await ApplyPaidSideEffectsAsync(payment);
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
+
+            await PublishPaidCompletionAsync(payment, completion);
         }
 
-        private async Task ApplyPaidSideEffectsAsync(Database.Payment payment)
+        private async Task<PaidCompletion> ApplyPaidSideEffectsAsync(Database.Payment payment)
         {
             PaymentRelatedEntityType? relatedType = TryParseRelatedType(payment.RelatedEntityType, out var parsedType)
                 ? parsedType
@@ -387,6 +379,8 @@ namespace eCommerce.Services
             {
                 relatedType = await InferRelatedTypeAsync(payment.Id);
             }
+
+            var completion = new PaidCompletion { RelatedType = relatedType };
 
             switch (relatedType)
             {
@@ -401,9 +395,7 @@ namespace eCommerce.Services
                             ticket.Status = TicketStatus.Active;
                         }
 
-                        await _dbContext.SaveChangesAsync();
-                        var ticketResponse = _mapper.Map<TicketResponse>(ticket);
-                        await _notificationEvents.NotifyTicketPurchasedAsync(ticketResponse);
+                        completion.Ticket = _mapper.Map<TicketResponse>(ticket);
                     }
 
                     break;
@@ -420,13 +412,12 @@ namespace eCommerce.Services
                             adoption.Status = AdoptionStatus.Active;
                         }
 
-                        await _dbContext.SaveChangesAsync();
                         var adoptionResponse = _mapper.Map<AdoptionResponse>(adoption);
                         adoptionResponse.UserFullName = adoption.User != null
                             ? $"{adoption.User.FirstName} {adoption.User.LastName}".Trim()
                             : string.Empty;
                         adoptionResponse.AnimalName = adoption.Animal?.Name ?? string.Empty;
-                        await _notificationEvents.NotifyAdoptionCreatedAsync(adoptionResponse);
+                        completion.Adoption = adoptionResponse;
                     }
 
                     break;
@@ -438,17 +429,70 @@ namespace eCommerce.Services
                         .FirstOrDefaultAsync(d => d.PaymentId == payment.Id || d.Id == payment.RelatedEntityId);
                     if (donation?.ZooPartner != null)
                     {
-                        donation.ZooPartner.CurrentAmount += donation.Amount;
-                        await _dbContext.SaveChangesAsync();
+                        var chargedAmount = payment.Amount;
+                        await _dbContext.ZooPartners
+                            .Where(z => z.Id == donation.ZooPartnerId)
+                            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                                z => z.CurrentAmount,
+                                z => z.CurrentAmount + chargedAmount));
+
+                        var amountEntry = _dbContext.Entry(donation.ZooPartner).Property(z => z.CurrentAmount);
+                        amountEntry.CurrentValue = donation.ZooPartner.CurrentAmount + chargedAmount;
+                        amountEntry.OriginalValue = amountEntry.CurrentValue;
+                        amountEntry.IsModified = false;
+
                         var donationResponse = _mapper.Map<DonationResponse>(donation);
                         donationResponse.UserFullName = donation.User != null
                             ? $"{donation.User.FirstName} {donation.User.LastName}".Trim()
                             : string.Empty;
                         donationResponse.ZooPartnerName = donation.ZooPartner.Name;
-                        await _notificationEvents.NotifyDonationReceivedAsync(donationResponse);
+                        completion.Donation = donationResponse;
                     }
 
                     break;
+            }
+
+            return completion;
+        }
+
+        private async Task PublishPaidCompletionAsync(Database.Payment payment, PaidCompletion completion)
+        {
+            var userId = payment.UserId ?? await FindPaymentUserIdAsync(payment.Id);
+            if (!userId.HasValue)
+            {
+                return;
+            }
+
+            var sentSpecific = false;
+            switch (completion.RelatedType)
+            {
+                case PaymentRelatedEntityType.Ticket when completion.Ticket != null:
+                    await _notificationEvents.NotifyTicketPurchasedAsync(completion.Ticket);
+                    sentSpecific = true;
+                    break;
+
+                case PaymentRelatedEntityType.Adoption when completion.Adoption != null:
+                    await _notificationEvents.NotifyAdoptionCreatedAsync(completion.Adoption);
+                    sentSpecific = true;
+                    break;
+
+                case PaymentRelatedEntityType.Donation when completion.Donation != null:
+                    await _notificationEvents.NotifyDonationReceivedAsync(completion.Donation);
+                    sentSpecific = true;
+                    break;
+            }
+
+            if (!sentSpecific && completion.RelatedType is not (
+                PaymentRelatedEntityType.Ticket or PaymentRelatedEntityType.Adoption or PaymentRelatedEntityType.Donation))
+            {
+                await _notificationEvents.NotifyPaymentCompletedAsync(userId.Value, payment.Id, payment.Amount);
+            }
+
+            if (completion.RelatedType is PaymentRelatedEntityType.Reservation
+                or PaymentRelatedEntityType.Adoption
+                or PaymentRelatedEntityType.Donation)
+            {
+                await _badgeAwardService.CheckAndAwardBadgesAsync(userId.Value);
             }
         }
 
@@ -822,6 +866,36 @@ namespace eCommerce.Services
             return entity;
         }
 
+        private async Task RecordProcessedEventAsync(Event stripeEvent)
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                if (await _dbContext.StripeProcessedEvents.AnyAsync(e => e.EventId == stripeEvent.Id))
+                {
+                    await transaction.CommitAsync();
+                    return;
+                }
+
+                _dbContext.StripeProcessedEvents.Add(new StripeProcessedEvent
+                {
+                    EventId = stripeEvent.Id,
+                    EventType = stripeEvent.Type,
+                    ProcessedAt = DateTime.UtcNow
+                });
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException)
+            {
+                await transaction.RollbackAsync();
+                if (!await EventAlreadyStoredAsync(stripeEvent.Id))
+                {
+                    throw;
+                }
+            }
+        }
+
         private async Task<bool> EventAlreadyStoredAsync(string eventId)
         {
             return await _dbContext.StripeProcessedEvents.AsNoTracking().AnyAsync(e => e.EventId == eventId);
@@ -872,6 +946,14 @@ namespace eCommerce.Services
             var message = ex.Message ?? string.Empty;
             return message.Contains("already been refunded", StringComparison.OrdinalIgnoreCase)
                 || message.Contains("charge_already_refunded", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private sealed class PaidCompletion
+        {
+            public PaymentRelatedEntityType? RelatedType { get; set; }
+            public TicketResponse? Ticket { get; set; }
+            public AdoptionResponse? Adoption { get; set; }
+            public DonationResponse? Donation { get; set; }
         }
 
         private sealed class PayableRecord

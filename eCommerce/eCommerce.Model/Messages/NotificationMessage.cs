@@ -12,6 +12,7 @@ namespace eCommerce.Model.Messages
             Converters = { new JsonStringEnumConverter() }
         };
 
+        public Guid MessageId { get; set; }
         public int UserId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
