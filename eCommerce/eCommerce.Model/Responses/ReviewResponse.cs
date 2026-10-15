@@ -9,6 +9,8 @@ namespace eCommerce.Model.Responses
         public string ActivityName { get; set; } = string.Empty;
         public int Rating { get; set; }
         public string Comment { get; set; } = string.Empty;
+        public string? SentimentLabel { get; set; }
+        public double? SentimentScore { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

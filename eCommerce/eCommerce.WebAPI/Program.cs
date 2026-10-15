@@ -5,6 +5,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
+using eCommerce.Services.Sentiment;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ReservationStateMachine;
 using eCommerce.Services.Validators;
@@ -221,6 +222,10 @@ builder.Services.AddScoped<INotificationEventService, NotificationEventService>(
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddSingleton<ISentimentService>(sp =>
+    new SentimentService(
+        sp.GetRequiredService<ILogger<SentimentService>>(),
+        EnvVariables.Optional("SENTIMENT_MODEL_PATH")));
 
 builder.Services.AddScoped<IValidator<UserInsertRequest>, UserInsertValidator>();
 builder.Services.AddScoped<IValidator<UserUpdateRequest>, UserUpdateValidator>();
@@ -350,10 +355,47 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 await MigrateDatabaseAsync(app);
+await InitializeSentimentAsync(app);
 
 app.MapControllers();
 
 app.Run();
+
+static async Task InitializeSentimentAsync(WebApplication app)
+{
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Sentiment");
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var sentiment = scope.ServiceProvider.GetRequiredService<ISentimentService>();
+        var ready = await sentiment.EnsureReadyAsync();
+        if (!ready)
+        {
+            logger.LogWarning("Sentiment model is not available. Existing reviews were not labeled.");
+            return;
+        }
+
+        var reviews = scope.ServiceProvider.GetRequiredService<IReviewService>();
+        var updated = await reviews.BackfillSentimentAsync();
+        var report = sentiment.LastReport;
+        if (report?.HoldoutAccuracy is double accuracy)
+        {
+            logger.LogInformation(
+                "Sentiment model ready. Hold-out accuracy {Accuracy:P1} on {Holdout} rows. Backfilled {Count} reviews.",
+                accuracy,
+                report.HoldoutCount,
+                updated);
+        }
+        else
+        {
+            logger.LogInformation("Sentiment model ready. Backfilled {Count} reviews.", updated);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Sentiment initialization failed. The API will continue without review labels.");
+    }
+}
 
 static async Task MigrateDatabaseAsync(WebApplication app)
 {

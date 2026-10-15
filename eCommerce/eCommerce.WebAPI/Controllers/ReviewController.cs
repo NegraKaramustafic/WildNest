@@ -1,3 +1,4 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -13,6 +14,20 @@ public class ReviewController : BaseCRUDController<ReviewResponse, ReviewSearchO
 {
     public ReviewController(IReviewService reviewService) : base(reviewService)
     {
+    }
+
+    /// <summary>
+    /// Counts, percentages, average rating, monthly trend, and activity breakdown. Admin only.
+    /// </summary>
+    [HttpGet("sentiment-statistics")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ReviewSentimentStatisticsResponse>> SentimentStatistics()
+    {
+        var result = await _service.GetSentimentStatisticsAsync();
+        return Ok(result);
     }
 
     [HttpPost]

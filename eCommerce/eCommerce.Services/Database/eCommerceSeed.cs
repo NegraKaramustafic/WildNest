@@ -716,6 +716,114 @@ namespace eCommerce.Services.Database
                     Rating = 5,
                     Comment = "A must-do! Quiet, atmospheric, and the kids stayed engaged the whole time.",
                     CreatedAt = createdAt
+                },
+                new
+                {
+                    Id = 7,
+                    UserId = 3,
+                    ActivityId = 3,
+                    Rating = 2,
+                    Comment = "Terrible experience. The guide was rude and we waited far too long.",
+                    CreatedAt = new DateTime(2025, 10, 12, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 8,
+                    UserId = 4,
+                    ActivityId = 3,
+                    Rating = 3,
+                    Comment = "The session starts at 10:00 and lasts about one hour.",
+                    CreatedAt = new DateTime(2025, 11, 4, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 9,
+                    UserId = 5,
+                    ActivityId = 3,
+                    Rating = 5,
+                    Comment = "Wonderful morning. The keepers were friendly and I would recommend this activity.",
+                    CreatedAt = new DateTime(2025, 12, 16, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 10,
+                    UserId = 3,
+                    ActivityId = 4,
+                    Rating = 1,
+                    Comment = "Awful organisation. The enclosure was dirty and the whole visit felt wasted.",
+                    CreatedAt = new DateTime(2026, 1, 8, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 11,
+                    UserId = 4,
+                    ActivityId = 4,
+                    Rating = 3,
+                    Comment = "Parking is beside the main gate and tickets are checked at the entrance.",
+                    CreatedAt = new DateTime(2026, 2, 11, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 12,
+                    UserId = 5,
+                    ActivityId = 4,
+                    Rating = 5,
+                    Comment = "Excellent activity. Everything was well organised and the kids were thrilled.",
+                    CreatedAt = new DateTime(2026, 4, 3, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 13,
+                    UserId = 4,
+                    ActivityId = 6,
+                    Rating = 2,
+                    Comment = "Disappointing tour. The staff were unhelpful and this was the worst workshop.",
+                    CreatedAt = new DateTime(2025, 10, 21, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 14,
+                    UserId = 5,
+                    ActivityId = 6,
+                    Rating = 3,
+                    Comment = "The workshop is listed on the Tuesday schedule and lasts ninety minutes.",
+                    CreatedAt = new DateTime(2026, 1, 19, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 15,
+                    UserId = 3,
+                    ActivityId = 5,
+                    Rating = 4,
+                    Comment = "We loved this safari. It was amazing and I recommend it to every family.",
+                    CreatedAt = new DateTime(2026, 2, 20, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 16,
+                    UserId = 5,
+                    ActivityId = 7,
+                    Rating = 1,
+                    Comment = "The worst feeding we have had. Staff were rude and the delay was awful.",
+                    CreatedAt = new DateTime(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 17,
+                    UserId = 4,
+                    ActivityId = 7,
+                    Rating = 3,
+                    Comment = "Tickets are checked at the entrance and the tour starts at the main gate.",
+                    CreatedAt = new DateTime(2026, 4, 9, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new
+                {
+                    Id = 18,
+                    UserId = 3,
+                    ActivityId = 6,
+                    Rating = 5,
+                    Comment = "A wonderful workshop. The guide was excellent and we loved every minute.",
+                    CreatedAt = new DateTime(2026, 4, 15, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
         }

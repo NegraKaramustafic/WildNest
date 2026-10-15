@@ -104,7 +104,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
           _categories = [
             AnimalCategory(
               id: _categoryId!,
-              name: widget.animal?.categoryName ?? 'Kategorija $_categoryId',
+              name: widget.animal?.categoryName ?? 'Category $_categoryId',
             ),
             ...items,
           ];

@@ -4,6 +4,7 @@ import 'package:ecommerce_desktop/providers/activity_type_provider.dart';
 import 'package:ecommerce_desktop/providers/animal_category_provider.dart';
 import 'package:ecommerce_desktop/providers/animal_provider.dart';
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/providers/review_provider.dart';
 import 'package:ecommerce_desktop/providers/schedule_provider.dart';
 import 'package:ecommerce_desktop/providers/ticket_provider.dart';
 import 'package:ecommerce_desktop/screens/login_screen.dart';
@@ -32,6 +33,7 @@ class WildNestApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ActivityTypeProvider()),
         ChangeNotifierProvider(create: (_) => ScheduleProvider()),
         ChangeNotifierProvider(create: (_) => TicketProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
       ],
       child: MaterialApp(
         title: 'WildNest Admin',

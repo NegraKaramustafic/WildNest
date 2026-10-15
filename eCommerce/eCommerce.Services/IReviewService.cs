@@ -6,5 +6,8 @@ namespace eCommerce.Services
 {
     public interface IReviewService : IBaseCRUDService<ReviewResponse, ReviewSearchObject, ReviewInsertRequest, ReviewUpdateRequest>
     {
+        Task<ReviewSentimentStatisticsResponse> GetSentimentStatisticsAsync();
+
+        Task<int> BackfillSentimentAsync();
     }
 }

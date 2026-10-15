@@ -25,6 +25,11 @@ namespace eCommerce.Services.Database
         [MaxLength(500)]
         public string Comment { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string? SentimentLabel { get; set; }
+
+        public double? SentimentScore { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
