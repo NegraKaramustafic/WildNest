@@ -22,7 +22,7 @@ namespace eCommerce.Services
         {
         }
 
-        protected override string NotFoundMessage => "Značka nije pronađena.";
+        protected override string NotFoundMessage => "Badge not found.";
 
         protected override IQueryable<Badge> ApplyFilters(IQueryable<Badge> query, BadgeSearchObject? search)
         {

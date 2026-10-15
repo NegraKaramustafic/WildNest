@@ -36,7 +36,7 @@ namespace eCommerce.Services.ActivityStateMachine
         protected void ThrowNotFound(int id)
         {
             Logger.LogWarning("Activity {Id} was not found.", id);
-            throw new NotFoundException("Aktivnost nije pronađena.");
+            throw new NotFoundException("Activity not found.");
         }
 
         public virtual Task<ActivityResponse> InsertAsync(ActivityInsertRequest request)
@@ -108,7 +108,7 @@ namespace eCommerce.Services.ActivityStateMachine
                 {
                     new ValidationFailure(
                         nameof(ActivityInsertRequest.ActivityTypeId),
-                        "Odabrani tip aktivnosti ne postoji.")
+                        "The selected activity type does not exist.")
                 });
             }
         }

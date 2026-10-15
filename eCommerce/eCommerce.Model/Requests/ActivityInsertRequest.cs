@@ -14,7 +14,7 @@ namespace eCommerce.Model.Requests
         public int? AnimalId { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Tip aktivnosti je obavezan.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Activity type is required.")]
         public int ActivityTypeId { get; set; }
 
         [Required]

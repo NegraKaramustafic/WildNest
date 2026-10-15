@@ -22,7 +22,7 @@ namespace eCommerce.Services
         {
         }
 
-        protected override string NotFoundMessage => "Kategorija životinja nije pronađena.";
+        protected override string NotFoundMessage => "Category not found.";
 
         protected override IQueryable<AnimalCategory> ApplyFilters(IQueryable<AnimalCategory> query, AnimalCategorySearchObject? search)
         {

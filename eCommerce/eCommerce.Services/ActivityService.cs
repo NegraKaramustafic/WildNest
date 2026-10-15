@@ -94,7 +94,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -106,7 +106,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -118,7 +118,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -130,7 +130,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -148,7 +148,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
