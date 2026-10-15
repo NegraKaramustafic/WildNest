@@ -9,13 +9,13 @@ namespace eCommerce.Services.Validators
         {
             RuleFor(x => x.Name)
                 .Cascade(CascadeMode.Stop)
-                .Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("Naziv je obavezan.")
-                .Must(name => name.Trim().Length >= 2).WithMessage("Naziv mora imati najmanje 2 znaka.")
-                .Must(name => name.Trim().Length <= 50).WithMessage("Naziv ne može biti duži od 50 znakova.");
+                .Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("Name is required.")
+                .Must(name => name.Trim().Length >= 2).WithMessage("Name must be at least 2 characters.")
+                .Must(name => name.Trim().Length <= 50).WithMessage("Name cannot exceed 50 characters.");
 
             RuleFor(x => x.Description)
                 .Must(description => string.IsNullOrWhiteSpace(description) || description.Trim().Length <= 500)
-                .WithMessage("Opis ne može biti duži od 500 znakova.");
+                .WithMessage("Description cannot exceed 500 characters.");
         }
     }
 }

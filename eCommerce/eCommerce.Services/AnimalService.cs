@@ -23,7 +23,7 @@ namespace eCommerce.Services
         {
         }
 
-        protected override string NotFoundMessage => "Životinja nije pronađena.";
+        protected override string NotFoundMessage => "Animal not found.";
 
         protected override async Task<IQueryable<Animal>> IncludeRelatedEntitiesAsync(AnimalSearchObject? search, IQueryable<Animal> query = null!)
         {
@@ -64,7 +64,7 @@ namespace eCommerce.Services
         {
             if (!await _dbContext.AnimalCategories.AnyAsync(category => category.Id == categoryId))
             {
-                ThrowNotFound("AnimalCategory", categoryId, "Kategorija životinje nije pronađena.");
+                ThrowNotFound("AnimalCategory", categoryId, "Category not found.");
             }
         }
 

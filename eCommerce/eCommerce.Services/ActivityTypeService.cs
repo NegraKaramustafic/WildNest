@@ -24,7 +24,7 @@ namespace eCommerce.Services
         {
         }
 
-        protected override string NotFoundMessage => "Tip aktivnosti nije pronađen.";
+        protected override string NotFoundMessage => "Activity type not found.";
 
         protected override IQueryable<ActivityType> ApplyFilters(IQueryable<ActivityType> query, ActivityTypeSearchObject? search)
         {
@@ -95,7 +95,7 @@ namespace eCommerce.Services
             var inUse = await _dbContext.Activities.AnyAsync(activity => activity.ActivityTypeId == id);
             if (inUse)
             {
-                throw new ClientException("Tip aktivnosti koriste aktivnosti i ne može se obrisati.");
+                throw new ClientException("This activity type is used by activities and cannot be deleted.");
             }
 
             await base.DeleteAsync(id);
@@ -181,7 +181,7 @@ namespace eCommerce.Services
             {
                 new ValidationFailure(
                     nameof(ActivityTypeInsertRequest.Name),
-                    $"Tip aktivnosti s nazivom '{name.Trim()}' već postoji.")
+                    $"An activity type named '{name.Trim()}' already exists.")
             });
         }
 

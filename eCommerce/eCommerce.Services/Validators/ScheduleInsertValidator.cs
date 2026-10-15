@@ -11,19 +11,19 @@ namespace eCommerce.Services.Validators
         public ScheduleInsertValidator(ECommerceDbContext dbContext, ZooClock zooClock)
         {
             RuleFor(x => x.ActivityId)
-                .GreaterThan(0).WithMessage("Aktivnost je obavezna.");
+                .GreaterThan(0).WithMessage("Activity is required.");
 
             RuleFor(x => x.Date)
                 .Must(date => date != default && date >= zooClock.Today)
-                .WithMessage("Datum ne može biti u prošlosti.");
+                .WithMessage("The date cannot be in the past.");
 
             RuleFor(x => x.EndTime)
                 .GreaterThan(x => x.StartTime)
-                .WithMessage("Vrijeme završetka mora biti nakon vremena početka.");
+                .WithMessage("End time must be after start time.");
 
             RuleFor(x => x.CapacityLeft)
                 .GreaterThanOrEqualTo(0).When(x => x.CapacityLeft.HasValue)
-                .WithMessage("Preostali kapacitet ne može biti negativan.");
+                .WithMessage("Remaining capacity cannot be negative.");
 
             RuleFor(x => x).CustomAsync(async (request, context, cancellation) =>
             {
@@ -39,7 +39,7 @@ namespace eCommerce.Services.Validators
                 {
                     context.AddFailure(
                         nameof(ScheduleInsertRequest.CapacityLeft),
-                        $"Preostali kapacitet ne može biti veći od kapaciteta aktivnosti ({activity.Capacity}).");
+                        $"Remaining capacity cannot exceed the activity capacity ({activity.Capacity}).");
                 }
             });
 
@@ -59,7 +59,7 @@ namespace eCommerce.Services.Validators
 
                 if (overlaps)
                 {
-                    context.AddFailure("Već postoji aktivan termin koji se preklapa za istu aktivnost na isti datum.");
+                    context.AddFailure("An active schedule already overlaps for the same activity on the same date.");
                 }
             });
         }

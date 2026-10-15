@@ -199,7 +199,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                ThrowNotFound("Ticket", code, "Ulaznica s ovim kodom ne postoji.");
+                ThrowNotFound("Ticket", code, "A ticket with this code does not exist.");
             }
 
             if (entity.Status == TicketStatus.Used)

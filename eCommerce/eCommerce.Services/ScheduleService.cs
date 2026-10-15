@@ -35,7 +35,7 @@ namespace eCommerce.Services
             _zooClock = zooClock;
         }
 
-        protected override string NotFoundMessage => "Termin nije pronađen.";
+        protected override string NotFoundMessage => "Schedule not found.";
 
         protected override async Task<IQueryable<Schedule>> IncludeRelatedEntitiesAsync(ScheduleSearchObject? search, IQueryable<Schedule> query = null!)
         {
@@ -52,7 +52,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
+                ThrowNotFound("Schedule", id, "Schedule not found.");
             }
 
             return _mapper.Map<ScheduleResponse>(entity);
@@ -69,12 +69,12 @@ namespace eCommerce.Services
             var activity = await GetActiveActivityAsync(request.ActivityId);
             if (request.Date < _zooClock.Today)
             {
-                throw new ClientException("Datum ne može biti u prošlosti.");
+                throw new ClientException("The date cannot be in the past.");
             }
 
             if (request.EndTime <= request.StartTime)
             {
-                throw new ClientException("Vrijeme završetka mora biti nakon vremena početka.");
+                throw new ClientException("End time must be after start time.");
             }
 
             if (request.CapacityLeft.HasValue)
@@ -106,7 +106,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
+                ThrowNotFound("Schedule", id, "Schedule not found.");
             }
 
             if (request.ActivityId != entity.ActivityId)
@@ -123,7 +123,7 @@ namespace eCommerce.Services
 
             if (openReservations.Count > 0 && ChangesLockedFields(entity, request))
             {
-                throw new ClientException("Termin ima rezervacije. Aktivnost, datum i vrijeme se ne mogu mijenjati.");
+                throw new ClientException("This schedule has reservations. The activity, date, and times cannot be changed.");
             }
 
             var cancelling = request.Status == ScheduleStatus.Cancelled && entity.Status != ScheduleStatus.Cancelled;
@@ -134,7 +134,7 @@ namespace eCommerce.Services
                 if (blocked)
                 {
                     throw new ClientException(
-                        "Termin ima završene rezervacije. Završenu rezervaciju nije moguće otkazati kroz postojeći tok otkazivanja, pa se termin ne može otkazati.");
+                        "This schedule has completed reservations. A completed reservation cannot be cancelled through the existing cancellation flow, so the schedule cannot be cancelled.");
                 }
 
                 var cancelled = new List<ReservationResponse>();
@@ -169,7 +169,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
+                ThrowNotFound("Schedule", id, "Schedule not found.");
             }
 
             var statuses = await _dbContext.Reservations
@@ -179,12 +179,12 @@ namespace eCommerce.Services
 
             if (statuses.Any(status => status != ReservationStatus.Cancelled))
             {
-                throw new ClientException("Termin ima rezervacije i ne može se obrisati – otkažite ga.");
+                throw new ClientException("This schedule has reservations and cannot be deleted. Cancel it instead.");
             }
 
             if (statuses.Count > 0)
             {
-                throw new ClientException("Termin ima otkazane rezervacije i ne može se obrisati.");
+                throw new ClientException("This schedule has cancelled reservations and cannot be deleted.");
             }
 
             await base.DeleteAsync(id);
@@ -244,12 +244,12 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == activityId);
             if (activity == null)
             {
-                ThrowNotFound("Activity", activityId, "Aktivnost nije pronađena.");
+                ThrowNotFound("Activity", activityId, "Activity not found.");
             }
 
             if (activity.Status != ActivityStatus.Active)
             {
-                throw new ClientException("Termin se može kreirati samo za aktivnu aktivnost.");
+                throw new ClientException("A schedule can only be created for an active activity.");
             }
 
             return activity;
@@ -260,7 +260,7 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.AsNoTracking().FirstOrDefaultAsync(item => item.Id == activityId);
             if (activity == null)
             {
-                ThrowNotFound("Activity", activityId, "Aktivnost nije pronađena.");
+                ThrowNotFound("Activity", activityId, "Activity not found.");
             }
 
             EnsureCapacityValue(capacityLeft, activity.Capacity);
@@ -270,12 +270,12 @@ namespace eCommerce.Services
         {
             if (capacityLeft < 0)
             {
-                throw new ClientException("Preostali kapacitet ne može biti negativan.");
+                throw new ClientException("Remaining capacity cannot be negative.");
             }
 
             if (capacityLeft > activityCapacity)
             {
-                throw new ClientException($"Preostali kapacitet ne može biti veći od kapaciteta aktivnosti ({activityCapacity}).");
+                throw new ClientException($"Remaining capacity cannot exceed the activity capacity ({activityCapacity}).");
             }
         }
 
@@ -302,7 +302,7 @@ namespace eCommerce.Services
 
             if (overlaps)
             {
-                throw new ClientException("Već postoji aktivan termin koji se preklapa za istu aktivnost na isti datum.");
+                throw new ClientException("An active schedule already overlaps for the same activity on the same date.");
             }
         }
 

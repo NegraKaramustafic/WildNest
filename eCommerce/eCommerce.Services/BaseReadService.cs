@@ -110,12 +110,12 @@ namespace eCommerce.Services
 
             if (page < 1)
             {
-                throw new ClientException("Page mora biti najmanje 1.");
+                throw new ClientException("Page must be at least 1.");
             }
 
             if (pageSize < 1 || pageSize > Pagination.MaxPageSize)
             {
-                throw new ClientException($"PageSize mora biti između 1 i {Pagination.MaxPageSize}.");
+                throw new ClientException($"PageSize must be between 1 and {Pagination.MaxPageSize}.");
             }
 
             search.Page = page;
