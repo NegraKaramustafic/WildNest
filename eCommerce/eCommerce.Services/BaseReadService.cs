@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using eCommerce.Model;
@@ -6,6 +7,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Dynamic.Core;
 
 namespace eCommerce.Services
@@ -20,11 +22,31 @@ namespace eCommerce.Services
 
         protected readonly MapsterMapper.IMapper _mapper;
         protected readonly ECommerceDbContext _dbContext;
+        protected readonly ILogger _logger;
 
-        protected BaseReadService(MapsterMapper.IMapper mapper, ECommerceDbContext dbContext)
+        protected BaseReadService(MapsterMapper.IMapper mapper, ECommerceDbContext dbContext, ILoggerFactory loggerFactory)
         {
             _mapper = mapper;
             _dbContext = dbContext;
+            _logger = loggerFactory.CreateLogger(GetType());
+        }
+
+        /// <summary>
+        /// Shown when a record is missing. Subclasses set the language of the screen that loads or edits the record.
+        /// </summary>
+        protected virtual string NotFoundMessage => "The requested record was not found.";
+
+        [DoesNotReturn]
+        protected void ThrowNotFound(int id)
+        {
+            ThrowNotFound(typeof(TEntity).Name, id, NotFoundMessage);
+        }
+
+        [DoesNotReturn]
+        protected void ThrowNotFound(string entityName, object id, string message)
+        {
+            _logger.LogWarning("{Entity} {Id} was not found.", entityName, id);
+            throw new NotFoundException(message);
         }
 
         protected abstract IQueryable<TEntity> ApplyFilters(IQueryable<TEntity> query, TSearch? search);
@@ -75,7 +97,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             return _mapper.Map<TResponse>(entity);

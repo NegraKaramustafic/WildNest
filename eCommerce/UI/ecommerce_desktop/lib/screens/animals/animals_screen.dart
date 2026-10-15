@@ -92,17 +92,17 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Brisanje životinje'),
-        content: Text('Obrisati životinju ${animal.name}?'),
+        title: const Text('Delete animal'),
+        content: Text('Delete ${animal.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Obriši'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -150,7 +150,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Upravljanje životinjama',
+                      'Animals',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -159,7 +159,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Pregled i uređivanje životinja',
+                      'View and edit animals',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
@@ -168,13 +168,13 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
               OutlinedButton.icon(
                 onPressed: () => setState(() => _showCategories = true),
                 icon: const Icon(Icons.category_outlined, size: 18),
-                label: const Text('Kategorije'),
+                label: const Text('Categories'),
               ),
               const SizedBox(width: 10),
               FilledButton.icon(
                 onPressed: _add,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Dodaj životinju'),
+                label: const Text('Add animal'),
               ),
             ],
           ),
@@ -185,7 +185,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
-                hintText: 'Pretraži životinje...',
+                hintText: 'Search animals...',
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -240,7 +240,7 @@ class _AnimalsTable extends StatelessWidget {
             child: animals.isEmpty
                 ? const Center(
                     child: Text(
-                      'Nema životinja za prikaz.',
+                      'No animals to show.',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   )
@@ -272,12 +272,12 @@ class _HeaderRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          Expanded(flex: 3, child: _HeaderLabel('Životinja')),
-          Expanded(flex: 3, child: _HeaderLabel('Vrsta')),
-          Expanded(flex: 3, child: _HeaderLabel('Kategorija')),
+          Expanded(flex: 3, child: _HeaderLabel('Animal')),
+          Expanded(flex: 3, child: _HeaderLabel('Species')),
+          Expanded(flex: 3, child: _HeaderLabel('Category')),
           Expanded(flex: 2, child: _HeaderLabel('Status')),
-          Expanded(flex: 2, child: _HeaderLabel('Usvajanje')),
-          SizedBox(width: 96, child: _HeaderLabel('Akcije')),
+          Expanded(flex: 2, child: _HeaderLabel('Adoption')),
+          SizedBox(width: 96, child: _HeaderLabel('Actions')),
         ],
       ),
     );
@@ -341,14 +341,14 @@ class _AnimalRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.edit_outlined,
                   color: AppColors.textMuted,
-                  tooltip: 'Uredi',
+                  tooltip: 'Edit',
                   onPressed: onEdit,
                 ),
                 const SizedBox(width: 6),
                 _IconAction(
                   icon: Icons.delete_outline,
                   color: AppColors.danger,
-                  tooltip: 'Obriši',
+                  tooltip: 'Delete',
                   onPressed: onDelete,
                 ),
               ],
@@ -408,7 +408,7 @@ class _ErrorState extends StatelessWidget {
         children: [
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Pokušaj ponovo')),
+          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );

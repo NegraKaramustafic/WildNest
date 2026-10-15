@@ -30,7 +30,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
     if (code.isEmpty) {
       setState(() {
         _ticket = null;
-        _error = 'Unesite kod ulaznice.';
+        _error = 'Enter a ticket code.';
       });
       return;
     }
@@ -70,7 +70,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
           child: ListView(
             children: [
               const Text(
-                'Verifikacija ulaznica',
+                'Ticket verification',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -79,7 +79,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Unesite kod ulaznice za provjeru valjanosti',
+                'Enter a ticket code to check that it is valid',
                 style: TextStyle(color: AppColors.textMuted),
               ),
               const SizedBox(height: 18),
@@ -94,7 +94,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Kod ulaznice',
+                      'Ticket code',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
@@ -107,7 +107,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _verify(),
                             decoration: const InputDecoration(
-                              hintText: 'npr. WN-A1B2C3',
+                              hintText: 'e.g. WN-A1B2C3',
                               prefixIcon: Icon(Icons.confirmation_number_outlined),
                             ),
                           ),
@@ -115,7 +115,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
                         const SizedBox(width: 12),
                         FilledButton(
                           onPressed: _verifying ? null : _verify,
-                          child: Text(_verifying ? 'Provjera...' : 'Verificiraj'),
+                          child: Text(_verifying ? 'Checking...' : 'Verify'),
                         ),
                       ],
                     ),
@@ -143,7 +143,7 @@ class TicketVerifyResultView extends StatelessWidget {
     if (error != null) {
       return _ResultCard(
         tone: _ResultTone.error,
-        title: 'Ulaznica nije verificirana',
+        title: 'Ticket was not verified',
         message: error!,
       );
     }
@@ -158,9 +158,13 @@ class TicketVerifyResultView extends StatelessWidget {
       children: [
         const _ResultCard(
           tone: _ResultTone.success,
-          title: 'Ulaznica je uspješno verificirana',
-          message: 'Kod je prihvaćen i ulaznica je označena kao iskorištena.',
+          title: 'Ticket verified',
+          message: 'The code was accepted and the ticket is marked as used.',
         ),
+        if (verified.warning != null && verified.warning!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _WarningBanner(message: verified.warning!),
+        ],
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(18),
@@ -171,24 +175,55 @@ class TicketVerifyResultView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _DetailRow(label: 'Kod', value: verified.code),
-              _DetailRow(label: 'Posjetilac', value: verified.userFullName),
-              _DetailRow(label: 'Datum posjete', value: formatDate(verified.visitDate)),
-              _DetailRow(label: 'Broj posjetilaca', value: verified.visitorCount.toString()),
-              _DetailRow(label: 'Ukupno', value: formatKm(verified.totalPrice)),
+              _DetailRow(label: 'Code', value: verified.code),
+              _DetailRow(label: 'Visitor', value: verified.userFullName),
+              _DetailRow(label: 'Visit date', value: formatDate(verified.visitDate)),
+              _DetailRow(label: 'Visitors', value: verified.visitorCount.toString()),
+              _DetailRow(label: 'Total', value: formatKm(verified.totalPrice)),
               _DetailRow(label: 'Status', value: verified.statusLabel),
               if (verified.verifiedAt != null)
                 _DetailRow(
-                  label: 'Vrijeme verifikacije',
+                  label: 'Verified at',
                   value: formatDate(verified.verifiedAt!.toLocal()),
                 ),
               if (verified.verifiedByFullName != null &&
                   verified.verifiedByFullName!.isNotEmpty)
-                _DetailRow(label: 'Verificirao', value: verified.verifiedByFullName!),
+                _DetailRow(label: 'Verified by', value: verified.verifiedByFullName!),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WarningBanner extends StatelessWidget {
+  const _WarningBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.warningBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_outlined, color: AppColors.warningText),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: AppColors.warningText, height: 1.35),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -77,13 +77,13 @@ abstract class BaseProvider<T> with ChangeNotifier {
 
     final parsed = ApiErrorParser.messageFromBody(response.body);
     if (response.statusCode == 404) {
-      throw ApiClientException(parsed ?? 'Zapis nije pronađen.');
+      throw ApiClientException(parsed ?? 'Record not found.');
     }
     if (response.statusCode >= 500) {
-      throw ApiClientException(parsed ?? 'Greška na serveru. Pokušajte ponovo.');
+      throw ApiClientException(parsed ?? 'Server error. Please try again.');
     }
     throw ApiClientException(
-      parsed ?? 'Zahtjev nije moguće izvršiti. Pokušajte ponovo.',
+      parsed ?? 'The request could not be completed. Please try again.',
     );
   }
 

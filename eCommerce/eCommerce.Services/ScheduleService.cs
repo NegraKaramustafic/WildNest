@@ -9,6 +9,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -25,13 +26,16 @@ namespace eCommerce.Services
             IValidator<ScheduleUpdateRequest> updateValidator,
             IReservationService reservationService,
             INotificationEventService notificationEvents,
-            ZooClock zooClock)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            ZooClock zooClock,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _reservationService = reservationService;
             _notificationEvents = notificationEvents;
             _zooClock = zooClock;
         }
+
+        protected override string NotFoundMessage => "Termin nije pronađen.";
 
         protected override async Task<IQueryable<Schedule>> IncludeRelatedEntitiesAsync(ScheduleSearchObject? search, IQueryable<Schedule> query = null!)
         {
@@ -48,7 +52,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new NotFoundException($"Schedule with id {id} not found.");
+                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
             }
 
             return _mapper.Map<ScheduleResponse>(entity);
@@ -102,7 +106,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                throw new NotFoundException($"Schedule with id {id} not found.");
+                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
             }
 
             if (request.ActivityId != entity.ActivityId)
@@ -165,7 +169,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Schedules.FirstOrDefaultAsync(s => s.Id == id);
             if (entity == null)
             {
-                throw new NotFoundException($"Schedule with id {id} not found.");
+                ThrowNotFound("Schedule", id, "Termin nije pronađen.");
             }
 
             var statuses = await _dbContext.Reservations
@@ -240,7 +244,7 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == activityId);
             if (activity == null)
             {
-                throw new NotFoundException($"Activity with id {activityId} not found.");
+                ThrowNotFound("Activity", activityId, "Aktivnost nije pronađena.");
             }
 
             if (activity.Status != ActivityStatus.Active)
@@ -256,7 +260,7 @@ namespace eCommerce.Services
             var activity = await _dbContext.Activities.AsNoTracking().FirstOrDefaultAsync(item => item.Id == activityId);
             if (activity == null)
             {
-                throw new NotFoundException($"Activity with id {activityId} not found.");
+                ThrowNotFound("Activity", activityId, "Aktivnost nije pronađena.");
             }
 
             EnsureCapacityValue(capacityLeft, activity.Capacity);

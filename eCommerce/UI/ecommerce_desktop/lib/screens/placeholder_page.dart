@@ -27,7 +27,7 @@ class PlaceholderPage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Ovaj ekran dolazi u narednoj sesiji.',
+                'This screen is coming in a later session.',
                 style: TextStyle(fontSize: 15, color: AppColors.textMuted),
               ),
             ],

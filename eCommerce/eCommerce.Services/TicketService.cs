@@ -11,6 +11,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -33,14 +34,17 @@ namespace eCommerce.Services
             IAuthenticatedUserAccessor userAccessor,
             INotificationEventService notificationEvents,
             IPaymentService paymentService,
-            ZooClock zooClock)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            ZooClock zooClock,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
             _notificationEvents = notificationEvents;
             _paymentService = paymentService;
             _zooClock = zooClock;
         }
+
+        protected override string NotFoundMessage => "Ticket not found.";
 
         protected override async Task<IQueryable<Ticket>> IncludeRelatedEntitiesAsync(TicketSearchObject? search, IQueryable<Ticket> query = null!)
         {
@@ -60,7 +64,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new NotFoundException($"Ticket with id {id} not found.");
+                ThrowNotFound("Ticket", id, "Ticket not found.");
             }
 
             return _mapper.Map<TicketResponse>(entity);
@@ -83,7 +87,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new NotFoundException($"Ticket with id {id} not found.");
+                ThrowNotFound("Ticket", id, "Ticket not found.");
             }
 
             if (entity.Status == TicketStatus.Used || entity.Status == TicketStatus.Cancelled)
@@ -100,7 +104,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new NotFoundException($"Ticket with id {id} not found.");
+                ThrowNotFound("Ticket", id, "Ticket not found.");
             }
 
             await base.DeleteAsync(id);
@@ -195,7 +199,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new NotFoundException($"Ticket with code {code} not found.");
+                ThrowNotFound("Ticket", code, "Ulaznica s ovim kodom ne postoji.");
             }
 
             if (entity.Status == TicketStatus.Used)
@@ -281,7 +285,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Tickets.FindAsync(id);
             if (entity == null || !CanAccessTicket(entity.UserId))
             {
-                throw new NotFoundException($"Ticket with id {id} not found.");
+                ThrowNotFound("Ticket", id, "Ticket not found.");
             }
 
             if (entity.Status == TicketStatus.Cancelled)

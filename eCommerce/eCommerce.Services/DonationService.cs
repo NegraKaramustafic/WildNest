@@ -8,7 +8,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -22,11 +22,14 @@ namespace eCommerce.Services
             MapsterMapper.IMapper mapper,
             IValidator<DonationInsertRequest> insertValidator,
             IValidator<DonationUpdateRequest> updateValidator,
-            IAuthenticatedUserAccessor userAccessor)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            IAuthenticatedUserAccessor userAccessor,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
         }
+
+        protected override string NotFoundMessage => "Donation not found.";
 
         protected override async Task<IQueryable<Donation>> IncludeRelatedEntitiesAsync(DonationSearchObject? search, IQueryable<Donation> query = null!)
         {
@@ -46,7 +49,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new NotFoundException($"Donation with id {id} not found.");
+                ThrowNotFound("Donation", id, "Donation not found.");
             }
 
             return _mapper.Map<DonationResponse>(entity);
@@ -56,7 +59,7 @@ namespace eCommerce.Services
         {
             if (!await _dbContext.ZooPartners.AnyAsync(partner => partner.Id == request.ZooPartnerId))
             {
-                throw new NotFoundException($"ZooPartner with id {request.ZooPartnerId} not found.");
+                ThrowNotFound("ZooPartner", request.ZooPartnerId, "Zoo partner not found.");
             }
 
             var created = await base.InsertAsync(request);
@@ -68,7 +71,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Donations.FindAsync(id);
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new NotFoundException($"Donation with id {id} not found.");
+                ThrowNotFound("Donation", id, "Donation not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -80,7 +83,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Donations.FindAsync(id);
             if (entity == null || !CanAccessDonation(entity.UserId))
             {
-                throw new NotFoundException($"Donation with id {id} not found.");
+                ThrowNotFound("Donation", id, "Donation not found.");
             }
 
             await base.DeleteAsync(id);

@@ -8,6 +8,7 @@ using eCommerce.Services.Database;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -17,10 +18,13 @@ namespace eCommerce.Services
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<ActivityTypeInsertRequest> insertValidator,
-            IValidator<ActivityTypeUpdateRequest> updateValidator)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            IValidator<ActivityTypeUpdateRequest> updateValidator,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
         }
+
+        protected override string NotFoundMessage => "Tip aktivnosti nije pronađen.";
 
         protected override IQueryable<ActivityType> ApplyFilters(IQueryable<ActivityType> query, ActivityTypeSearchObject? search)
         {

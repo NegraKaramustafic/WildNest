@@ -2,14 +2,18 @@ using eCommerce.Model.Enums;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ActivityStateMachine
 {
     public class ActiveActivityState : BaseActivityState
     {
-        public ActiveActivityState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
-            : base(dbContext, mapper, serviceProvider)
+        public ActiveActivityState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, serviceProvider, loggerFactory)
         {
         }
 
@@ -18,7 +22,7 @@ namespace eCommerce.Services.ActivityStateMachine
             var entity = await DbContext.Activities.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Activity with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             entity.Status = ActivityStatus.Inactive;

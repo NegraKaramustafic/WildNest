@@ -95,17 +95,17 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Brisanje kategorije'),
-        content: Text('Obrisati kategoriju ${category.name}?'),
+        title: const Text('Delete category'),
+        content: Text('Delete category ${category.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Obriši'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -137,7 +137,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
           Row(
             children: [
               IconButton(
-                tooltip: 'Nazad',
+                tooltip: 'Back',
                 onPressed: widget.onBack,
                 icon: const Icon(Icons.arrow_back),
               ),
@@ -147,12 +147,12 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kategorije životinja',
+                      'Animal categories',
                       style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Šifarnik kategorija za obrazac životinje',
+                      'Categories used on the animal form',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
@@ -161,7 +161,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
               FilledButton.icon(
                 onPressed: () => _edit(),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Dodaj kategoriju'),
+                label: const Text('Add category'),
               ),
             ],
           ),
@@ -175,7 +175,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
                 _debounce = Timer(const Duration(milliseconds: 300), _load);
               },
               decoration: const InputDecoration(
-                hintText: 'Pretraži kategorije...',
+                hintText: 'Search categories...',
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -197,7 +197,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
           children: [
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: _load, child: const Text('Pokušaj ponovo')),
+            OutlinedButton(onPressed: _load, child: const Text('Try again')),
           ],
         ),
       );
@@ -217,7 +217,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'NAZIV',
+                    'NAME',
                     style: TextStyle(
                       fontSize: 11,
                       letterSpacing: 0.6,
@@ -229,7 +229,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
                 SizedBox(
                   width: 96,
                   child: Text(
-                    'AKCIJE',
+                    'ACTIONS',
                     style: TextStyle(
                       fontSize: 11,
                       letterSpacing: 0.6,
@@ -246,7 +246,7 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
             child: _categories.isEmpty
                 ? const Center(
                     child: Text(
-                      'Nema kategorija.',
+                      'No categories.',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   )
@@ -265,12 +265,12 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
                               child: Row(
                                 children: [
                                   IconButton(
-                                    tooltip: 'Uredi',
+                                    tooltip: 'Edit',
                                     onPressed: () => _edit(category: category),
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                   ),
                                   IconButton(
-                                    tooltip: 'Obriši',
+                                    tooltip: 'Delete',
                                     onPressed: () => _delete(category),
                                     icon: const Icon(
                                       Icons.delete_outline,
@@ -322,17 +322,17 @@ class _CategoryNameDialogState extends State<_CategoryNameDialog> {
   Widget build(BuildContext context) {
     final isEdit = widget.initial.isNotEmpty;
     return AlertDialog(
-      title: Text(isEdit ? 'Uredi kategoriju' : 'Nova kategorija'),
+      title: Text(isEdit ? 'Edit category' : 'New category'),
       content: Form(
         key: _formKey,
         child: TextFormField(
           controller: _controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Naziv'),
+          decoration: const InputDecoration(labelText: 'Name'),
           validator: (value) {
             final text = value?.trim() ?? '';
-            if (text.isEmpty) return 'Naziv je obavezan.';
-            if (text.length > 50) return 'Naziv ne može biti duži od 50 znakova.';
+            if (text.isEmpty) return 'Name is required.';
+            if (text.length > 50) return 'Name cannot be longer than 50 characters.';
             return null;
           },
         ),
@@ -340,7 +340,7 @@ class _CategoryNameDialogState extends State<_CategoryNameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Odustani'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: () {
@@ -348,7 +348,7 @@ class _CategoryNameDialogState extends State<_CategoryNameDialog> {
               Navigator.pop(context, _controller.text.trim());
             }
           },
-          child: const Text('Sačuvaj'),
+          child: const Text('Save'),
         ),
       ],
     );

@@ -66,8 +66,8 @@ String scheduleStatusApiValue(ScheduleStatus status) {
 String scheduleStatusLabel(ScheduleStatus status) {
   switch (status) {
     case ScheduleStatus.active:
-      return 'Aktivan';
+      return 'Active';
     case ScheduleStatus.cancelled:
-      return 'Otkazan';
+      return 'Cancelled';
   }
 }

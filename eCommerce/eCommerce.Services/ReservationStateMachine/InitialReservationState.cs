@@ -6,6 +6,7 @@ using eCommerce.Services.Database;
 using FluentValidation;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
@@ -18,9 +19,10 @@ namespace eCommerce.Services.ReservationStateMachine
             ECommerceDbContext dbContext,
             IMapper mapper,
             IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory,
             IValidator<ReservationInsertRequest> insertValidator,
             IAuthenticatedUserAccessor userAccessor)
-            : base(dbContext, mapper, serviceProvider)
+            : base(dbContext, mapper, serviceProvider, loggerFactory)
         {
             _insertValidator = insertValidator;
             _userAccessor = userAccessor;

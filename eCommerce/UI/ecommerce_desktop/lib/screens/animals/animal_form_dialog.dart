@@ -187,7 +187,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  _isEdit ? 'Uredi životinju' : 'Nova životinja',
+                  _isEdit ? 'Edit animal' : 'New animal',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 16),
@@ -213,9 +213,9 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Expanded(child: _optionalField(_habitat, 'Stanište', 100)),
+                            Expanded(child: _optionalField(_habitat, 'Habitat', 100)),
                             const SizedBox(width: 12),
-                            Expanded(child: _optionalField(_diet, 'Ishrana', 100)),
+                            Expanded(child: _optionalField(_diet, 'Diet', 100)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -223,26 +223,26 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
                           children: [
                             Expanded(child: _weightField()),
                             const SizedBox(width: 12),
-                            Expanded(child: _optionalField(_lifespan, 'Životni vijek', 50)),
+                            Expanded(child: _optionalField(_lifespan, 'Lifespan', 50)),
                           ],
                         ),
                         const SizedBox(height: 12),
                         _adoptionField(),
                         const SizedBox(height: 12),
-                        _optionalField(_imageUrl, 'URL slike', 500),
+                        _optionalField(_imageUrl, 'Image URL', 500),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _description,
                           maxLines: 3,
                           maxLength: 1000,
                           decoration: const InputDecoration(
-                            labelText: 'Opis',
+                            labelText: 'Description',
                             alignLabelWithHint: true,
                           ),
                         ),
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Aktivna'),
+                          title: const Text('Active'),
                           value: _isActive,
                           onChanged: (value) => setState(() => _isActive = value),
                         ),
@@ -260,12 +260,12 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
                   children: [
                     TextButton(
                       onPressed: _saving ? null : () => Navigator.pop(context, false),
-                      child: const Text('Odustani'),
+                      child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: _saving || _loadingCategories ? null : _save,
-                      child: Text(_saving ? 'Spremanje...' : 'Sačuvaj'),
+                      child: Text(_saving ? 'Saving...' : 'Save'),
                     ),
                   ],
                 ),
@@ -280,11 +280,11 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _nameField() {
     return TextFormField(
       controller: _name,
-      decoration: const InputDecoration(labelText: 'Naziv'),
+      decoration: const InputDecoration(labelText: 'Name'),
       validator: (value) {
         final text = value?.trim() ?? '';
-        if (text.isEmpty) return 'Naziv je obavezan.';
-        if (text.length > 100) return 'Naziv ne može biti duži od 100 znakova.';
+        if (text.isEmpty) return 'Name is required.';
+        if (text.length > 100) return 'Name cannot be longer than 100 characters.';
         return null;
       },
     );
@@ -293,11 +293,11 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _speciesField() {
     return TextFormField(
       controller: _species,
-      decoration: const InputDecoration(labelText: 'Vrsta'),
+      decoration: const InputDecoration(labelText: 'Species'),
       validator: (value) {
         final text = value?.trim() ?? '';
-        if (text.isEmpty) return 'Vrsta je obavezna.';
-        if (text.length > 100) return 'Vrsta ne može biti duža od 100 znakova.';
+        if (text.isEmpty) return 'Species is required.';
+        if (text.length > 100) return 'Species cannot be longer than 100 characters.';
         return null;
       },
     );
@@ -306,28 +306,28 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _categoryField() {
     if (_loadingCategories) {
       return const InputDecorator(
-        decoration: InputDecoration(labelText: 'Kategorija'),
-        child: Text('Učitavanje...'),
+        decoration: InputDecoration(labelText: 'Category'),
+        child: Text('Loading...'),
       );
     }
 
     final selected = _categories.any((c) => c.id == _categoryId) ? _categoryId : null;
     return DropdownButtonFormField<int>(
       initialValue: selected,
-      decoration: const InputDecoration(labelText: 'Kategorija'),
+      decoration: const InputDecoration(labelText: 'Category'),
       items: [
         for (final category in _categories)
           DropdownMenuItem(value: category.id, child: Text(category.name)),
       ],
       onChanged: (value) => setState(() => _categoryId = value),
-      validator: (value) => value == null ? 'Kategorija je obavezna.' : null,
+      validator: (value) => value == null ? 'Category is required.' : null,
     );
   }
 
   Widget _tagField() {
     return DropdownButtonFormField<AnimalTag>(
       initialValue: _tag,
-      decoration: const InputDecoration(labelText: 'Oznaka'),
+      decoration: const InputDecoration(labelText: 'Tag'),
       items: [
         for (final tag in AnimalTag.values)
           DropdownMenuItem(value: tag, child: Text(animalTagLabel(tag))),
@@ -344,7 +344,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
       decoration: InputDecoration(labelText: label),
       validator: (value) {
         if ((value?.trim().length ?? 0) > max) {
-          return '$label ne može biti duži od $max znakova.';
+          return '$label cannot be longer than $max characters.';
         }
         return null;
       },
@@ -354,15 +354,15 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _weightField() {
     return TextFormField(
       controller: _weight,
-      decoration: const InputDecoration(labelText: 'Težina (kg)'),
+      decoration: const InputDecoration(labelText: 'Weight (kg)'),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {
         final parsed = _parseNumber(value ?? '');
         if (value != null && value.trim().isNotEmpty && parsed == null) {
-          return 'Unesite ispravan broj.';
+          return 'Enter a valid number.';
         }
-        if (parsed != null && parsed < 0) return 'Težina ne može biti negativna.';
+        if (parsed != null && parsed < 0) return 'Weight cannot be negative.';
         return null;
       },
     );
@@ -371,16 +371,16 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _adoptionField() {
     return TextFormField(
       controller: _adoptionPrice,
-      decoration: const InputDecoration(labelText: 'Cijena usvajanja (KM)'),
+      decoration: const InputDecoration(labelText: 'Adoption price (KM)'),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {
         final parsed = _parseNumber(value ?? '');
         if (value != null && value.trim().isNotEmpty && parsed == null) {
-          return 'Unesite ispravan broj.';
+          return 'Enter a valid number.';
         }
         if (parsed != null && parsed < 0) {
-          return 'Cijena usvajanja ne može biti negativna.';
+          return 'Adoption price cannot be negative.';
         }
         return null;
       },

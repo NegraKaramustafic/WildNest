@@ -105,10 +105,10 @@ String activityStatusApiValue(ActivityStatus status) {
 String activityStatusLabel(ActivityStatus status) {
   switch (status) {
     case ActivityStatus.draft:
-      return 'Nacrt';
+      return 'Draft';
     case ActivityStatus.active:
-      return 'Aktivna';
+      return 'Active';
     case ActivityStatus.inactive:
-      return 'Neaktivna';
+      return 'Inactive';
   }
 }

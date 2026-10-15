@@ -10,6 +10,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -25,12 +26,15 @@ namespace eCommerce.Services
             IValidator<AdoptionInsertRequest> insertValidator,
             IValidator<AdoptionUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            IPaymentService paymentService)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            IPaymentService paymentService,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
             _paymentService = paymentService;
         }
+
+        protected override string NotFoundMessage => "Adoption not found.";
 
         protected override async Task<IQueryable<Adoption>> IncludeRelatedEntitiesAsync(AdoptionSearchObject? search, IQueryable<Adoption> query = null!)
         {
@@ -50,7 +54,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new NotFoundException($"Adoption with id {id} not found.");
+                ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
             return _mapper.Map<AdoptionResponse>(entity);
@@ -62,7 +66,7 @@ namespace eCommerce.Services
             var animal = await _dbContext.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == request.AnimalId);
             if (animal == null)
             {
-                throw new NotFoundException($"Animal with id {request.AnimalId} not found.");
+                ThrowNotFound("Animal", request.AnimalId, "Animal not found.");
             }
 
             if (!animal.AdoptionPrice.HasValue)
@@ -83,7 +87,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new NotFoundException($"Adoption with id {id} not found.");
+                ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -95,7 +99,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new NotFoundException($"Adoption with id {id} not found.");
+                ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
             await base.DeleteAsync(id);
@@ -171,7 +175,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Adoptions.FindAsync(id);
             if (entity == null || !CanAccessAdoption(entity.UserId))
             {
-                throw new NotFoundException($"Adoption with id {id} not found.");
+                ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
             if (entity.Status == AdoptionStatus.Cancelled)

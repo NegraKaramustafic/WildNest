@@ -5,7 +5,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -17,8 +17,9 @@ namespace eCommerce.Services
         public UserBadgeService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
-            IAuthenticatedUserAccessor userAccessor)
-            : base(mapper, dbContext)
+            IAuthenticatedUserAccessor userAccessor,
+            ILoggerFactory loggerFactory)
+            : base(mapper, dbContext, loggerFactory)
         {
             _userAccessor = userAccessor;
         }
@@ -38,7 +39,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessUserBadge(entity.UserId))
             {
-                throw new NotFoundException($"UserBadge with id {id} not found.");
+                ThrowNotFound("UserBadge", id, "Badge not found.");
             }
 
             return _mapper.Map<UserBadgeResponse>(entity);

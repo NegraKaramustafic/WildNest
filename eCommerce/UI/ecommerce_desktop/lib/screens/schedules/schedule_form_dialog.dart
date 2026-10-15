@@ -85,7 +85,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
           0,
           Activity(
             id: currentId,
-            name: widget.schedule?.activityName ?? 'Aktivnost $currentId',
+            name: widget.schedule?.activityName ?? 'Activity $currentId',
             capacity: widget.schedule?.activityCapacity ?? 0,
             status: ActivityStatus.inactive,
           ),
@@ -133,6 +133,12 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
     final picked = await showTimePicker(
       context: context,
       initialTime: start ? _start : _end,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -145,9 +151,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   }
 
   String _clock(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    return formatClock(Duration(hours: time.hour, minutes: time.minute));
   }
 
   String _apiTime(TimeOfDay time) {
@@ -159,7 +163,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_activityId == null) {
-      setState(() => _error = 'Odaberite aktivnost.');
+      setState(() => _error = 'Select an activity.');
       return;
     }
 
@@ -212,7 +216,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  _isEdit ? 'Uredi termin' : 'Novi termin',
+                  _isEdit ? 'Edit schedule' : 'New schedule',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 16),
@@ -247,12 +251,12 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
                   children: [
                     TextButton(
                       onPressed: _saving ? null : () => Navigator.pop(context, false),
-                      child: const Text('Odustani'),
+                      child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: _saving || _loadingActivities ? null : _save,
-                      child: Text(_saving ? 'Spremanje...' : 'Sačuvaj'),
+                      child: Text(_saving ? 'Saving...' : 'Save'),
                     ),
                   ],
                 ),
@@ -267,15 +271,15 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   Widget _activityField() {
     if (_loadingActivities) {
       return const InputDecorator(
-        decoration: InputDecoration(labelText: 'Aktivnost'),
-        child: Text('Učitavanje...'),
+        decoration: InputDecoration(labelText: 'Activity'),
+        child: Text('Loading...'),
       );
     }
 
     if (_activities.isEmpty) {
       return const InputDecorator(
-        decoration: InputDecoration(labelText: 'Aktivnost'),
-        child: Text('Nema aktivnih aktivnosti.'),
+        decoration: InputDecoration(labelText: 'Activity'),
+        child: Text('No active activities.'),
       );
     }
 
@@ -285,7 +289,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
     return DropdownButtonFormField<int>(
       initialValue: selected,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Aktivnost'),
+      decoration: const InputDecoration(labelText: 'Activity'),
       items: [
         for (final activity in _activities)
           DropdownMenuItem(value: activity.id, child: Text(activity.name)),
@@ -299,7 +303,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
           }
         });
       },
-      validator: (value) => value == null ? 'Aktivnost je obavezna.' : null,
+      validator: (value) => value == null ? 'Activity is required.' : null,
     );
   }
 
@@ -314,7 +318,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
             ? null
             : DateUtils.dateOnly(widget.schedule!.date);
         if (day.isBefore(today) && day != original) {
-          return 'Datum ne može biti u prošlosti.';
+          return 'Date cannot be in the past.';
         }
         return null;
       },
@@ -327,7 +331,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
           borderRadius: BorderRadius.circular(10),
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: 'Datum',
+              labelText: 'Date',
               errorText: state.errorText,
               suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
             ),
@@ -344,7 +348,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
       initialValue: value,
       validator: (_) {
         if (_minutes(_end) <= _minutes(_start)) {
-          return start ? null : 'Završetak mora biti nakon početka.';
+          return start ? null : 'End must be after start.';
         }
         return null;
       },
@@ -357,7 +361,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
           borderRadius: BorderRadius.circular(10),
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: start ? 'Početak' : 'Završetak',
+              labelText: start ? 'Start' : 'End',
               errorText: state.errorText,
               suffixIcon: const Icon(Icons.schedule, size: 18),
             ),
@@ -371,16 +375,16 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   Widget _capacityField() {
     return TextFormField(
       controller: _capacity,
-      decoration: const InputDecoration(labelText: 'Preostali kapacitet'),
+      decoration: const InputDecoration(labelText: 'Capacity left'),
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value) {
         final parsed = int.tryParse(value?.trim() ?? '');
-        if (parsed == null) return 'Unesite preostali kapacitet.';
-        if (parsed < 0) return 'Preostali kapacitet ne može biti negativan.';
+        if (parsed == null) return 'Enter the capacity left.';
+        if (parsed < 0) return 'Capacity left cannot be negative.';
         final maxCapacity = _selectedActivity?.capacity;
         if (maxCapacity != null && maxCapacity > 0 && parsed > maxCapacity) {
-          return 'Preostali kapacitet ne može biti veći od kapaciteta aktivnosti ($maxCapacity).';
+          return 'Capacity left cannot be greater than the activity capacity ($maxCapacity).';
         }
         return null;
       },

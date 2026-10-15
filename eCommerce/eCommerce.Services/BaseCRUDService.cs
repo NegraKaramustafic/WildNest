@@ -3,7 +3,7 @@ using eCommerce.Services.Database;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -19,7 +19,8 @@ namespace eCommerce.Services
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<TInsertRequest> insertValidator,
-            IValidator<TUpdateRequest> updateValidator) : base(mapper, dbContext)
+            IValidator<TUpdateRequest> updateValidator,
+            ILoggerFactory loggerFactory) : base(mapper, dbContext, loggerFactory)
         {
             _insertValidator = insertValidator;
             _updateValidator = updateValidator;
@@ -71,7 +72,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<TEntity>().FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             MapUpdateRequestToEntity(request, entity);
@@ -92,7 +93,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<TEntity>().FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"{typeof(TEntity).Name} with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             _dbContext.Set<TEntity>().Remove(entity);

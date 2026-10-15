@@ -87,8 +87,8 @@ class AuthProvider extends ChangeNotifier {
       throw ApiClientException(
         ApiErrorParser.messageFromBody(response.body) ??
             (response.statusCode == 401
-                ? 'Pogrešno korisničko ime ili lozinka.'
-                : 'Prijava nije uspjela. Pokušajte ponovo.'),
+                ? 'Invalid username or password.'
+                : 'Could not sign in. Please try again.'),
       );
     }
 
@@ -96,20 +96,20 @@ class AuthProvider extends ChangeNotifier {
     final access = (data['accesstoken'] ?? data['Accesstoken']) as String?;
     final refresh = (data['refreshtoken'] ?? data['Refreshtoken']) as String?;
     if (access == null || access.isEmpty) {
-      throw ApiClientException('Prijava je uspjela, ali token nije vraćen.');
+      throw ApiClientException('Sign-in succeeded, but no token was returned.');
     }
 
     Map<String, dynamic> claims;
     try {
       claims = JwtDecoder.decode(access);
     } catch (_) {
-      throw ApiClientException('Primljeni token nije ispravan.');
+      throw ApiClientException('The token that was received is not valid.');
     }
 
     if (!isAdminRole(claims)) {
       _clearMemory();
       throw ApiClientException(
-        'Samo administratori mogu pristupiti ovoj aplikaciji.',
+        'Only administrators can use this app.',
       );
     }
 
@@ -119,7 +119,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {
       _clearMemory();
       throw ApiClientException(
-        'Token nije moguće spremiti u sigurnu pohranu.',
+        'The token could not be saved to secure storage.',
       );
     }
     _isAuthenticated = true;
@@ -155,7 +155,7 @@ class AuthProvider extends ChangeNotifier {
     }
     _handlingUnauthorized = true;
     try {
-      _sessionNotice = 'Sesija je istekla. Prijavite se ponovo.';
+      _sessionNotice = 'Your session has expired. Please sign in again.';
       _clearMemory();
       _isAuthenticated = false;
       await _clearStoredTokens();

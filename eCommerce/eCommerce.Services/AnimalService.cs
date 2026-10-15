@@ -7,16 +7,23 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
     public class AnimalService : BaseCRUDService<Animal, AnimalResponse, AnimalSearchObject, AnimalInsertRequest, AnimalUpdateRequest>, IAnimalService
     {
-        public AnimalService(ECommerceDbContext dbContext, MapsterMapper.IMapper mapper, IValidator<AnimalInsertRequest> insertValidator, IValidator<AnimalUpdateRequest> updateValidator)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+        public AnimalService(
+            ECommerceDbContext dbContext,
+            MapsterMapper.IMapper mapper,
+            IValidator<AnimalInsertRequest> insertValidator,
+            IValidator<AnimalUpdateRequest> updateValidator,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
         }
+
+        protected override string NotFoundMessage => "Životinja nije pronađena.";
 
         protected override async Task<IQueryable<Animal>> IncludeRelatedEntitiesAsync(AnimalSearchObject? search, IQueryable<Animal> query = null!)
         {
@@ -33,7 +40,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new NotFoundException($"Animal with id {id} not found.");
+                ThrowNotFound("Animal", id, "Animal not found.");
             }
 
             return _mapper.Map<AnimalResponse>(entity);
@@ -57,7 +64,7 @@ namespace eCommerce.Services
         {
             if (!await _dbContext.AnimalCategories.AnyAsync(category => category.Id == categoryId))
             {
-                throw new NotFoundException($"AnimalCategory with id {categoryId} not found.");
+                ThrowNotFound("AnimalCategory", categoryId, "Kategorija životinje nije pronađena.");
             }
         }
 

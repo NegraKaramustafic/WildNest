@@ -2,14 +2,18 @@ using eCommerce.Model.Enums;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
     public class ConfirmedReservationState : BaseReservationState
     {
-        public ConfirmedReservationState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
-            : base(dbContext, mapper, serviceProvider)
+        public ConfirmedReservationState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, serviceProvider, loggerFactory)
         {
         }
 
@@ -18,7 +22,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Reservation with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             entity.Status = ReservationStatus.Completed;
@@ -31,7 +35,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Reservation with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             entity.Status = ReservationStatus.Cancelled;

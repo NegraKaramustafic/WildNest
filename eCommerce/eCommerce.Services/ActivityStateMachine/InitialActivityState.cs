@@ -3,13 +3,18 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ActivityStateMachine
 {
     public class InitialActivityState : BaseActivityState
     {
-        public InitialActivityState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
-            : base(dbContext, mapper, serviceProvider)
+        public InitialActivityState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, serviceProvider, loggerFactory)
         {
         }
 

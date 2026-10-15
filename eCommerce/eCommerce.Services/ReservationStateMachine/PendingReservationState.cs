@@ -4,13 +4,18 @@ using eCommerce.Model.Responses;
 using eCommerce.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
     public class PendingReservationState : BaseReservationState
     {
-        public PendingReservationState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
-            : base(dbContext, mapper, serviceProvider)
+        public PendingReservationState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, serviceProvider, loggerFactory)
         {
         }
 
@@ -19,7 +24,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Reservation with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             if (!entity.PaymentId.HasValue
@@ -38,7 +43,7 @@ namespace eCommerce.Services.ReservationStateMachine
             var entity = await DbContext.Reservations.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Reservation with id {id} not found.");
+                ThrowNotFound(id);
             }
 
             entity.Status = ReservationStatus.Cancelled;

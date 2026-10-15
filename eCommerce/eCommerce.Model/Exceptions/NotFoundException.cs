@@ -1,7 +1,9 @@
 namespace eCommerce.Model.Exceptions
 {
     /// <summary>
-    /// Missing entity. The WebAPI exception filter maps this to HTTP 404
+    /// Missing entity. The message is shown to the user and must not include
+    /// database ids; log the id with <c>ILogger</c> before throwing.
+    /// The WebAPI exception filter maps this to HTTP 404
     /// with a JSON body: { "message": "...", "errors": { "notFound": ["..."] } }.
     /// </summary>
     public class NotFoundException : Exception
