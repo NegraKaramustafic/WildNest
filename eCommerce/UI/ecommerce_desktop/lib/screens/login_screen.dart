@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
     if (username.isEmpty || password.isEmpty) {
       setState(() {
-        _error = 'Unesite korisničko ime i lozinku.';
+        _error = 'Enter a username and password.';
       });
       return;
     }
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _usernameController,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'Korisničko ime',
+                      labelText: 'Username',
                     ),
                     onSubmitted: (_) => _submit(),
                   ),
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscure,
                     decoration: InputDecoration(
-                      labelText: 'Lozinka',
+                      labelText: 'Password',
                       suffixIcon: IconButton(
                         onPressed: () => setState(() => _obscure = !_obscure),
                         icon: Icon(
@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _submitting ? null : _submit,
-                    child: Text(_submitting ? 'Prijava...' : 'Prijava'),
+                    child: Text(_submitting ? 'Signing in...' : 'Sign in'),
                   ),
                 ],
               ),

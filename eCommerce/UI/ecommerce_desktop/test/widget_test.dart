@@ -36,10 +36,10 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Prijava'));
+    await tester.tap(find.text('Sign in'));
     await tester.pump();
 
-    expect(find.text('Unesite korisničko ime i lozinku.'), findsOneWidget);
+    expect(find.text('Enter a username and password.'), findsOneWidget);
   });
 
   testWidgets('shell opens placeholders and ticket verification', (tester) async {
@@ -60,29 +60,29 @@ void main() {
       ),
     );
 
-    expect(find.text('Ovaj ekran dolazi u narednoj sesiji.'), findsOneWidget);
+    expect(find.text('This screen is coming in a later session.'), findsOneWidget);
 
-    await tester.tap(find.text('Verifikacija ulaznica'));
+    await tester.tap(find.text('Tickets'));
     await tester.pump();
 
-    expect(find.text('Unesite kod ulaznice za provjeru valjanosti'), findsOneWidget);
+    expect(find.text('Enter a ticket code to check that it is valid'), findsOneWidget);
     expect(find.textContaining('Demo kodovi'), findsNothing);
-    expect(find.text('npr. WN-A1B2C3'), findsOneWidget);
+    expect(find.text('e.g. WN-A1B2C3'), findsOneWidget);
 
-    await tester.tap(find.text('Verificiraj'));
+    await tester.tap(find.text('Verify'));
     await tester.pump();
-    expect(find.text('Unesite kod ulaznice.'), findsOneWidget);
+    expect(find.text('Enter a ticket code.'), findsOneWidget);
 
-    await tester.tap(find.text('Donacije'));
+    await tester.tap(find.text('Donations'));
     await tester.pump();
-    expect(find.text('Donacije'), findsWidgets);
-    expect(find.text('Ovaj ekran dolazi u narednoj sesiji.'), findsOneWidget);
+    expect(find.text('Donations'), findsWidgets);
+    expect(find.text('This screen is coming in a later session.'), findsOneWidget);
 
-    await tester.tap(find.text('Životinje'));
+    await tester.tap(find.text('Animals'));
     await tester.pump();
     await tester.pump();
     expect(find.textContaining('API_BASE_URL'), findsOneWidget);
-    expect(find.text('Upravljanje životinjama'), findsOneWidget);
+    expect(find.text('Animals'), findsWidgets);
   });
 
   testWidgets('ticket result shows details and the today warning', (tester) async {
@@ -106,7 +106,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Ulaznica je uspješno verificirana'), findsOneWidget);
+    expect(find.text('Ticket verified'), findsOneWidget);
     expect(find.text('Ticket is not valid for today'), findsOneWidget);
     expect(find.text('WN-2026-004'), findsOneWidget);
     expect(find.text('Ana Horvat'), findsOneWidget);
@@ -122,7 +122,7 @@ void main() {
     );
 
     expect(find.text('Ticket already used'), findsOneWidget);
-    expect(find.text('Ulaznica nije verificirana'), findsOneWidget);
+    expect(find.text('Ticket was not verified'), findsOneWidget);
   });
 
   testWidgets('app starts on the login screen', (tester) async {
@@ -130,7 +130,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Prijava'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
     expect(find.text('WildNest'), findsOneWidget);
   });
 }

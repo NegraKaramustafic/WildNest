@@ -51,13 +51,13 @@ class Ticket {
   String get statusLabel {
     switch (status) {
       case TicketStatus.active:
-        return 'Aktivna';
+        return 'Active';
       case TicketStatus.used:
-        return 'Iskorištena';
+        return 'Used';
       case TicketStatus.cancelled:
-        return 'Otkazana';
+        return 'Cancelled';
       case TicketStatus.pendingPayment:
-        return 'Čeka uplatu';
+        return 'Pending payment';
     }
   }
 }

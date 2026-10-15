@@ -9,6 +9,7 @@ using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
 using eCommerce.Services.ReservationStateMachine;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using eCommerce.Model.Exceptions;
 
 namespace eCommerce.Services;
@@ -30,8 +31,9 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         IAuthenticatedUserAccessor userAccessor,
         INotificationEventService notificationEvents,
         RecommendationModelCache recommendationModelCache,
-        IPaymentService paymentService)
-        : base(mapper, dbContext)
+        IPaymentService paymentService,
+        ILoggerFactory loggerFactory)
+        : base(mapper, dbContext, loggerFactory)
     {
         ReservationState = reservationState;
         _userAccessor = userAccessor;
@@ -98,7 +100,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
         if (entity == null || !CanAccessReservation(entity.UserId))
         {
-            throw new NotFoundException($"Reservation with id {id} not found.");
+            ThrowNotFound("Reservation", id, "Reservation not found.");
         }
 
         var response = _mapper.Map<ReservationResponse>(entity);
@@ -130,7 +132,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     public async Task<ReservationResponse> ConfirmAsync(int id)
     {
-        EnsureAdmin();
+        EnsureAdmin(id);
         var entity = await GetAccessibleEntityAsync(id);
         var state = ReservationState.GetReservationState(entity.Status);
         var confirmed = await state.ConfirmAsync(id);
@@ -167,7 +169,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     public async Task<ReservationResponse> CompleteAsync(int id)
     {
-        EnsureAdmin();
+        EnsureAdmin(id);
         var entity = await GetAccessibleEntityAsync(id);
         var state = ReservationState.GetReservationState(entity.Status);
         var completed = await state.CompleteAsync(id);
@@ -193,7 +195,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         var entity = await _dbContext.Reservations.FindAsync(id);
         if (entity == null || !CanAccessReservation(entity.UserId))
         {
-            throw new NotFoundException($"Reservation with id {id} not found.");
+            ThrowNotFound("Reservation", id, "Reservation not found.");
         }
 
         return entity;
@@ -210,10 +212,11 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         return userId.HasValue && userId.Value == reservationUserId;
     }
 
-    private void EnsureAdmin()
+    private void EnsureAdmin(int id)
     {
         if (!_userAccessor.IsInRole(Roles.Admin))
         {
+            _logger.LogWarning("Reservation {Id} is not accessible.", id);
             throw new NotFoundException("Reservation not found.");
         }
     }

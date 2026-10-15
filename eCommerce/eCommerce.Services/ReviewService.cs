@@ -10,6 +10,7 @@ using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -25,12 +26,15 @@ namespace eCommerce.Services
             IValidator<ReviewInsertRequest> insertValidator,
             IValidator<ReviewUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            RecommendationModelCache recommendationModelCache)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            RecommendationModelCache recommendationModelCache,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
             _recommendationModelCache = recommendationModelCache;
         }
+
+        protected override string NotFoundMessage => "Review not found.";
 
         protected override async Task<IQueryable<Review>> IncludeRelatedEntitiesAsync(ReviewSearchObject? search, IQueryable<Review> query = null!)
         {
@@ -50,7 +54,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                throw new NotFoundException($"Review with id {id} not found.");
+                ThrowNotFound("Review", id, "Review not found.");
             }
 
             return _mapper.Map<ReviewResponse>(entity);
@@ -84,7 +88,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Reviews.FindAsync(id);
             if (entity == null || !CanModifyReview(entity.UserId))
             {
-                throw new NotFoundException($"Review with id {id} not found.");
+                ThrowNotFound("Review", id, "Review not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -97,7 +101,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Reviews.FindAsync(id);
             if (entity == null || !CanModifyReview(entity.UserId))
             {
-                throw new NotFoundException($"Review with id {id} not found.");
+                ThrowNotFound("Review", id, "Review not found.");
             }
 
             await base.DeleteAsync(id);

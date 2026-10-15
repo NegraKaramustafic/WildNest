@@ -26,14 +26,14 @@ Future<ActivityFormResult?> showActivityFormDialog(
     return showDialog<ActivityFormResult>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nema tipova aktivnosti'),
+        title: const Text('No activity types'),
         content: const Text(
-          'Dodajte tip aktivnosti prije unosa aktivnosti.',
+          'Add an activity type before adding an activity.',
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('U redu'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -100,7 +100,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
           id: _activityTypeId!,
           name: activity?.activityTypeName.isNotEmpty == true
               ? activity!.activityTypeName
-              : 'Tip aktivnosti',
+              : 'Activity type',
         ),
         ..._types,
       ];
@@ -140,7 +140,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
           _animals = [
             Animal(
               id: _animalId!,
-              name: widget.activity?.animalName ?? 'Životinja $_animalId',
+              name: widget.activity?.animalName ?? 'Animal $_animalId',
               species: '',
               categoryId: 0,
               categoryName: '',
@@ -220,13 +220,13 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  _isEdit ? 'Uredi aktivnost' : 'Nova aktivnost',
+                  _isEdit ? 'Edit activity' : 'New activity',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 if (!_isEdit) ...[
                   const SizedBox(height: 6),
                   const Text(
-                    'Nova aktivnost se čuva kao nacrt.',
+                    'A new activity is saved as a draft.',
                     style: TextStyle(color: AppColors.textMuted),
                   ),
                 ],
@@ -262,12 +262,12 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
                           maxLines: 3,
                           maxLength: 1000,
                           decoration: const InputDecoration(
-                            labelText: 'Opis',
+                            labelText: 'Description',
                             alignLabelWithHint: true,
                           ),
                           validator: (value) {
                             if ((value?.trim().length ?? 0) > 1000) {
-                              return 'Opis ne može biti duži od 1000 znakova.';
+                              return 'Description cannot be longer than 1000 characters.';
                             }
                             return null;
                           },
@@ -286,12 +286,12 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
                   children: [
                     TextButton(
                       onPressed: _saving ? null : () => Navigator.pop(context),
-                      child: const Text('Odustani'),
+                      child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: _saving || _loadingAnimals ? null : _save,
-                      child: Text(_saving ? 'Spremanje...' : 'Sačuvaj'),
+                      child: Text(_saving ? 'Saving...' : 'Save'),
                     ),
                   ],
                 ),
@@ -306,11 +306,11 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _nameField() {
     return TextFormField(
       controller: _name,
-      decoration: const InputDecoration(labelText: 'Naziv'),
+      decoration: const InputDecoration(labelText: 'Name'),
       validator: (value) {
         final text = value?.trim() ?? '';
-        if (text.isEmpty) return 'Naziv je obavezan.';
-        if (text.length > 100) return 'Naziv ne može biti duži od 100 znakova.';
+        if (text.isEmpty) return 'Name is required.';
+        if (text.length > 100) return 'Name cannot be longer than 100 characters.';
         return null;
       },
     );
@@ -322,7 +322,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
       key: ValueKey('activity-type-$selected'),
       initialValue: selected,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Tip'),
+      decoration: const InputDecoration(labelText: 'Type'),
       items: [
         for (final type in _types)
           DropdownMenuItem(value: type.id, child: Text(type.name)),
@@ -330,24 +330,24 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
       onChanged: (value) {
         if (value != null) setState(() => _activityTypeId = value);
       },
-      validator: (value) => value == null ? 'Tip je obavezan.' : null,
+      validator: (value) => value == null ? 'Type is required.' : null,
     );
   }
 
   Widget _animalField() {
     if (_loadingAnimals) {
       return const InputDecorator(
-        decoration: InputDecoration(labelText: 'Životinja'),
-        child: Text('Učitavanje...'),
+        decoration: InputDecoration(labelText: 'Animal'),
+        child: Text('Loading...'),
       );
     }
 
     final selected = _animals.any((animal) => animal.id == _animalId) ? _animalId : null;
     return DropdownButtonFormField<int?>(
       initialValue: selected,
-      decoration: const InputDecoration(labelText: 'Životinja'),
+      decoration: const InputDecoration(labelText: 'Animal'),
       items: [
-        const DropdownMenuItem<int?>(value: null, child: Text('Bez životinje')),
+        const DropdownMenuItem<int?>(value: null, child: Text('No animal')),
         for (final animal in _animals)
           DropdownMenuItem(value: animal.id, child: Text(animal.name)),
       ],
@@ -358,13 +358,13 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _durationField() {
     return TextFormField(
       controller: _duration,
-      decoration: const InputDecoration(labelText: 'Trajanje (minute)'),
+      decoration: const InputDecoration(labelText: 'Duration (minutes)'),
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value) {
         final parsed = int.tryParse(value?.trim() ?? '');
         if (parsed == null || parsed <= 0) {
-          return 'Trajanje mora biti veće od 0.';
+          return 'Duration must be greater than 0.';
         }
         return null;
       },
@@ -374,13 +374,13 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _priceField() {
     return TextFormField(
       controller: _price,
-      decoration: const InputDecoration(labelText: 'Cijena (KM)'),
+      decoration: const InputDecoration(labelText: 'Price (KM)'),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {
         final parsed = _parseNumber(value ?? '');
-        if (parsed == null) return 'Unesite ispravnu cijenu.';
-        if (parsed <= 0) return 'Cijena mora biti veća od 0.';
+        if (parsed == null) return 'Enter a valid price.';
+        if (parsed <= 0) return 'Price must be greater than 0.';
         return null;
       },
     );
@@ -389,13 +389,13 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _capacityField() {
     return TextFormField(
       controller: _capacity,
-      decoration: const InputDecoration(labelText: 'Kapacitet'),
+      decoration: const InputDecoration(labelText: 'Capacity'),
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value) {
         final parsed = int.tryParse(value?.trim() ?? '');
         if (parsed == null || parsed <= 0) {
-          return 'Kapacitet mora biti veći od 0.';
+          return 'Capacity must be greater than 0.';
         }
         return null;
       },
@@ -405,10 +405,10 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _imageField() {
     return TextFormField(
       controller: _imageUrl,
-      decoration: const InputDecoration(labelText: 'URL slike'),
+      decoration: const InputDecoration(labelText: 'Image URL'),
       validator: (value) {
         if ((value?.trim().length ?? 0) > 500) {
-          return 'URL slike ne može biti duži od 500 znakova.';
+          return 'Image URL cannot be longer than 500 characters.';
         }
         return null;
       },

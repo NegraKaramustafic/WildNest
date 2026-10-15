@@ -102,12 +102,12 @@ String animalTagApiValue(AnimalTag tag) {
 String animalTagLabel(AnimalTag tag) {
   switch (tag) {
     case AnimalTag.popular:
-      return 'Popularno';
+      return 'Popular';
     case AnimalTag.isNew:
-      return 'Novo';
+      return 'New';
     case AnimalTag.adoptable:
-      return 'Za usvajanje';
+      return 'Adoptable';
     case AnimalTag.none:
-      return 'Bez oznake';
+      return 'No tag';
   }
 }

@@ -9,7 +9,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services;
 
@@ -24,8 +24,9 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         ECommerceDbContext dbContext,
         MapsterMapper.IMapper mapper,
         BaseActivityState activityState,
-        IAuthenticatedUserAccessor userAccessor)
-        : base(mapper, dbContext)
+        IAuthenticatedUserAccessor userAccessor,
+        ILoggerFactory loggerFactory)
+        : base(mapper, dbContext, loggerFactory)
     {
         ActivityState = activityState;
         _userAccessor = userAccessor;
@@ -93,7 +94,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -105,7 +106,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -117,7 +118,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -129,7 +130,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -147,7 +148,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         var entity = await _dbContext.Activities.FindAsync(id);
         if (entity == null)
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Aktivnost nije pronađena.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
@@ -164,7 +165,7 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
 
         if (entity == null || !CanViewActivity(entity))
         {
-            throw new NotFoundException($"Activity with id {id} not found.");
+            ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var response = _mapper.Map<ActivityResponse>(entity);

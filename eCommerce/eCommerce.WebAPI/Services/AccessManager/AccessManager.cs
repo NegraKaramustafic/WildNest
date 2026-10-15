@@ -42,7 +42,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
 
             if (user == null || !_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
             {
-                throw new ClientException("Pogrešno korisničko ime ili lozinka.");
+                throw new ClientException("Invalid username or password.");
             }
 
             if (!user.IsActive)

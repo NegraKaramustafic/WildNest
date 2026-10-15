@@ -6,15 +6,23 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
     public class AnimalCategoryService : BaseCRUDService<AnimalCategory, AnimalCategoryResponse, AnimalCategorySearchObject, AnimalCategoryInsertRequest, AnimalCategoryUpdateRequest>, IAnimalCategoryService
     {
-        public AnimalCategoryService(ECommerceDbContext dbContext, MapsterMapper.IMapper mapper, IValidator<AnimalCategoryInsertRequest> insertValidator, IValidator<AnimalCategoryUpdateRequest> updateValidator)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+        public AnimalCategoryService(
+            ECommerceDbContext dbContext,
+            MapsterMapper.IMapper mapper,
+            IValidator<AnimalCategoryInsertRequest> insertValidator,
+            IValidator<AnimalCategoryUpdateRequest> updateValidator,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
         }
+
+        protected override string NotFoundMessage => "Kategorija životinja nije pronađena.";
 
         protected override IQueryable<AnimalCategory> ApplyFilters(IQueryable<AnimalCategory> query, AnimalCategorySearchObject? search)
         {

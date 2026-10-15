@@ -26,7 +26,7 @@ class StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        label ?? (active ? 'Aktivna' : 'Neaktivna'),
+        label ?? (active ? 'Active' : 'Inactive'),
         style: TextStyle(
           color: fg,
           fontSize: 12,

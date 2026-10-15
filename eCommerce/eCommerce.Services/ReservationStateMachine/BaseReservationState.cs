@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using eCommerce.Model.Enums;
 using eCommerce.Model.Exceptions;
@@ -7,6 +8,7 @@ using eCommerce.Services.Database;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ReservationStateMachine
 {
@@ -19,12 +21,25 @@ namespace eCommerce.Services.ReservationStateMachine
         protected ECommerceDbContext DbContext { get; }
         protected IMapper Mapper { get; }
         protected IServiceProvider ServiceProvider { get; }
+        protected ILogger Logger { get; }
 
-        public BaseReservationState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
+        public BaseReservationState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
         {
             DbContext = dbContext;
             Mapper = mapper;
             ServiceProvider = serviceProvider;
+            Logger = loggerFactory.CreateLogger(GetType());
+        }
+
+        [DoesNotReturn]
+        protected void ThrowNotFound(int id)
+        {
+            Logger.LogWarning("Reservation {Id} was not found.", id);
+            throw new NotFoundException("Reservation not found.");
         }
 
         public virtual Task<ReservationResponse> InsertAsync(ReservationInsertRequest request)

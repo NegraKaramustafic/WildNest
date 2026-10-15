@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using eCommerce.Model.Enums;
 using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
@@ -8,6 +9,7 @@ using FluentValidation.Results;
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services.ActivityStateMachine
 {
@@ -16,12 +18,25 @@ namespace eCommerce.Services.ActivityStateMachine
         protected ECommerceDbContext DbContext { get; }
         protected IMapper Mapper { get; }
         protected IServiceProvider ServiceProvider { get; }
+        protected ILogger Logger { get; }
 
-        public BaseActivityState(ECommerceDbContext dbContext, IMapper mapper, IServiceProvider serviceProvider)
+        public BaseActivityState(
+            ECommerceDbContext dbContext,
+            IMapper mapper,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory)
         {
             DbContext = dbContext;
             Mapper = mapper;
             ServiceProvider = serviceProvider;
+            Logger = loggerFactory.CreateLogger(GetType());
+        }
+
+        [DoesNotReturn]
+        protected void ThrowNotFound(int id)
+        {
+            Logger.LogWarning("Activity {Id} was not found.", id);
+            throw new NotFoundException("Aktivnost nije pronađena.");
         }
 
         public virtual Task<ActivityResponse> InsertAsync(ActivityInsertRequest request)

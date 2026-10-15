@@ -5,7 +5,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
-using eCommerce.Model.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -17,8 +17,9 @@ namespace eCommerce.Services
         public NotificationService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
-            IAuthenticatedUserAccessor userAccessor)
-            : base(mapper, dbContext)
+            IAuthenticatedUserAccessor userAccessor,
+            ILoggerFactory loggerFactory)
+            : base(mapper, dbContext, loggerFactory)
         {
             _userAccessor = userAccessor;
         }
@@ -38,7 +39,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessNotification(entity.UserId))
             {
-                throw new NotFoundException($"Notification with id {id} not found.");
+                ThrowNotFound("Notification", id, "Notification not found.");
             }
 
             return _mapper.Map<NotificationResponse>(entity);
@@ -112,7 +113,7 @@ namespace eCommerce.Services
 
             if (entity == null || !CanAccessNotification(entity.UserId))
             {
-                throw new NotFoundException($"Notification with id {id} not found.");
+                ThrowNotFound("Notification", id, "Notification not found.");
             }
 
             if (!entity.IsRead)

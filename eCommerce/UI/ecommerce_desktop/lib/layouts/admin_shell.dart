@@ -10,20 +10,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum AdminSection {
-  dashboard('Kontrolna ploča', Icons.dashboard_outlined),
-  animals('Životinje', Icons.pets_outlined),
-  activities('Aktivnosti', Icons.local_activity_outlined),
-  activityTypes('Tipovi aktivnosti', Icons.label_outline),
-  schedules('Termini', Icons.calendar_month_outlined),
-  reservations('Rezervacije', Icons.event_available_outlined),
-  donations('Donacije', Icons.favorite_border),
-  adoptions('Usvajanja', Icons.volunteer_activism_outlined),
-  users('Korisnici', Icons.people_outline),
-  reviews('Recenzije', Icons.chat_bubble_outline),
-  badges('Značke', Icons.emoji_events_outlined),
-  reports('Izvještaji', Icons.description_outlined),
-  tickets('Verifikacija ulaznica', Icons.confirmation_number_outlined),
-  settings('Postavke', Icons.settings_outlined);
+  dashboard('Dashboard', Icons.dashboard_outlined),
+  animals('Animals', Icons.pets_outlined),
+  activities('Activities', Icons.local_activity_outlined),
+  activityTypes('Activity types', Icons.label_outline),
+  schedules('Schedules', Icons.calendar_month_outlined),
+  reservations('Reservations', Icons.event_available_outlined),
+  donations('Donations', Icons.favorite_border),
+  adoptions('Adoptions', Icons.volunteer_activism_outlined),
+  users('Users', Icons.people_outline),
+  reviews('Reviews', Icons.chat_bubble_outline),
+  badges('Badges', Icons.emoji_events_outlined),
+  reports('Reports', Icons.description_outlined),
+  tickets('Tickets', Icons.confirmation_number_outlined),
+  settings('Settings', Icons.settings_outlined);
 
   const AdminSection(this.label, this.icon);
 
@@ -200,6 +200,7 @@ class _NavItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     section.label,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppColors.sidebarText,
                       fontSize: 13.5,
@@ -242,7 +243,7 @@ class _TopBar extends StatelessWidget {
           TextButton.icon(
             onPressed: () => _confirmLogout(context),
             icon: const Icon(Icons.logout, size: 18),
-            label: const Text('Odjava'),
+            label: const Text('Sign out'),
           ),
         ],
       ),
@@ -253,16 +254,16 @@ class _TopBar extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Odjava'),
-        content: const Text('Želite li se odjaviti?'),
+        title: const Text('Sign out'),
+        content: const Text('Do you want to sign out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Odjavi se'),
+            child: const Text('Sign out'),
           ),
         ],
       ),

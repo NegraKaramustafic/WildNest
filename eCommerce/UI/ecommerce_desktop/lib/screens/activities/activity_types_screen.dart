@@ -101,7 +101,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
     if (saved == null || !mounted) return;
 
     final created = type == null;
-    _toast(created ? 'Tip aktivnosti je dodan.' : 'Tip aktivnosti je ažuriran.');
+    _toast(created ? 'Activity type added.' : 'Activity type updated.');
     if (created) {
       final query = _searchController.text.trim().toLowerCase();
       if (query.isNotEmpty && !saved.name.toLowerCase().contains(query)) {
@@ -122,17 +122,17 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Brisanje tipa aktivnosti'),
-        content: Text('Obrisati tip aktivnosti ${type.name}?'),
+        title: const Text('Delete activity type'),
+        content: Text('Delete activity type ${type.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Obriši'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -142,7 +142,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
     try {
       await context.read<ActivityTypeProvider>().remove(type.id);
       if (!mounted) return;
-      _toast('Tip aktivnosti je obrisan.');
+      _toast('Activity type deleted.');
       await _load();
     } on SessionExpiredException {
       return;
@@ -174,12 +174,12 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tipovi aktivnosti',
+                      'Activity types',
                       style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Šifarnik tipova za obrazac aktivnosti',
+                      'Types used on the activity form',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
@@ -188,7 +188,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
               FilledButton.icon(
                 onPressed: () => _edit(),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Dodaj tip'),
+                label: const Text('Add type'),
               ),
             ],
           ),
@@ -199,7 +199,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
-                hintText: 'Pretraži tipove aktivnosti...',
+                hintText: 'Search activity types...',
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -221,7 +221,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
           children: [
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: _load, child: const Text('Pokušaj ponovo')),
+            OutlinedButton(onPressed: _load, child: const Text('Try again')),
           ],
         ),
       );
@@ -244,9 +244,9 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
             padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             child: Row(
               children: [
-                Expanded(flex: 3, child: _HeaderLabel('Naziv')),
-                Expanded(flex: 4, child: _HeaderLabel('Opis')),
-                SizedBox(width: 96, child: _HeaderLabel('Akcije')),
+                Expanded(flex: 3, child: _HeaderLabel('Name')),
+                Expanded(flex: 4, child: _HeaderLabel('Description')),
+                SizedBox(width: 96, child: _HeaderLabel('Actions')),
               ],
             ),
           ),
@@ -255,7 +255,7 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
             child: _types.isEmpty
                 ? const Center(
                     child: Text(
-                      'Nema tipova aktivnosti.',
+                      'No activity types.',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   )
@@ -284,15 +284,15 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
                               child: Row(
                                 children: [
                                   IconButton(
-                                    tooltip: 'Uredi',
+                                    tooltip: 'Edit',
                                     onPressed: () => _edit(type: type),
                                     icon: const Icon(Icons.edit_outlined, size: 18),
                                   ),
                                   _DeleteAction(
                                     enabled: !type.isInUse,
                                     tooltip: type.isInUse
-                                        ? 'Tip aktivnosti koriste aktivnosti i ne može se obrisati.'
-                                        : 'Obriši',
+                                        ? 'This type is used by activities and cannot be deleted.'
+                                        : 'Delete',
                                     onPressed: () => _delete(type),
                                   ),
                                 ],
@@ -310,18 +310,18 @@ class _ActivityTypesScreenState extends State<ActivityTypesScreen> {
             child: Row(
               children: [
                 Text(
-                  _total == 0 ? '0 od 0' : '$from–$to od $_total',
+                  _total == 0 ? '0 of 0' : '$from–$to of $_total',
                   style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Prethodna',
+                  tooltip: 'Previous',
                   onPressed: hasPrev ? () => _changePage(_page - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                 ),
                 Text('$_page'),
                 IconButton(
-                  tooltip: 'Sljedeća',
+                  tooltip: 'Next',
                   onPressed: hasNext ? () => _changePage(_page + 1) : null,
                   icon: const Icon(Icons.chevron_right),
                 ),
@@ -452,7 +452,7 @@ class _ActivityTypeDialogState extends State<_ActivityTypeDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_isEdit ? 'Uredi tip aktivnosti' : 'Novi tip aktivnosti'),
+      title: Text(_isEdit ? 'Edit activity type' : 'New activity type'),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -463,16 +463,16 @@ class _ActivityTypeDialogState extends State<_ActivityTypeDialog> {
               TextFormField(
                 controller: _name,
                 autofocus: true,
-                decoration: const InputDecoration(labelText: 'Naziv'),
+                decoration: const InputDecoration(labelText: 'Name'),
                 onChanged: (_) {
                   if (_nameError != null) setState(() => _nameError = null);
                 },
                 validator: (value) {
                   if (_nameError != null) return _nameError;
                   final text = value?.trim() ?? '';
-                  if (text.isEmpty) return 'Naziv je obavezan.';
-                  if (text.length < 2) return 'Naziv mora imati najmanje 2 znaka.';
-                  if (text.length > 50) return 'Naziv ne može biti duži od 50 znakova.';
+                  if (text.isEmpty) return 'Name is required.';
+                  if (text.length < 2) return 'Name must be at least 2 characters.';
+                  if (text.length > 50) return 'Name cannot be longer than 50 characters.';
                   return null;
                 },
               ),
@@ -481,12 +481,12 @@ class _ActivityTypeDialogState extends State<_ActivityTypeDialog> {
                 controller: _description,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  labelText: 'Opis',
+                  labelText: 'Description',
                   alignLabelWithHint: true,
                 ),
                 validator: (value) {
                   if ((value?.trim().length ?? 0) > 500) {
-                    return 'Opis ne može biti duži od 500 znakova.';
+                    return 'Description cannot be longer than 500 characters.';
                   }
                   return null;
                 },
@@ -498,11 +498,11 @@ class _ActivityTypeDialogState extends State<_ActivityTypeDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('Odustani'),
+          child: const Text('Cancel'),
         ),
         FilledButton(
           onPressed: _saving ? null : _save,
-          child: Text(_saving ? 'Spremanje...' : 'Sačuvaj'),
+          child: Text(_saving ? 'Saving...' : 'Save'),
         ),
       ],
     );

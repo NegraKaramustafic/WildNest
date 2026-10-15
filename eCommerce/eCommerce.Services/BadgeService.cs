@@ -6,6 +6,7 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 
 namespace eCommerce.Services
 {
@@ -15,10 +16,13 @@ namespace eCommerce.Services
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<BadgeInsertRequest> insertValidator,
-            IValidator<BadgeUpdateRequest> updateValidator)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            IValidator<BadgeUpdateRequest> updateValidator,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
         }
+
+        protected override string NotFoundMessage => "Značka nije pronađena.";
 
         protected override IQueryable<Badge> ApplyFilters(IQueryable<Badge> query, BadgeSearchObject? search)
         {

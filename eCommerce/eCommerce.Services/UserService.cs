@@ -8,6 +8,7 @@ using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,13 +31,16 @@ namespace eCommerce.Services
             IValidator<UserUpdateRequest> updateValidator,
             ICryptoService cryptoService,
             IAuthenticatedUserAccessor userAccessor,
-            ISecurityStampCache securityStampCache)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            ISecurityStampCache securityStampCache,
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _cryptoService = cryptoService;
             _userAccessor = userAccessor;
             _securityStampCache = securityStampCache;
         }
+
+        protected override string NotFoundMessage => "User not found.";
 
 
         protected override IQueryable<User> ApplyFilters(IQueryable<User> query, UserSearch? search)
@@ -127,7 +131,7 @@ namespace eCommerce.Services
         {
             if (!CanAccessUser(id))
             {
-                throw new NotFoundException($"User with id {id} not found.");
+                ThrowNotFound("User", id, "User not found.");
             }
 
             return await base.GetByIdAsync(id);
@@ -137,7 +141,7 @@ namespace eCommerce.Services
         {
             if (!CanAccessUser(id))
             {
-                throw new NotFoundException($"User with id {id} not found.");
+                ThrowNotFound("User", id, "User not found.");
             }
 
             await _updateValidator.ValidateAndThrowAsync(request);
@@ -145,7 +149,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Users.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"User with id {id} not found.");
+                ThrowNotFound("User", id, "User not found.");
             }
 
             var existingIsActive = entity.IsActive;
@@ -194,7 +198,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (entity == null)
             {
-                throw new NotFoundException($"User with id {id} not found.");
+                ThrowNotFound("User", id, "User not found.");
             }
 
             var softDeleted = false;
@@ -275,7 +279,7 @@ namespace eCommerce.Services
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
-                throw new NotFoundException("User not found");
+                ThrowNotFound("User", userId, "User not found.");
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
                 throw new ClientException("Wrong credential");
@@ -313,7 +317,7 @@ namespace eCommerce.Services
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                throw new NotFoundException("User not found");
+                ThrowNotFound("User", userId, "User not found.");
             }
 
             await RotateSecurityStampAsync(user);

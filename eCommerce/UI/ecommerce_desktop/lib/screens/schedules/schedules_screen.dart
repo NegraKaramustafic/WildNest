@@ -70,7 +70,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         DateUtils.dateOnly(_dateFrom!).isAfter(DateUtils.dateOnly(_dateTo!))) {
       setState(() {
         _loading = false;
-        _error = 'Datum od ne može biti nakon datuma do.';
+        _error = 'From date cannot be after to date.';
         _schedules = [];
         _total = 0;
       });
@@ -147,19 +147,19 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Brisanje termina'),
+        title: const Text('Delete schedule'),
         content: Text(
-          'Obrisati termin ${schedule.activityName} (${formatDate(schedule.date)})?',
+          'Delete the schedule for ${schedule.activityName} (${formatDate(schedule.date)})?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Obriši'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -182,20 +182,20 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Otkazivanje termina'),
+        title: const Text('Cancel schedule'),
         content: const Text(
-          'Otkazivanjem termina otkazuju se i postojeće rezervacije. '
-          'Uplate se vraćaju na isti način kao kada korisnik otkaže rezervaciju. Nastaviti?',
+          'Cancelling this schedule also cancels its reservations. '
+          'Payments are refunded the same way as when a customer cancels a reservation. Continue?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Otkaži termin'),
+            child: const Text('Cancel schedule'),
           ),
         ],
       ),
@@ -264,7 +264,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Upravljanje terminima',
+                      'Schedules',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -273,7 +273,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Nadolazeći termini, sortirani po datumu i vremenu',
+                      'Upcoming schedules, sorted by date and time',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
@@ -282,7 +282,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
               FilledButton.icon(
                 onPressed: _add,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Dodaj termin'),
+                label: const Text('Add schedule'),
               ),
             ],
           ),
@@ -294,13 +294,13 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
             children: [
               SizedBox(width: 240, child: _activityFilter()),
               _dateButton(
-                label: 'Datum od',
+                label: 'From date',
                 value: _dateFrom,
                 onPick: () => _pickDate(from: true),
                 onClear: _dateFrom == null ? null : () => _applyFilter(() => _dateFrom = null),
               ),
               _dateButton(
-                label: 'Datum do',
+                label: 'To date',
                 value: _dateTo,
                 onPick: () => _pickDate(from: false),
                 onClear: _dateTo == null ? null : () => _applyFilter(() => _dateTo = null),
@@ -318,8 +318,8 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
   Widget _activityFilter() {
     if (_loadingActivities) {
       return const InputDecorator(
-        decoration: InputDecoration(labelText: 'Aktivnost', isDense: true),
-        child: Text('Učitavanje...'),
+        decoration: InputDecoration(labelText: 'Activity', isDense: true),
+        child: Text('Loading...'),
       );
     }
 
@@ -330,9 +330,9 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
       key: ValueKey('activity-$selected-${_activities.length}'),
       initialValue: selected,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Aktivnost', isDense: true),
+      decoration: const InputDecoration(labelText: 'Activity', isDense: true),
       items: [
-        const DropdownMenuItem(value: null, child: Text('Sve aktivnosti')),
+        const DropdownMenuItem(value: null, child: Text('All activities')),
         for (final activity in _activities)
           DropdownMenuItem(value: activity.id, child: Text(activity.name)),
       ],
@@ -347,7 +347,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
       isExpanded: true,
       decoration: const InputDecoration(labelText: 'Status', isDense: true),
       items: [
-        const DropdownMenuItem(value: null, child: Text('Svi statusi')),
+        const DropdownMenuItem(value: null, child: Text('All statuses')),
         for (final status in ScheduleStatus.values)
           DropdownMenuItem(value: status, child: Text(scheduleStatusLabel(status))),
       ],
@@ -370,14 +370,14 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
           suffixIcon: onClear == null
               ? const Icon(Icons.calendar_today_outlined, size: 18)
               : IconButton(
-                  tooltip: 'Ukloni',
+                  tooltip: 'Clear',
                   onPressed: onClear,
                   icon: const Icon(Icons.close, size: 18),
                 ),
         ),
         child: InkWell(
           onTap: onPick,
-          child: Text(value == null ? 'Odaberite' : formatDate(value)),
+          child: Text(value == null ? 'Select' : formatDate(value)),
         ),
       ),
     );
@@ -443,7 +443,7 @@ class _SchedulesTable extends StatelessWidget {
             child: schedules.isEmpty
                 ? const Center(
                     child: Text(
-                      'Nema termina za prikaz.',
+                      'No schedules to show.',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   )
@@ -467,18 +467,18 @@ class _SchedulesTable extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  total == 0 ? '0 od 0' : '$from–$to od $total',
+                  total == 0 ? '0 of 0' : '$from–$to of $total',
                   style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Prethodna',
+                  tooltip: 'Previous',
                   onPressed: page > 1 ? () => onPage(page - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                 ),
                 Text('$page'),
                 IconButton(
-                  tooltip: 'Sljedeća',
+                  tooltip: 'Next',
                   onPressed: page * pageSize < total ? () => onPage(page + 1) : null,
                   icon: const Icon(Icons.chevron_right),
                 ),
@@ -500,12 +500,12 @@ class _HeaderRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          Expanded(flex: 3, child: _HeaderLabel('Aktivnost')),
-          Expanded(flex: 2, child: _HeaderLabel('Datum')),
-          Expanded(flex: 2, child: _HeaderLabel('Vrijeme')),
-          Expanded(flex: 2, child: _HeaderLabel('Kapacitet')),
+          Expanded(flex: 3, child: _HeaderLabel('Activity')),
+          Expanded(flex: 2, child: _HeaderLabel('Date')),
+          Expanded(flex: 2, child: _HeaderLabel('Time')),
+          Expanded(flex: 2, child: _HeaderLabel('Capacity')),
           Expanded(flex: 2, child: _HeaderLabel('Status')),
-          SizedBox(width: 148, child: _HeaderLabel('Akcije')),
+          SizedBox(width: 148, child: _HeaderLabel('Actions')),
         ],
       ),
     );
@@ -566,7 +566,11 @@ class _ScheduleRow extends StatelessWidget {
           Expanded(flex: 2, child: Text(formatDate(schedule.date))),
           Expanded(
             flex: 2,
-            child: Text('${formatClock(schedule.startTime)}–${formatClock(schedule.endTime)}'),
+            child: Text(
+              '${formatClock(schedule.startTime)}–${formatClock(schedule.endTime)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           Expanded(flex: 2, child: Text(capacity)),
           Expanded(
@@ -583,7 +587,7 @@ class _ScheduleRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.edit_outlined,
                   color: AppColors.textMuted,
-                  tooltip: 'Uredi',
+                  tooltip: 'Edit',
                   onPressed: onEdit,
                 ),
                 const SizedBox(width: 4),
@@ -591,8 +595,8 @@ class _ScheduleRow extends StatelessWidget {
                   icon: Icons.event_busy_outlined,
                   color: AppColors.warningText,
                   tooltip: canCancel
-                      ? 'Otkaži termin'
-                      : 'Termin je već otkazan.',
+                      ? 'Cancel schedule'
+                      : 'This schedule is already cancelled.',
                   enabled: canCancel,
                   onPressed: onCancel,
                 ),
@@ -600,7 +604,7 @@ class _ScheduleRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.delete_outline,
                   color: AppColors.danger,
-                  tooltip: 'Obriši',
+                  tooltip: 'Delete',
                   onPressed: onDelete,
                 ),
               ],
@@ -615,11 +619,11 @@ class _ScheduleRow extends StatelessWidget {
 Widget _statusChip(ScheduleStatus status) {
   switch (status) {
     case ScheduleStatus.active:
-      return const StatusChip(active: true, label: 'Aktivan');
+      return const StatusChip(active: true, label: 'Active');
     case ScheduleStatus.cancelled:
       return const StatusChip(
         active: false,
-        label: 'Otkazan',
+        label: 'Cancelled',
         background: AppColors.danger,
         foreground: Colors.white,
       );
@@ -680,7 +684,7 @@ class _ErrorState extends StatelessWidget {
         children: [
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Pokušaj ponovo')),
+          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );

@@ -10,6 +10,7 @@ import 'package:ecommerce_desktop/screens/login_screen.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -36,6 +37,13 @@ class WildNestApp extends StatelessWidget {
         title: 'WildNest Admin',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        locale: const Locale('en'),
+        supportedLocales: const [Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const _AuthGate(),
       ),
     );

@@ -26,7 +26,6 @@ namespace eCommerce.Services
         private readonly IBadgeAwardService _badgeAwardService;
         private readonly StripeSettings _stripeSettings;
         private readonly IValidator<PaymentCheckoutRequest> _checkoutValidator;
-        private readonly ILogger<PaymentService> _logger;
         private readonly StripeClient _stripeClient;
 
         public PaymentService(
@@ -39,24 +38,25 @@ namespace eCommerce.Services
             INotificationEventService notificationEvents,
             IBadgeAwardService badgeAwardService,
             StripeSettings stripeSettings,
-            ILogger<PaymentService> logger)
-            : base(dbContext, mapper, insertValidator, updateValidator)
+            ILoggerFactory loggerFactory)
+            : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _checkoutValidator = checkoutValidator;
             _userAccessor = userAccessor;
             _notificationEvents = notificationEvents;
             _badgeAwardService = badgeAwardService;
             _stripeSettings = stripeSettings;
-            _logger = logger;
             _stripeClient = new StripeClient(_stripeSettings.SecretKey);
         }
+
+        protected override string NotFoundMessage => "Payment not found.";
 
         public override async Task<PaymentResponse> GetByIdAsync(int id)
         {
             var entity = await _dbContext.Payments.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
             if (entity == null || !CanAccessPayment(entity.UserId))
             {
-                throw new NotFoundException($"Payment with id {id} not found.");
+                ThrowNotFound("Payment", id, "Payment not found.");
             }
 
             return _mapper.Map<PaymentResponse>(entity);
@@ -73,7 +73,7 @@ namespace eCommerce.Services
             var entity = await GetEntityOrThrowAsync(id);
             if (!CanAccessPayment(entity.UserId))
             {
-                throw new NotFoundException($"Payment with id {id} not found.");
+                ThrowNotFound("Payment", id, "Payment not found.");
             }
 
             await base.UpdateAsync(id, request);
@@ -86,7 +86,7 @@ namespace eCommerce.Services
             var entity = await GetEntityOrThrowAsync(id);
             if (!CanAccessPayment(entity.UserId))
             {
-                throw new NotFoundException($"Payment with id {id} not found.");
+                ThrowNotFound("Payment", id, "Payment not found.");
             }
 
             await base.DeleteAsync(id);
@@ -704,7 +704,7 @@ namespace eCommerce.Services
                         var ticket = await _dbContext.Tickets.FindAsync(id);
                         if (ticket == null || !CanAccessOwnedRecord(ticket.UserId))
                         {
-                            throw new NotFoundException($"Ticket with id {id} not found.");
+                            ThrowNotFound("Ticket", id, "Ticket not found.");
                         }
 
                         if (ticket.Status is TicketStatus.Cancelled or TicketStatus.Used)
@@ -725,7 +725,7 @@ namespace eCommerce.Services
                         var reservation = await _dbContext.Reservations.FindAsync(id);
                         if (reservation == null || !CanAccessOwnedRecord(reservation.UserId))
                         {
-                            throw new NotFoundException($"Reservation with id {id} not found.");
+                            ThrowNotFound("Reservation", id, "Reservation not found.");
                         }
 
                         if (reservation.Status is ReservationStatus.Cancelled or ReservationStatus.Completed)
@@ -746,7 +746,7 @@ namespace eCommerce.Services
                         var adoption = await _dbContext.Adoptions.FindAsync(id);
                         if (adoption == null || !CanAccessOwnedRecord(adoption.UserId))
                         {
-                            throw new NotFoundException($"Adoption with id {id} not found.");
+                            ThrowNotFound("Adoption", id, "Adoption not found.");
                         }
 
                         if (adoption.Status == AdoptionStatus.Cancelled)
@@ -767,7 +767,7 @@ namespace eCommerce.Services
                         var donation = await _dbContext.Donations.FindAsync(id);
                         if (donation == null || !CanAccessOwnedRecord(donation.UserId))
                         {
-                            throw new NotFoundException($"Donation with id {id} not found.");
+                            ThrowNotFound("Donation", id, "Donation not found.");
                         }
 
                         return new PayableRecord(
@@ -873,7 +873,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Payments.FindAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Payment with id {id} not found.");
+                ThrowNotFound("Payment", id, "Payment not found.");
             }
 
             return entity;

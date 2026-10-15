@@ -64,7 +64,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       if (!mounted) return null;
       setState(() => _activityTypes = types);
       if (types.isEmpty) {
-        _showError('Nema tipova aktivnosti. Dodajte tip aktivnosti prije unosa aktivnosti.');
+        _showError('There are no activity types. Add an activity type before adding an activity.');
         return null;
       }
       return types;
@@ -148,18 +148,18 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     final activate = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aktivirati sada?'),
+        title: const Text('Activate now?'),
         content: Text(
-          'Aktivnost „${activity.name}” je sačuvana kao nacrt. Želite li je aktivirati sada?',
+          '“${activity.name}” was saved as a draft. Do you want to activate it now?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Ne sada'),
+            child: const Text('Not now'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Aktiviraj sada'),
+            child: const Text('Activate now'),
           ),
         ],
       ),
@@ -214,17 +214,17 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Brisanje aktivnosti'),
-        content: Text('Obrisati aktivnost ${activity.name}?'),
+        title: const Text('Delete activity'),
+        content: Text('Delete ${activity.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Odustani'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Obriši'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -267,7 +267,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Upravljanje aktivnostima',
+                      'Activities',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -276,7 +276,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Pregled i uređivanje aktivnosti',
+                      'View and edit activities',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
@@ -285,7 +285,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               FilledButton.icon(
                 onPressed: _add,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Dodaj aktivnost'),
+                label: const Text('Add activity'),
               ),
             ],
           ),
@@ -301,7 +301,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                   controller: _searchController,
                   onChanged: _onSearchChanged,
                   decoration: const InputDecoration(
-                    hintText: 'Pretraži po nazivu...',
+                    hintText: 'Search by name...',
                     prefixIcon: Icon(Icons.search),
                     isDense: true,
                   ),
@@ -326,9 +326,9 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       key: ValueKey('type-$selected-${_activityTypes.length}'),
       initialValue: selected,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Tip', isDense: true),
+      decoration: const InputDecoration(labelText: 'Type', isDense: true),
       items: [
-        const DropdownMenuItem(value: null, child: Text('Svi tipovi')),
+        const DropdownMenuItem(value: null, child: Text('All types')),
         for (final type in _activityTypes)
           DropdownMenuItem(value: type.id, child: Text(type.name)),
       ],
@@ -349,7 +349,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       isExpanded: true,
       decoration: const InputDecoration(labelText: 'Status', isDense: true),
       items: [
-        const DropdownMenuItem(value: null, child: Text('Svi statusi')),
+        const DropdownMenuItem(value: null, child: Text('All statuses')),
         for (final status in ActivityStatus.values)
           DropdownMenuItem(value: status, child: Text(activityStatusLabel(status))),
       ],
@@ -428,7 +428,7 @@ class _ActivitiesTable extends StatelessWidget {
             child: activities.isEmpty
                 ? const Center(
                     child: Text(
-                      'Nema aktivnosti za prikaz.',
+                      'No activities to show.',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   )
@@ -453,18 +453,18 @@ class _ActivitiesTable extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  total == 0 ? '0 od 0' : '$from–$to od $total',
+                  total == 0 ? '0 of 0' : '$from–$to of $total',
                   style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: 'Prethodna',
+                  tooltip: 'Previous',
                   onPressed: hasPrev ? () => onPage(page - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                 ),
                 Text('$page'),
                 IconButton(
-                  tooltip: 'Sljedeća',
+                  tooltip: 'Next',
                   onPressed: hasNext ? () => onPage(page + 1) : null,
                   icon: const Icon(Icons.chevron_right),
                 ),
@@ -486,14 +486,14 @@ class _HeaderRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          Expanded(flex: 4, child: _HeaderLabel('Aktivnost')),
-          Expanded(flex: 2, child: _HeaderLabel('Tip')),
-          Expanded(flex: 2, child: _HeaderLabel('Životinja')),
-          Expanded(flex: 2, child: _HeaderLabel('Trajanje')),
-          Expanded(flex: 2, child: _HeaderLabel('Cijena')),
-          Expanded(flex: 2, child: _HeaderLabel('Kapacitet')),
+          Expanded(flex: 4, child: _HeaderLabel('Activity')),
+          Expanded(flex: 2, child: _HeaderLabel('Type')),
+          Expanded(flex: 2, child: _HeaderLabel('Animal')),
+          Expanded(flex: 2, child: _HeaderLabel('Duration')),
+          Expanded(flex: 2, child: _HeaderLabel('Price')),
+          Expanded(flex: 2, child: _HeaderLabel('Capacity')),
           Expanded(flex: 2, child: _HeaderLabel('Status')),
-          SizedBox(width: 156, child: _HeaderLabel('Akcije')),
+          SizedBox(width: 156, child: _HeaderLabel('Actions')),
         ],
       ),
     );
@@ -586,7 +586,7 @@ class _ActivityRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.edit_outlined,
                   color: AppColors.textMuted,
-                  tooltip: canEdit ? 'Uredi' : _disabledTooltip(ActivityActions.update),
+                  tooltip: canEdit ? 'Edit' : _disabledTooltip(ActivityActions.update),
                   enabled: canEdit,
                   onPressed: onEdit,
                 ),
@@ -594,7 +594,7 @@ class _ActivityRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.play_arrow_outlined,
                   color: AppColors.green,
-                  tooltip: canActivate ? 'Aktiviraj' : _disabledTooltip(ActivityActions.activate),
+                  tooltip: canActivate ? 'Activate' : _disabledTooltip(ActivityActions.activate),
                   enabled: canActivate,
                   onPressed: onActivate,
                 ),
@@ -603,7 +603,7 @@ class _ActivityRow extends StatelessWidget {
                   icon: Icons.pause_outlined,
                   color: AppColors.warningText,
                   tooltip: canDeactivate
-                      ? 'Deaktiviraj'
+                      ? 'Deactivate'
                       : _disabledTooltip(ActivityActions.deactivate),
                   enabled: canDeactivate,
                   onPressed: onDeactivate,
@@ -612,7 +612,7 @@ class _ActivityRow extends StatelessWidget {
                 _IconAction(
                   icon: Icons.delete_outline,
                   color: AppColors.danger,
-                  tooltip: canDelete ? 'Obriši' : _disabledTooltip(ActivityActions.delete),
+                  tooltip: canDelete ? 'Delete' : _disabledTooltip(ActivityActions.delete),
                   enabled: canDelete,
                   onPressed: onDelete,
                 ),
@@ -628,23 +628,23 @@ class _ActivityRow extends StatelessWidget {
     switch (action) {
       case ActivityActions.update:
         if (activity.status == ActivityStatus.active) {
-          return 'Aktivnu aktivnost prvo deaktivirajte prije uređivanja.';
+          return 'Deactivate an active activity before editing it.';
         }
-        return 'Samo nacrt se može uređivati.';
+        return 'Only a draft can be edited.';
       case ActivityActions.activate:
-        return 'Aktivnost je već aktivna.';
+        return 'This activity is already active.';
       case ActivityActions.deactivate:
         if (activity.status == ActivityStatus.draft) {
-          return 'Nacrt se aktivira, a ne deaktivira.';
+          return 'A draft is activated, not deactivated.';
         }
-        return 'Aktivnost je već neaktivna.';
+        return 'This activity is already inactive.';
       case ActivityActions.delete:
         if (activity.status == ActivityStatus.active) {
-          return 'Aktivnu aktivnost nije moguće obrisati. Prvo je deaktivirajte.';
+          return 'An active activity cannot be deleted. Deactivate it first.';
         }
-        return 'Samo nacrt se može obrisati.';
+        return 'Only a draft can be deleted.';
       default:
-        return 'Akcija nije dozvoljena.';
+        return 'This action is not allowed.';
     }
   }
 }
@@ -652,13 +652,13 @@ class _ActivityRow extends StatelessWidget {
 Widget _statusChip(ActivityStatus status) {
   switch (status) {
     case ActivityStatus.active:
-      return const StatusChip(active: true, label: 'Aktivna');
+      return const StatusChip(active: true, label: 'Active');
     case ActivityStatus.inactive:
-      return const StatusChip(active: false, label: 'Neaktivna');
+      return const StatusChip(active: false, label: 'Inactive');
     case ActivityStatus.draft:
       return const StatusChip(
         active: false,
-        label: 'Nacrt',
+        label: 'Draft',
         background: Color(0xFFE8E6E1),
         foreground: AppColors.textMuted,
       );
@@ -750,7 +750,7 @@ class _ErrorState extends StatelessWidget {
         children: [
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Pokušaj ponovo')),
+          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );
