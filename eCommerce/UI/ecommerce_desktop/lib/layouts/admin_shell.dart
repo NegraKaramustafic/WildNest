@@ -3,6 +3,7 @@ import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_types_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
 import 'package:ecommerce_desktop/screens/placeholder_page.dart';
+import 'package:ecommerce_desktop/screens/reviews/reviews_screen.dart';
 import 'package:ecommerce_desktop/screens/schedules/schedules_screen.dart';
 import 'package:ecommerce_desktop/screens/tickets/ticket_verification_screen.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
@@ -76,6 +77,8 @@ class _AdminShellState extends State<AdminShell> {
         return const SchedulesScreen();
       case AdminSection.tickets:
         return const TicketVerificationScreen();
+      case AdminSection.reviews:
+        return const ReviewsScreen();
       default:
         return PlaceholderPage(title: _section.label);
     }

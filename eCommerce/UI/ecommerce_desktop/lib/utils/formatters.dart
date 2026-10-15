@@ -39,6 +39,28 @@ String _groupDigits(String digits) {
   return buffer.toString();
 }
 
+String formatCount(num value) {
+  final rounded = value.round();
+  final grouped = _groupDigits(rounded.abs().toString());
+  return rounded < 0 ? '-$grouped' : grouped;
+}
+
+String formatRating(double? value) {
+  if (value == null) return '—';
+  return value.toStringAsFixed(1);
+}
+
+String formatPercent(double value) {
+  if (value == value.roundToDouble()) {
+    return '${value.toInt()}%';
+  }
+  return '${value.toStringAsFixed(1)}%';
+}
+
+String formatMonth(int year, int month) {
+  return '${_months[month - 1]} $year';
+}
+
 String formatAdoption(double? value) {
   if (value == null) return '—';
   if (value == value.roundToDouble()) {

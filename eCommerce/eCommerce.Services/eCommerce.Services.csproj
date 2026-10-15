@@ -13,6 +13,12 @@
 
 
   <ItemGroup>
+    <EmbeddedResource Include="Sentiment\Data\review_sentiment.csv">
+      <LogicalName>eCommerce.Services.Sentiment.review_sentiment.csv</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="Mapster" Version="7.4.0" />
     <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />

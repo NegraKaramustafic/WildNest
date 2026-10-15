@@ -804,6 +804,13 @@ namespace eCommerce.Services.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
+                    b.Property<string>("SentimentLabel")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<double?>("SentimentScore")
+                        .HasColumnType("float");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -870,6 +877,114 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Rating = 5,
                             UserId = 5
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ActivityId = 3,
+                            Comment = "Terrible experience. The guide was rude and we waited far too long.",
+                            CreatedAt = new DateTime(2025, 10, 12, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 2,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ActivityId = 3,
+                            Comment = "The session starts at 10:00 and lasts about one hour.",
+                            CreatedAt = new DateTime(2025, 11, 4, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 3,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ActivityId = 3,
+                            Comment = "Wonderful morning. The keepers were friendly and I would recommend this activity.",
+                            CreatedAt = new DateTime(2025, 12, 16, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ActivityId = 4,
+                            Comment = "Awful organisation. The enclosure was dirty and the whole visit felt wasted.",
+                            CreatedAt = new DateTime(2026, 1, 8, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 1,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ActivityId = 4,
+                            Comment = "Parking is beside the main gate and tickets are checked at the entrance.",
+                            CreatedAt = new DateTime(2026, 2, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 3,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ActivityId = 4,
+                            Comment = "Excellent activity. Everything was well organised and the kids were thrilled.",
+                            CreatedAt = new DateTime(2026, 4, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ActivityId = 6,
+                            Comment = "Disappointing tour. The staff were unhelpful and this was the worst workshop.",
+                            CreatedAt = new DateTime(2025, 10, 21, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 2,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ActivityId = 6,
+                            Comment = "The workshop is listed on the Tuesday schedule and lasts ninety minutes.",
+                            CreatedAt = new DateTime(2026, 1, 19, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 3,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ActivityId = 5,
+                            Comment = "We loved this safari. It was amazing and I recommend it to every family.",
+                            CreatedAt = new DateTime(2026, 2, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 4,
+                            UserId = 3
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ActivityId = 7,
+                            Comment = "The worst feeding we have had. Staff were rude and the delay was awful.",
+                            CreatedAt = new DateTime(2026, 3, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 1,
+                            UserId = 5
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ActivityId = 7,
+                            Comment = "Tickets are checked at the entrance and the tour starts at the main gate.",
+                            CreatedAt = new DateTime(2026, 4, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 3,
+                            UserId = 4
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ActivityId = 6,
+                            Comment = "A wonderful workshop. The guide was excellent and we loved every minute.",
+                            CreatedAt = new DateTime(2026, 4, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Rating = 5,
+                            UserId = 3
                         });
                 });
 
