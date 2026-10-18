@@ -130,7 +130,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_categoryId == null) {
-      setState(() => _error = 'Odaberite kategoriju.');
+      setState(() => _error = 'Select a category.');
       return;
     }
 

@@ -572,13 +572,6 @@ namespace eCommerce.Services.Migrations
                         },
                         new
                         {
-                            Id = 4,
-                            Criteria = 3,
-                            Description = "Visit 10 animal profiles",
-                            Name = "Animal Whisperer"
-                        },
-                        new
-                        {
                             Id = 5,
                             Criteria = 4,
                             Description = "Adopt 5 animals",

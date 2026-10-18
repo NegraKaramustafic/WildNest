@@ -5,10 +5,10 @@ import 'package:ecommerce_desktop/models/schedule.dart';
 import 'package:ecommerce_desktop/providers/activity_provider.dart';
 import 'package:ecommerce_desktop/providers/schedule_provider.dart';
 import 'package:ecommerce_desktop/screens/schedules/schedule_form_dialog.dart';
+import 'package:ecommerce_desktop/screens/schedules/schedule_week_view.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:ecommerce_desktop/utils/formatters.dart';
-import 'package:ecommerce_desktop/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,17 +32,21 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
 
   bool _loading = true;
   bool _loadingActivities = true;
+  bool _calendar = true;
+  bool _showingNearest = false;
+  bool _noSchedules = false;
   String? _error;
   List<Schedule> _schedules = [];
+  List<Schedule> _weekItems = [];
   List<Activity> _activities = [];
+  late DateTime _weekStart;
 
   @override
   void initState() {
     super.initState();
-    final today = DateTime.now();
-    _dateFrom = DateTime(today.year, today.month, today.day);
+    _weekStart = _monday(DateTime.now());
     _loadActivities();
-    _load();
+    _loadWeek(allowNearest: true);
   }
 
   Future<void> _loadActivities() async {
@@ -120,6 +124,144 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     }
   }
 
+  DateTime _monday(DateTime day) {
+    final date = DateUtils.dateOnly(day);
+    return date.subtract(Duration(days: date.weekday - DateTime.monday));
+  }
+
+  DateTime _createDate() {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final start = DateUtils.dateOnly(_weekStart);
+    if (!start.isBefore(today)) return start;
+    final end = start.add(const Duration(days: 6));
+    if (!today.isAfter(end)) return today;
+    return today;
+  }
+
+  Future<void> _reloadVisible() {
+    if (_calendar) return _loadWeek(allowNearest: false);
+    return _load();
+  }
+
+  void _showCalendar(bool calendar) {
+    if (_calendar == calendar) return;
+    setState(() => _calendar = calendar);
+    _reloadVisible();
+  }
+
+  void _moveWeek(int deltaDays) {
+    setState(() {
+      _weekStart = _weekStart.add(Duration(days: deltaDays));
+      _showingNearest = false;
+      _noSchedules = false;
+    });
+    _loadWeek(allowNearest: false);
+  }
+
+  Future<List<Schedule>> _fetchRange(DateTime from, DateTime to) async {
+    final provider = context.read<ScheduleProvider>();
+    final all = <Schedule>[];
+    var page = 1;
+    while (page <= 50) {
+      final result = await provider.get(
+        filter: {
+          'DateFrom': formatApiDate(from),
+          'DateTo': formatApiDate(to),
+          'SortBy': 'Date asc, StartTime asc',
+          'Page': page,
+          'PageSize': 100,
+          'IncludeTotalCount': true,
+        },
+      );
+      final items = result.items ?? [];
+      all.addAll(items);
+      final total = result.totalCount;
+      if (items.length < 100 || (total != null && all.length >= total)) break;
+      page++;
+    }
+    all.sort((a, b) {
+      final byDate = a.date.compareTo(b.date);
+      if (byDate != 0) return byDate;
+      return a.startTime.compareTo(b.startTime);
+    });
+    return all;
+  }
+
+  Future<DateTime?> _nearestDate(DateTime today) async {
+    final provider = context.read<ScheduleProvider>();
+    final upcoming = await provider.get(
+      filter: {
+        'DateFrom': formatApiDate(today),
+        'SortBy': 'Date asc',
+        'Page': 1,
+        'PageSize': 1,
+      },
+    );
+    if (!mounted) return null;
+    final previous = await provider.get(
+      filter: {
+        'DateTo': formatApiDate(today.subtract(const Duration(days: 1))),
+        'SortBy': 'Date desc',
+        'Page': 1,
+        'PageSize': 1,
+      },
+    );
+    final next = (upcoming.items?.isNotEmpty ?? false) ? upcoming.items!.first.date : null;
+    final prev = (previous.items?.isNotEmpty ?? false) ? previous.items!.first.date : null;
+    if (next == null) return prev;
+    if (prev == null) return next;
+    final nextDelta = DateUtils.dateOnly(next).difference(today).inDays.abs();
+    final prevDelta = today.difference(DateUtils.dateOnly(prev)).inDays.abs();
+    return prevDelta < nextDelta ? prev : next;
+  }
+
+  Future<void> _loadWeek({required bool allowNearest}) async {
+    final requestId = ++_requestId;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      var start = DateUtils.dateOnly(_weekStart);
+      var items = await _fetchRange(start, start.add(const Duration(days: 6)));
+      if (!mounted || requestId != _requestId) return;
+      var nearest = false;
+      var none = false;
+      if (allowNearest && items.isEmpty) {
+        final today = DateUtils.dateOnly(DateTime.now());
+        final found = await _nearestDate(today);
+        if (!mounted || requestId != _requestId) return;
+        if (found == null) {
+          none = true;
+        } else {
+          final monday = _monday(found);
+          if (!DateUtils.isSameDay(monday, start)) {
+            start = monday;
+            items = await _fetchRange(start, start.add(const Duration(days: 6)));
+            nearest = true;
+          }
+        }
+      }
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _weekStart = start;
+        _weekItems = items;
+        _showingNearest = nearest;
+        _noSchedules = none;
+        _loading = false;
+      });
+    } on SessionExpiredException {
+      return;
+    } catch (e) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _error = _message(e);
+        _loading = false;
+      });
+    }
+  }
+
   void _applyFilter(VoidCallback change) {
     setState(() {
       change();
@@ -133,14 +275,14 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     _load();
   }
 
-  Future<void> _add() async {
-    final saved = await showScheduleFormDialog(context);
-    if (saved && mounted) await _load();
+  Future<void> _add({DateTime? date}) async {
+    final saved = await showScheduleFormDialog(context, initialDate: date ?? _createDate());
+    if (saved && mounted) await _reloadVisible();
   }
 
   Future<void> _edit(Schedule schedule) async {
     final saved = await showScheduleFormDialog(context, schedule: schedule);
-    if (saved && mounted) await _load();
+    if (saved && mounted) await _reloadVisible();
   }
 
   Future<void> _delete(Schedule schedule) async {
@@ -149,7 +291,8 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete schedule'),
         content: Text(
-          'Delete the schedule for ${schedule.activityName} (${formatDate(schedule.date)})?',
+          'Delete the schedule for ${schedule.activityName} (${formatDate(schedule.date)})? '
+          'An occupied schedule cannot be deleted until its reservations are cancelled.',
         ),
         actions: [
           TextButton(
@@ -169,12 +312,84 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     try {
       final provider = context.read<ScheduleProvider>();
       await provider.remove(schedule.id);
-      if (mounted) await _load();
+      if (mounted) await _reloadVisible();
     } on SessionExpiredException {
       return;
     } catch (e) {
       if (!mounted) return;
       _showError(_message(e));
+    }
+  }
+
+  Future<void> _openDetails(Schedule schedule) async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final canCancel = schedule.status == ScheduleStatus.active;
+        return AlertDialog(
+          title: Text(schedule.activityName),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(formatDate(schedule.date)),
+                const SizedBox(height: 4),
+                Text('${formatClock(schedule.startTime)} – ${formatClock(schedule.endTime)}'),
+                const SizedBox(height: 8),
+                Text(scheduleOccupancyLabel(schedule)),
+                const SizedBox(height: 12),
+                ScheduleStatusChip(status: schedule.status),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, 'edit'),
+                      child: const Text('Edit'),
+                    ),
+                    _DialogAction(
+                      label: 'Cancel schedule',
+                      tooltip: canCancel
+                          ? 'Cancel schedule'
+                          : 'This schedule is already cancelled.',
+                      enabled: canCancel,
+                      onPressed: () => Navigator.pop(context, 'cancel'),
+                    ),
+                    _DialogAction(
+                      label: 'Delete',
+                      tooltip:
+                          'An occupied schedule cannot be deleted until its reservations are cancelled.',
+                      enabled: true,
+                      danger: true,
+                      onPressed: () => Navigator.pop(context, 'delete'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case 'edit':
+        await _edit(schedule);
+        break;
+      case 'cancel':
+        await _cancel(schedule);
+        break;
+      case 'delete':
+        await _delete(schedule);
+        break;
     }
   }
 
@@ -212,7 +427,7 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         'capacityLeft': schedule.capacityLeft,
         'status': scheduleStatusApiValue(ScheduleStatus.cancelled),
       });
-      if (mounted) await _load();
+      if (mounted) await _reloadVisible();
     } on SessionExpiredException {
       return;
     } catch (e) {
@@ -273,20 +488,40 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Upcoming schedules, sorted by date and time',
+                      'Activities arranged by day for the selected week',
                       style: TextStyle(color: AppColors.textMuted),
                     ),
                   ],
                 ),
               ),
               FilledButton.icon(
-                onPressed: _add,
+                onPressed: () => _add(),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add schedule'),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment<bool>(
+                value: true,
+                label: Text('Calendar'),
+                icon: Icon(Icons.calendar_view_week, size: 18),
+              ),
+              ButtonSegment<bool>(
+                value: false,
+                label: Text('List'),
+                icon: Icon(Icons.view_list, size: 18),
+              ),
+            ],
+            selected: {_calendar},
+            onSelectionChanged: (selection) => _showCalendar(selection.first),
+          ),
           const SizedBox(height: 18),
+          if (_calendar) _weekToolbar(),
+          if (!_calendar)
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -383,12 +618,82 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
     );
   }
 
+  Widget _weekToolbar() {
+    final start = DateUtils.dateOnly(_weekStart);
+    final end = start.add(const Duration(days: 6));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 4,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            IconButton(
+              tooltip: 'Previous week',
+              onPressed: () => _moveWeek(-7),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Text(
+              '${formatDate(start)} – ${formatDate(end)}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            IconButton(
+              tooltip: 'Next week',
+              onPressed: () => _moveWeek(7),
+              icon: const Icon(Icons.chevron_right),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _weekStart = _monday(DateTime.now());
+                  _showingNearest = false;
+                  _noSchedules = false;
+                });
+                _loadWeek(allowNearest: false);
+              },
+              child: const Text('Today'),
+            ),
+          ],
+        ),
+        if (_showingNearest) ...[
+          const SizedBox(height: 8),
+          _Notice(
+            text:
+                'Opened the nearest week with schedules. Today is ${formatDate(DateTime.now())}.',
+          ),
+        ],
+        if (_noSchedules) ...[
+          const SizedBox(height: 8),
+          const _Notice(
+            text: 'No schedules yet. Add a schedule to place it on the calendar.',
+          ),
+        ] else if (!_showingNearest && !_loading && _error == null && _weekItems.isEmpty) ...[
+          const SizedBox(height: 8),
+          const _Notice(text: 'No activities this week.'),
+        ],
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
   Widget _buildBody() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return _ErrorState(message: _error!, onRetry: _load);
+      return _ErrorState(
+        message: _error!,
+        onRetry: () => _calendar ? _loadWeek(allowNearest: false) : _load(),
+      );
+    }
+    if (_calendar) {
+      return ScheduleWeekView(
+        weekStart: _weekStart,
+        schedules: _weekItems,
+        onOpen: _openDetails,
+        onCreate: (day) => _add(date: day),
+      );
     }
     return _SchedulesTable(
       schedules: _schedules,
@@ -577,7 +882,7 @@ class _ScheduleRow extends StatelessWidget {
             flex: 2,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: _statusChip(schedule.status),
+              child: ScheduleStatusChip(status: schedule.status),
             ),
           ),
           SizedBox(
@@ -616,17 +921,62 @@ class _ScheduleRow extends StatelessWidget {
   }
 }
 
-Widget _statusChip(ScheduleStatus status) {
-  switch (status) {
-    case ScheduleStatus.active:
-      return const StatusChip(active: true, label: 'Active');
-    case ScheduleStatus.cancelled:
-      return const StatusChip(
-        active: false,
-        label: 'Cancelled',
-        background: AppColors.danger,
-        foreground: Colors.white,
+class _Notice extends StatelessWidget {
+  const _Notice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.warningBorder),
+      ),
+      child: Text(text, style: const TextStyle(color: AppColors.warningText)),
+    );
+  }
+}
+
+class _DialogAction extends StatelessWidget {
+  const _DialogAction({
+    required this.label,
+    required this.tooltip,
+    required this.enabled,
+    required this.onPressed,
+    this.danger = false,
+  });
+
+  final String label;
+  final String tooltip;
+  final bool enabled;
+  final VoidCallback onPressed;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final ButtonStyle style;
+    if (!enabled) {
+      style = FilledButton.styleFrom(
+        backgroundColor: AppColors.border,
+        foregroundColor: AppColors.textMuted,
       );
+    } else if (danger) {
+      style = FilledButton.styleFrom(backgroundColor: AppColors.danger);
+    } else {
+      style = FilledButton.styleFrom();
+    }
+    return Tooltip(
+      message: tooltip,
+      child: FilledButton(
+        style: style,
+        onPressed: enabled ? onPressed : () {},
+        child: Text(label),
+      ),
+    );
   }
 }
 

@@ -7,6 +7,7 @@ import 'package:ecommerce_desktop/screens/animals/animal_form_dialog.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:ecommerce_desktop/utils/formatters.dart';
+import 'package:ecommerce_desktop/widgets/admin_list.dart';
 import 'package:ecommerce_desktop/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,9 +20,13 @@ class AnimalsScreen extends StatefulWidget {
 }
 
 class _AnimalsScreenState extends State<AnimalsScreen> {
+  static const _pageSize = 10;
+
   final _searchController = TextEditingController();
   Timer? _debounce;
   int _requestId = 0;
+  int _page = 1;
+  int _total = 0;
 
   bool _loading = true;
   bool _showCategories = false;
@@ -51,15 +56,16 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
     try {
       final result = await context.read<AnimalProvider>().get(
         filter: {
-          'FTS': _searchController.text.trim(),
-          'Page': 1,
-          'PageSize': 100,
+          'Name': _searchController.text.trim(),
+          'Page': _page,
+          'PageSize': _pageSize,
           'IncludeTotalCount': true,
         },
       );
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _animals = result.items ?? [];
+        _total = result.totalCount ?? _animals.length;
         _loading = false;
       });
     } on SessionExpiredException {
@@ -75,7 +81,16 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), _load);
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() => _page = 1);
+      _load();
+    });
+  }
+
+  void _changePage(int page) {
+    setState(() => _page = page);
+    _load();
   }
 
   Future<void> _add() async {
@@ -185,7 +200,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
-                hintText: 'Search animals...',
+                hintText: 'Search by name...',
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -207,6 +222,10 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
     }
     return _AnimalsTable(
       animals: _animals,
+      page: _page,
+      pageSize: _pageSize,
+      total: _total,
+      onPage: _changePage,
       onEdit: _edit,
       onDelete: _delete,
     );
@@ -216,11 +235,19 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
 class _AnimalsTable extends StatelessWidget {
   const _AnimalsTable({
     required this.animals,
+    required this.page,
+    required this.pageSize,
+    required this.total,
+    required this.onPage,
     required this.onEdit,
     required this.onDelete,
   });
 
   final List<Animal> animals;
+  final int page;
+  final int pageSize;
+  final int total;
+  final ValueChanged<int> onPage;
   final ValueChanged<Animal> onEdit;
   final ValueChanged<Animal> onDelete;
 
@@ -257,6 +284,8 @@ class _AnimalsTable extends StatelessWidget {
                     },
                   ),
           ),
+          const Divider(height: 1),
+          ListPager(page: page, pageSize: pageSize, total: total, onPage: onPage),
         ],
       ),
     );
@@ -272,11 +301,12 @@ class _HeaderRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          Expanded(flex: 3, child: _HeaderLabel('Animal')),
+          SizedBox(width: 54),
+          Expanded(flex: 3, child: _HeaderLabel('Name')),
           Expanded(flex: 3, child: _HeaderLabel('Species')),
-          Expanded(flex: 3, child: _HeaderLabel('Category')),
+          Expanded(flex: 3, child: _HeaderLabel('Habitat')),
           Expanded(flex: 2, child: _HeaderLabel('Status')),
-          Expanded(flex: 2, child: _HeaderLabel('Adoption')),
+          Expanded(flex: 2, child: _HeaderLabel('Active adoptions')),
           SizedBox(width: 96, child: _HeaderLabel('Actions')),
         ],
       ),
@@ -314,26 +344,36 @@ class _AnimalRow extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  String _habitat(Animal animal) {
+    final habitat = animal.habitat?.trim();
+    if (habitat == null || habitat.isEmpty) return '—';
+    return habitat;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          EntityThumbnail(url: animal.imageUrl),
+          const SizedBox(width: 12),
           Expanded(
             flex: 3,
             child: Text(
               animal.name,
+              softWrap: true,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          Expanded(flex: 3, child: Text(animal.species)),
-          Expanded(flex: 3, child: Text(animal.categoryName)),
+          Expanded(flex: 3, child: Text(animal.species, softWrap: true)),
+          Expanded(flex: 3, child: Text(_habitat(animal), softWrap: true)),
           Expanded(flex: 2, child: Align(
             alignment: Alignment.centerLeft,
             child: StatusChip(active: animal.isActive),
           )),
-          Expanded(flex: 2, child: Text(formatMoney(animal.adoptionPrice))),
+          Expanded(flex: 2, child: Text(formatCount(animal.activeAdoptionCount))),
           SizedBox(
             width: 96,
             child: Row(

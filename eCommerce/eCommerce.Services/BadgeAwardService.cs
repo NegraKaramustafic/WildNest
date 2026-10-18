@@ -49,7 +49,6 @@ namespace eCommerce.Services
                     BadgeCriteria.FirstBooking => reservationCount >= 1,
                     BadgeCriteria.ThreeDonations => donationCount >= 3,
                     BadgeCriteria.FiveAdoptions => adoptionCount >= 5,
-                    BadgeCriteria.TenAnimalVisits => false,
                     _ => false
                 };
 

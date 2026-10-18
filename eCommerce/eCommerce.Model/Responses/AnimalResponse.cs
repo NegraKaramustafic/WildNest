@@ -18,6 +18,7 @@ namespace eCommerce.Model.Responses
         public AnimalTag Tag { get; set; }
         public bool IsActive { get; set; }
         public decimal? AdoptionPrice { get; set; }
+        public int ActiveAdoptionCount { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }
