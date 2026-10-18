@@ -237,21 +237,23 @@ namespace eCommerce.Services
                 entity.ProfileImageBase64 = ImageContent.NormalizeProfileImage(request.ProfileImageBase64);
             }
 
-            var passwordChanged = ApplyPasswordIfProvided(entity, request.Password);
+            var updatingSelf = currentUserId == id;
+            var passwordChanged = !updatingSelf && ApplyPasswordIfProvided(entity, request.Password);
+            var roleChanged = false;
             if (isAdmin && !string.IsNullOrWhiteSpace(request.Role))
             {
-                await ReplaceRoleAsync(entity, RoleNames.Canonical(request.Role));
+                roleChanged = await ReplaceRoleAsync(entity, RoleNames.Canonical(request.Role));
             }
 
             var deactivated = existingIsActive && !entity.IsActive;
-            if (deactivated || passwordChanged)
+            if (deactivated || passwordChanged || roleChanged)
             {
                 await RotateSecurityStampAsync(entity);
             }
 
             _dbContext.Users.Update(entity);
             await _dbContext.SaveChangesAsync();
-            if (deactivated || passwordChanged)
+            if (deactivated || passwordChanged || roleChanged)
             {
                 _securityStampCache.Invalidate(entity.Id);
             }
@@ -475,12 +477,12 @@ namespace eCommerce.Services
             return true;
         }
 
-        private async Task ReplaceRoleAsync(User entity, string roleName)
+        private async Task<bool> ReplaceRoleAsync(User entity, string roleName)
         {
             var roleId = await GetRoleIdAsync(roleName);
             if (entity.UserRoles.Count == 1 && entity.UserRoles.First().RoleId == roleId)
             {
-                return;
+                return false;
             }
 
             _dbContext.UserRoles.RemoveRange(entity.UserRoles);
@@ -491,6 +493,7 @@ namespace eCommerce.Services
                 RoleId = roleId,
                 DateAssigned = DateTime.UtcNow
             });
+            return true;
         }
 
         private async Task<int> GetRoleIdAsync(string roleName)

@@ -27,40 +27,48 @@ namespace eCommerce.Services
                 HostName = _settings.HostName,
                 Port = _settings.Port,
                 UserName = _settings.UserName,
-                Password = _settings.Password
+                Password = _settings.Password,
+                RequestedConnectionTimeout = TimeSpan.FromSeconds(5)
             };
         }
 
         public async Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default)
         {
-            try
+            var connection = await GetOrCreateConnectionAsync(cancellationToken);
+            var channelOptions = new CreateChannelOptions(
+                publisherConfirmationsEnabled: true,
+                publisherConfirmationTrackingEnabled: true);
+            await using var channel = await connection.CreateChannelAsync(channelOptions, cancellationToken);
+
+            await RabbitMqNotificationTopology.EnsureDeclaredAsync(channel, _settings, cancellationToken);
+
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, NotificationMessage.JsonOptions));
+            var properties = CreateProperties(message);
+            await channel.BasicPublishAsync(
+                exchange: string.Empty,
+                routingKey: _settings.QueueName,
+                mandatory: true,
+                basicProperties: properties,
+                body: body,
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Published {Type} notification {MessageId} for user {UserId} to {Queue}. The broker confirmed the persistent message.",
+                message.Type,
+                message.MessageId,
+                message.UserId,
+                _settings.QueueName);
+        }
+
+        internal static BasicProperties CreateProperties(NotificationMessage message)
+        {
+            return new BasicProperties
             {
-                var connection = await GetOrCreateConnectionAsync(cancellationToken);
-                await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-
-                await RabbitMqNotificationTopology.EnsureDeclaredAsync(channel, _settings, cancellationToken);
-
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, NotificationMessage.JsonOptions));
-                await channel.BasicPublishAsync(
-                    exchange: string.Empty,
-                    routingKey: _settings.QueueName,
-                    body: body,
-                    cancellationToken: cancellationToken);
-
-                _logger.LogInformation(
-                    "Published {Type} notification for user {UserId} to {Queue}",
-                    message.Type,
-                    message.UserId,
-                    _settings.QueueName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Failed to publish {Type} notification for user {UserId}. The business operation was not rolled back.",
-                    message.Type,
-                    message.UserId);
-            }
+                Persistent = true,
+                ContentType = "application/json",
+                MessageId = message.MessageId.ToString("D"),
+                Type = message.Type.ToString()
+            };
         }
 
         private async Task<IConnection> GetOrCreateConnectionAsync(CancellationToken cancellationToken)

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:ecommerce_desktop/models/app_user.dart';
+import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/providers/user_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
@@ -27,6 +28,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
   late final TextEditingController _email;
   late final TextEditingController _username;
   late final TextEditingController _phone;
+  late final TextEditingController _currentPassword;
   late final TextEditingController _password;
   late final TextEditingController _confirm;
   late String _role;
@@ -50,6 +52,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
     _email = TextEditingController(text: user?.email ?? '');
     _username = TextEditingController(text: user?.username ?? '');
     _phone = TextEditingController(text: user?.phoneNumber ?? '');
+    _currentPassword = TextEditingController();
     _password = TextEditingController();
     _confirm = TextEditingController();
     _role = user?.role == 'Admin' ? 'Admin' : 'Customer';
@@ -64,6 +67,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
     _email.dispose();
     _username.dispose();
     _phone.dispose();
+    _currentPassword.dispose();
     _password.dispose();
     _confirm.dispose();
     super.dispose();
@@ -91,6 +95,8 @@ class _UserFormDialogState extends State<UserFormDialog> {
       _saving = true;
       _formError = null;
     });
+    final changingOwnPassword = widget.editingSelf &&
+        (_password.text.trim().isNotEmpty || _confirm.text.trim().isNotEmpty);
     final body = <String, dynamic>{
       'firstName': _firstName.text.trim(),
       'lastName': _lastName.text.trim(),
@@ -101,7 +107,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
       'role': _role,
       'profileImageBase64': _pickedBase64 ?? (_clearImage ? '' : _existingImage),
     };
-    if (_password.text.trim().isNotEmpty || !_isEdit) {
+    if (!widget.editingSelf && (_password.text.trim().isNotEmpty || !_isEdit)) {
       body['password'] = _password.text.trim();
       body['confirmPassword'] = _confirm.text.trim();
     }
@@ -111,6 +117,19 @@ class _UserFormDialogState extends State<UserFormDialog> {
       final saved = _isEdit
           ? await provider.update(widget.user!.id, body)
           : await provider.insert(body);
+      if (changingOwnPassword) {
+        await provider.changePassword({
+          'id': widget.user!.id,
+          'password': _currentPassword.text,
+          'newPassword': _password.text.trim(),
+          'confirmNewPassword': _confirm.text.trim(),
+        });
+        if (!mounted) return;
+        final auth = context.read<AuthProvider>();
+        Navigator.pop(context);
+        await auth.logout();
+        return;
+      }
       if (!mounted) return;
       Navigator.pop(context, saved);
     } on SessionExpiredException {
@@ -213,6 +232,25 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             ),
                           ),
                         const SizedBox(height: 12),
+                        if (widget.editingSelf) ...[
+                          _field(
+                            _currentPassword,
+                            'Current password',
+                            (value) {
+                              final changing = _password.text.trim().isNotEmpty || _confirm.text.trim().isNotEmpty;
+                              if (!changing) return null;
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Current password is required.';
+                              }
+                              return null;
+                            },
+                            required: false,
+                            markOptional: false,
+                            obscure: true,
+                            helper: 'Required when you set a new password.',
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         _field(
                           _password,
                           _isEdit ? 'New password' : 'Password',
@@ -222,7 +260,11 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             confirm: _confirm.text,
                           ),
                           obscure: true,
-                          helper: _isEdit ? 'Leave blank to keep the current password.' : null,
+                          helper: _isEdit
+                              ? (widget.editingSelf
+                                  ? 'Leave blank to keep the current password. Your current password is required to set a new one.'
+                                  : 'Leave blank to keep the current password.')
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         _field(
@@ -290,6 +332,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
     String label,
     String? Function(String?) validator, {
     bool required = true,
+    bool markOptional = true,
     bool obscure = false,
     String? helper,
   }) {
@@ -298,7 +341,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
       obscureText: obscure,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
-        labelText: required ? label : '$label (optional)',
+        labelText: required || !markOptional ? label : '$label (optional)',
         isDense: true,
         helperText: helper,
         helperMaxLines: 2,

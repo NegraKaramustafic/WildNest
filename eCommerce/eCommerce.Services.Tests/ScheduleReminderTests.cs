@@ -1,7 +1,10 @@
 using eCommerce.Model.Enums;
+using eCommerce.Model.Messages;
+using eCommerce.Services;
 using eCommerce.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using RabbitMQ.Client;
 using Xunit;
 
 namespace eCommerce.Services.Tests
@@ -83,6 +86,106 @@ namespace eCommerce.Services.Tests
             Assert.Single(publisher.Messages);
         }
 
+        [Fact]
+        public async Task Service_ReleasesTheReservationClaim_WhenPublishFails_AndRetriesNextRun()
+        {
+            using var db = new SqliteDb();
+            var publisher = new FailOncePublisher();
+            var inside = await AddReservationAsync(db, DateTime.UtcNow.AddHours(2), ReservationStatus.Confirmed, "Bird watch");
+            var service = ReminderService(db, publisher);
+
+            var sent = await service.SendDueRemindersAsync();
+
+            Assert.Equal(0, sent);
+            Assert.Equal(1, publisher.Calls);
+            Assert.Null(await db.Context.Reservations.Where(row => row.Id == inside).Select(row => row.ReminderSentAt).SingleAsync());
+
+            var retried = await service.SendDueRemindersAsync();
+            Assert.Equal(1, retried);
+            Assert.Equal(2, publisher.Calls);
+            Assert.NotNull(await db.Context.Reservations.Where(row => row.Id == inside).Select(row => row.ReminderSentAt).SingleAsync());
+        }
+
+        [Fact]
+        public async Task Service_ReleasesTheTicketClaim_WhenPublishFails()
+        {
+            using var db = new SqliteDb();
+            var publisher = new FailOncePublisher();
+            var ticketId = await AddTicketAsync(db, DateOnly.FromDateTime(DateTime.UtcNow));
+            var service = ReminderService(db, publisher);
+
+            var sent = await service.SendDueRemindersAsync();
+
+            Assert.Equal(0, sent);
+            Assert.Null(await db.Context.Tickets.Where(row => row.Id == ticketId).Select(row => row.ReminderSentAt).SingleAsync());
+
+            var retried = await service.SendDueRemindersAsync();
+            Assert.Equal(1, retried);
+            Assert.NotNull(await db.Context.Tickets.Where(row => row.Id == ticketId).Select(row => row.ReminderSentAt).SingleAsync());
+        }
+
+        [Fact]
+        public void Publisher_MarksMessagesPersistent()
+        {
+            var properties = RabbitMqNotificationPublisher.CreateProperties(new NotificationMessage
+            {
+                MessageId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                Type = NotificationType.UpcomingReminder
+            });
+
+            Assert.True(properties.Persistent);
+            Assert.Equal(DeliveryModes.Persistent, properties.DeliveryMode);
+            Assert.Equal("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", properties.MessageId);
+        }
+
+        [Fact]
+        public async Task Publisher_ReportsConnectionFailure_InsteadOfSwallowingIt()
+        {
+            await using var publisher = new RabbitMqNotificationPublisher(
+                NullLogger<RabbitMqNotificationPublisher>.Instance,
+                RabbitMqSettings.Create("127.0.0.1", 1, "guest", "guest", "wildnest.notifications"));
+
+            var error = await Assert.ThrowsAnyAsync<Exception>(() => publisher.PublishAsync(new NotificationMessage
+            {
+                MessageId = Guid.NewGuid(),
+                UserId = 4,
+                Type = NotificationType.UpcomingReminder,
+                Title = "Upcoming schedule",
+                Message = "Your reservation starts soon."
+            }));
+
+            Assert.False(string.IsNullOrWhiteSpace(error.Message));
+        }
+
+        private static ScheduleReminderService ReminderService(SqliteDb db, INotificationPublisher publisher)
+        {
+            return new ScheduleReminderService(
+                db.Context,
+                publisher,
+                new ZooClock("UTC"),
+                new ReminderSettings { HoursBefore = 24, CheckIntervalMinutes = 15 },
+                NullLogger<ScheduleReminderService>.Instance);
+        }
+
+        private static async Task<int> AddTicketAsync(SqliteDb db, DateOnly visitDate)
+        {
+            var ticket = new Ticket
+            {
+                UserId = 4,
+                VisitDate = visitDate,
+                VisitorCount = 1,
+                PricePerPerson = 8,
+                TotalPrice = 8,
+                Code = "T" + Random.Shared.Next(100000, 999999),
+                QrCodeData = "QR",
+                Status = TicketStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Context.Tickets.Add(ticket);
+            await db.Context.SaveChangesAsync();
+            return ticket.Id;
+        }
+
         private static bool Due(
             DateOnly date,
             TimeOnly start,
@@ -146,6 +249,22 @@ namespace eCommerce.Services.Tests
             db.Context.Reservations.Add(reservation);
             await db.Context.SaveChangesAsync();
             return reservation.Id;
+        }
+
+        private sealed class FailOncePublisher : INotificationPublisher
+        {
+            public int Calls { get; private set; }
+
+            public Task PublishAsync(NotificationMessage message, CancellationToken cancellationToken = default)
+            {
+                Calls++;
+                if (Calls == 1)
+                {
+                    throw new InvalidOperationException("Broker unavailable.");
+                }
+
+                return Task.CompletedTask;
+            }
         }
     }
 }

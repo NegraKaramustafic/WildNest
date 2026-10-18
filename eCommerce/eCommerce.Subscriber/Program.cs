@@ -40,6 +40,7 @@ builder.Services.AddDbContext<ECommerceDbContext>(options =>
 builder.Services.AddSingleton(rabbitSettings);
 builder.Services.AddSingleton(smtpSettings);
 builder.Services.AddSingleton<NotificationEmailSender>();
+builder.Services.AddScoped<NotificationDeliveryStore>();
 builder.Services.AddHostedService<NotificationConsumer>();
 
 var host = builder.Build();

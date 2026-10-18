@@ -3,7 +3,6 @@ using System.Text.Json;
 using eCommerce.Model.Messages;
 using eCommerce.Services;
 using eCommerce.Services.Database;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -154,23 +153,16 @@ namespace eCommerce.Subscriber
             {
                 try
                 {
-                    message ??= ReadMessage(ea.Body.ToArray());
-                    await InsertNotificationIfNewAsync(message, stoppingToken);
+                    message = ReadMessage(ea.Body.ToArray());
                     lastError = null;
                     break;
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    _logger.LogWarning("Message processing cancelled while shutting down. Delivery tag {Tag} will be requeued.", ea.DeliveryTag);
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: CancellationToken.None);
-                    return;
                 }
                 catch (Exception ex)
                 {
                     lastError = ex;
                     _logger.LogError(
                         ex,
-                        "Failed to store notification message (attempt {Attempt}/{MaxAttempts}). Delivery tag {Tag}.",
+                        "Failed to read notification message (attempt {Attempt}/{MaxAttempts}). Delivery tag {Tag}.",
                         attempt + 1,
                         maxAttempts,
                         ea.DeliveryTag);
@@ -179,7 +171,16 @@ namespace eCommerce.Subscriber
                     {
                         var delayMs = RetryDelaysMs[attempt];
                         _logger.LogWarning("Retrying notification message in {DelayMs}ms.", delayMs);
-                        await Task.Delay(delayMs, stoppingToken);
+                        try
+                        {
+                            await Task.Delay(delayMs, stoppingToken);
+                        }
+                        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                        {
+                            _logger.LogWarning("Message processing cancelled while shutting down. Delivery tag {Tag} will be requeued.", ea.DeliveryTag);
+                            await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: CancellationToken.None);
+                            return;
+                        }
                     }
                 }
             }
@@ -197,14 +198,55 @@ namespace eCommerce.Subscriber
                 return;
             }
 
+            bool needsEmail;
+            try
+            {
+                needsEmail = await StoreWithRetryAsync(message, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Message processing cancelled while shutting down. Delivery tag {Tag} will be requeued.", ea.DeliveryTag);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: CancellationToken.None);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Giving up on notification message after {Attempts} attempts (backoff 1s → 2s → 4s → 8s). Nacking without requeue so RabbitMQ dead-letters it to {DeadQueue}. Delivery tag {Tag}.",
+                    maxAttempts,
+                    deadQueueName,
+                    ea.DeliveryTag);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: stoppingToken);
+                return;
+            }
+
+            if (!needsEmail)
+            {
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+                _logger.LogInformation(
+                    "Notification {MessageId} for user {UserId} is already stored and the email was already sent. Skipping SMTP.",
+                    message.MessageId,
+                    message.UserId);
+                return;
+            }
+
+            var emailSent = false;
+            lastError = null;
             for (var attempt = 0; attempt < maxAttempts; attempt++)
             {
                 try
                 {
-                    await SendNotificationEmailAsync(message, stoppingToken);
+                    if (!emailSent)
+                    {
+                        await SendNotificationEmailAsync(message, stoppingToken);
+                        emailSent = true;
+                    }
+
+                    await MarkEmailSentAsync(message.MessageId, stoppingToken);
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
                     _logger.LogInformation(
-                        "Stored {Type} notification {MessageId} for user {UserId} (related {RelatedType} #{RelatedId}).",
+                        "Stored {Type} notification {MessageId} for user {UserId} and sent the email (related {RelatedType} #{RelatedId}).",
                         message.Type,
                         message.MessageId,
                         message.UserId,
@@ -214,6 +256,15 @@ namespace eCommerce.Subscriber
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
+                    if (emailSent && await TryMarkEmailSentAsync(message.MessageId))
+                    {
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: CancellationToken.None);
+                        _logger.LogInformation(
+                            "Notification {MessageId} email was sent before shutdown. Acknowledging so it is not sent again.",
+                            message.MessageId);
+                        return;
+                    }
+
                     _logger.LogWarning("Email sending cancelled while shutting down. Delivery tag {Tag} will be requeued.", ea.DeliveryTag);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: CancellationToken.None);
                     return;
@@ -238,14 +289,86 @@ namespace eCommerce.Subscriber
                 }
             }
 
-            _logger.LogError(
-                lastError,
-                "Notification {MessageId} for user {UserId} is already stored, but the email could not be sent after {Attempts} attempts. Acknowledging the message so it is not inserted again.",
-                message.MessageId,
-                message.UserId,
-                maxAttempts);
+            if (emailSent)
+            {
+                _logger.LogError(
+                    lastError,
+                    "Notification {MessageId} for user {UserId} was emailed, but EmailSentAt could not be saved. Acknowledging so the message is not sent again.",
+                    message.MessageId,
+                    message.UserId);
+            }
+            else
+            {
+                _logger.LogError(
+                    lastError,
+                    "Notification {MessageId} for user {UserId} is stored, but the email permanently failed after {Attempts} attempts. Acknowledging the message. A redelivery would try the email again only while EmailSentAt is empty.",
+                    message.MessageId,
+                    message.UserId,
+                    maxAttempts);
+            }
 
             await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+        }
+
+        private async Task<bool> StoreWithRetryAsync(NotificationMessage message, CancellationToken cancellationToken)
+        {
+            Exception? lastError = null;
+            var maxAttempts = RetryDelaysMs.Length + 1;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                try
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    var store = scope.ServiceProvider.GetRequiredService<NotificationDeliveryStore>();
+                    return await store.NeedsEmailAsync(message, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    _logger.LogError(
+                        ex,
+                        "Failed to store notification message (attempt {Attempt}/{MaxAttempts}). MessageId {MessageId}.",
+                        attempt + 1,
+                        maxAttempts,
+                        message.MessageId);
+
+                    if (attempt < RetryDelaysMs.Length)
+                    {
+                        var delayMs = RetryDelaysMs[attempt];
+                        _logger.LogWarning("Retrying notification message in {DelayMs}ms.", delayMs);
+                        await Task.Delay(delayMs, cancellationToken);
+                    }
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Notification {message.MessageId} could not be stored.",
+                lastError);
+        }
+
+        private async Task MarkEmailSentAsync(Guid messageId, CancellationToken cancellationToken)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var store = scope.ServiceProvider.GetRequiredService<NotificationDeliveryStore>();
+            await store.MarkEmailSentAsync(messageId, cancellationToken);
+        }
+
+        private async Task<bool> TryMarkEmailSentAsync(Guid messageId)
+        {
+            try
+            {
+                await MarkEmailSentAsync(messageId, CancellationToken.None);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not record EmailSentAt for notification {MessageId} during shutdown.", messageId);
+                return false;
+            }
         }
 
         private static NotificationMessage ReadMessage(byte[] body)
@@ -265,50 +388,6 @@ namespace eCommerce.Subscriber
             return message;
         }
 
-        private async Task InsertNotificationIfNewAsync(NotificationMessage message, CancellationToken cancellationToken)
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
-
-            var alreadyStored = await dbContext.Notifications
-                .AsNoTracking()
-                .AnyAsync(n => n.MessageId == message.MessageId, cancellationToken);
-            if (alreadyStored)
-            {
-                _logger.LogInformation(
-                    "Notification {MessageId} for user {UserId} already exists; skipping insert.",
-                    message.MessageId,
-                    message.UserId);
-                return;
-            }
-
-            dbContext.Notifications.Add(new Notification
-            {
-                MessageId = message.MessageId,
-                UserId = message.UserId,
-                Title = message.Title,
-                Message = message.Message,
-                Type = message.Type,
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow,
-                RelatedEntityType = message.RelatedEntityType,
-                RelatedEntityId = message.RelatedEntityId
-            });
-
-            try
-            {
-                await dbContext.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
-            {
-                _logger.LogInformation(
-                    ex,
-                    "Notification {MessageId} for user {UserId} was inserted concurrently; treating it as already processed.",
-                    message.MessageId,
-                    message.UserId);
-            }
-        }
-
         private async Task SendNotificationEmailAsync(NotificationMessage message, CancellationToken cancellationToken)
         {
             using var scope = _scopeFactory.CreateScope();
@@ -320,19 +399,6 @@ namespace eCommerce.Subscriber
                     .FirstOrDefaultAsync(cancellationToken);
 
             await _emailSender.SendAsync(message, email, cancellationToken);
-        }
-
-        private static bool IsUniqueConstraintViolation(DbUpdateException exception)
-        {
-            for (Exception? current = exception; current != null; current = current.InnerException)
-            {
-                if (current is SqlException sql && sql.Number is 2601 or 2627)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }
