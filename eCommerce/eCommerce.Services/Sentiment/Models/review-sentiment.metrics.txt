@@ -1,0 +1,21 @@
+WildNest binary sentiment model
+Saved: C:\dev\wildnest\eCommerce\eCommerce.Services\Sentiment\Models\review-sentiment.zip
+Bytes: 461431
+Pipeline: FeaturizeText + SdcaLogisticRegression (ML.NET binary sentiment tutorial).
+Split: stratified 20% hold-out, seed 1. The saved model was not trained on the hold-out rows.
+Train rows: 2444 (positive 1222, negative 1222)
+Test rows: 612 (positive 306, negative 306)
+UCI rows: 3000
+Zoo rows: 56 (English and Bosnian). Zoo rows in the hold-out: 11.
+Hold-out accuracy: 80.88%
+Hold-out AUC: 89.70%
+Hold-out F1: 81.40%
+Positive precision: 79.26%
+Positive recall: 83.66%
+Negative precision: 82.70%
+Negative recall: 78.10%
+Zoo hold-out accuracy: 81.82% (9/11)
+Source: UCI Sentiment Labelled Sentences, https://archive.ics.uci.edu/dataset/331/sentiment+labelled+sentences
+Citation: Dimitrios Kotzias, Misha Denil, Nando de Freitas, and Padhraic Smyth. 2015. From Group to Individual Labels using Deep Features. KDD 2015.
+Files: amazon_cells_labelled.txt, imdb_labelled.txt, yelp_labelled.txt (sentence, tab, 0 or 1).
+Licence: Creative Commons Attribution 4.0 International (CC BY 4.0), stated on the UCI dataset page. DOI 10.24432/C57604. Attribute Kotzias et al., KDD 2015.

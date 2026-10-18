@@ -7,7 +7,6 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services;
 using eCommerce.Services.Database;
-using eCommerce.Services.Recommendation;
 using eCommerce.Services.ReservationStateMachine;
 using eCommerce.Services.Validators;
 using Mapster;
@@ -322,7 +321,6 @@ namespace eCommerce.Services.Tests
                 root,
                 accessor,
                 new NotificationEventService(publisher, context),
-                new RecommendationModelCache(),
                 payments ?? new RecordingPaymentService(),
                 new ReservationCancelValidator(),
                 loggerFactory);

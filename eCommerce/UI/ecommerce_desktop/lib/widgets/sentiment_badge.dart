@@ -68,13 +68,6 @@ SentimentColors sentimentColors(String? label) {
         border: AppColors.errorBorder,
         chart: AppColors.danger,
       );
-    case 'Neutral':
-      return const SentimentColors(
-        background: AppColors.warningBg,
-        foreground: AppColors.warningText,
-        border: AppColors.warningBorder,
-        chart: Color(0xFFC48A2A),
-      );
     default:
       return const SentimentColors(
         background: AppColors.background,

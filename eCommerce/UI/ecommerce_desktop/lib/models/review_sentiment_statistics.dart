@@ -69,14 +69,12 @@ class SentimentTrendPoint {
   final int year;
   final int month;
   final int positiveCount;
-  final int neutralCount;
   final int negativeCount;
 
   const SentimentTrendPoint({
     required this.year,
     required this.month,
     required this.positiveCount,
-    required this.neutralCount,
     required this.negativeCount,
   });
 
@@ -85,7 +83,6 @@ class SentimentTrendPoint {
       year: asInt(json['year']),
       month: asInt(json['month']),
       positiveCount: asInt(json['positiveCount']),
-      neutralCount: asInt(json['neutralCount']),
       negativeCount: asInt(json['negativeCount']),
     );
   }
@@ -95,16 +92,18 @@ class SentimentActivityBreakdown {
   final int activityId;
   final String activityName;
   final int positiveCount;
-  final int neutralCount;
   final int negativeCount;
+  final double positivePercentage;
+  final double negativePercentage;
   final double? averageRating;
 
   const SentimentActivityBreakdown({
     required this.activityId,
     required this.activityName,
     required this.positiveCount,
-    required this.neutralCount,
     required this.negativeCount,
+    this.positivePercentage = 0,
+    this.negativePercentage = 0,
     this.averageRating,
   });
 
@@ -113,8 +112,9 @@ class SentimentActivityBreakdown {
       activityId: asInt(json['activityId']),
       activityName: asString(json['activityName']),
       positiveCount: asInt(json['positiveCount']),
-      neutralCount: asInt(json['neutralCount']),
       negativeCount: asInt(json['negativeCount']),
+      positivePercentage: asDouble(json['positivePercentage']),
+      negativePercentage: asDouble(json['negativePercentage']),
       averageRating: asDoubleOrNull(json['averageRating']),
     );
   }
@@ -124,15 +124,17 @@ class SentimentAnimalBreakdown {
   final int animalId;
   final String animalName;
   final int positiveCount;
-  final int neutralCount;
   final int negativeCount;
+  final double positivePercentage;
+  final double negativePercentage;
 
   const SentimentAnimalBreakdown({
     required this.animalId,
     required this.animalName,
     required this.positiveCount,
-    required this.neutralCount,
     required this.negativeCount,
+    this.positivePercentage = 0,
+    this.negativePercentage = 0,
   });
 
   factory SentimentAnimalBreakdown.fromJson(Map<String, dynamic> json) {
@@ -140,8 +142,9 @@ class SentimentAnimalBreakdown {
       animalId: asInt(json['animalId']),
       animalName: asString(json['animalName']),
       positiveCount: asInt(json['positiveCount']),
-      neutralCount: asInt(json['neutralCount']),
       negativeCount: asInt(json['negativeCount']),
+      positivePercentage: asDouble(json['positivePercentage']),
+      negativePercentage: asDouble(json['negativePercentage']),
     );
   }
 }

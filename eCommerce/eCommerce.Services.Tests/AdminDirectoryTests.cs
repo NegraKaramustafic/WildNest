@@ -1,4 +1,3 @@
-using System.Reflection;
 using eCommerce.Common.Services.CryptoService;
 using eCommerce.Model;
 using eCommerce.Model.Enums;
@@ -8,7 +7,6 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
 using eCommerce.Services.Images;
-using eCommerce.Services.Recommendation;
 using eCommerce.Services.Sentiment;
 using eCommerce.Services.Validators;
 using FluentValidation;
@@ -304,23 +302,20 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
-        public async Task ReviewDelete_RecalculatesSentimentStatistics_AndMarksRecommendationsDirty()
+        public async Task ReviewDelete_RecalculatesSentimentStatistics()
         {
             using var db = new SqliteDb();
-            var cache = new RecommendationModelCache();
-            var admin = Reviews(db.Context, cache, admin: true, userId: 1);
+            var admin = Reviews(db.Context, admin: true, userId: 1);
             var before = await admin.GetSentimentStatisticsAsync();
             var review = await db.Context.Reviews.AsNoTracking().OrderBy(item => item.Id).FirstAsync();
-            SetDirty(cache, false);
 
             await admin.DeleteAsync(review.Id);
 
             var after = await admin.GetSentimentStatisticsAsync();
             Assert.Equal(before.TotalReviews - 1, after.TotalReviews);
             Assert.False(await db.Context.Reviews.AnyAsync(item => item.Id == review.Id));
-            Assert.True(ReadDirty(cache));
 
-            var customer = Reviews(db.Context, new RecommendationModelCache(), admin: false, userId: 5);
+            var customer = Reviews(db.Context, admin: false, userId: 5);
             var other = await db.Context.Reviews.AsNoTracking().FirstAsync(item => item.UserId != 5);
             await Assert.ThrowsAsync<NotFoundException>(() => customer.DeleteAsync(other.Id));
         }
@@ -329,7 +324,7 @@ namespace eCommerce.Services.Tests
         public async Task ReviewFilters_RejectAnInvertedDateRange_AndARatingOutsideOneToFive()
         {
             using var db = new SqliteDb();
-            var service = Reviews(db.Context, new RecommendationModelCache(), admin: true, userId: 1);
+            var service = Reviews(db.Context, admin: true, userId: 1);
 
             var dates = await Assert.ThrowsAsync<ClientException>(() => service.GetAllAsync(new ReviewSearchObject
             {
@@ -394,7 +389,7 @@ namespace eCommerce.Services.Tests
                 new SilentLoggerFactory());
         }
 
-        private static ReviewService Reviews(ECommerceDbContext context, RecommendationModelCache cache, bool admin, int userId)
+        private static ReviewService Reviews(ECommerceDbContext context, bool admin, int userId)
         {
             return new ReviewService(
                 context,
@@ -402,7 +397,6 @@ namespace eCommerce.Services.Tests
                 new ReviewInsertValidator(),
                 new ReviewUpdateValidator(),
                 new TestUserAccessor { Admin = admin, UserId = userId },
-                cache,
                 new IdleSentiment(),
                 new SilentLoggerFactory());
         }
@@ -454,20 +448,6 @@ namespace eCommerce.Services.Tests
             };
         }
 
-        private static void SetDirty(RecommendationModelCache cache, bool value)
-        {
-            typeof(RecommendationModelCache)
-                .GetField("_isDirty", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .SetValue(cache, value);
-        }
-
-        private static bool ReadDirty(RecommendationModelCache cache)
-        {
-            return (bool)typeof(RecommendationModelCache)
-                .GetField("_isDirty", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .GetValue(cache)!;
-        }
-
         private sealed class RecordingStampCache : ISecurityStampCache
         {
             public List<int> Invalidated { get; } = new();
@@ -490,7 +470,7 @@ namespace eCommerce.Services.Tests
         {
             public bool IsReady => true;
 
-            public SentimentTrainingReport? LastReport => null;
+            public SentimentModelReport? LastReport => null;
 
             public SentimentClassification Classify(string? text) => SentimentClassification.Unlabeled;
 

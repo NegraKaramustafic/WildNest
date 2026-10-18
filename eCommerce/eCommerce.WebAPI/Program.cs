@@ -37,6 +37,7 @@ ZooClock zooClock;
 PasswordResetSettings passwordResetSettings;
 ReminderSettings reminderSettings;
 AuthRateLimitSettings authRateLimitSettings;
+RecommendationTrainingSettings recommendationTrainingSettings;
 string connectionString;
 try
 {
@@ -49,6 +50,7 @@ try
     passwordResetSettings = PasswordResetSettings.FromEnvironment();
     reminderSettings = ReminderSettings.FromEnvironment();
     authRateLimitSettings = AuthRateLimitSettings.FromEnvironment();
+    recommendationTrainingSettings = RecommendationTrainingSettings.FromEnvironment();
 }
 catch (InvalidOperationException ex)
 {
@@ -79,6 +81,7 @@ builder.Services.AddSingleton(corsSettings);
 builder.Services.AddSingleton(zooClock);
 builder.Services.AddSingleton(passwordResetSettings);
 builder.Services.AddSingleton(reminderSettings);
+builder.Services.AddSingleton(recommendationTrainingSettings);
 builder.Services.AddSingleton(authRateLimitSettings);
 builder.Services.AddSingleton<AuthRateLimitPolicy>();
 builder.Services.AddRateLimiter(options =>
@@ -304,6 +307,8 @@ builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IScheduleReminderService, ScheduleReminderService>();
 builder.Services.AddHostedService<ScheduleReminderHostedService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
+builder.Services.AddSingleton<RecommendationTrainer>();
+builder.Services.AddHostedService<RecommendationTrainingHostedService>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddSingleton<ISentimentService>(sp =>
     new SentimentService(
@@ -424,11 +429,14 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.Logger.LogInformation(
-    "Configuration loaded from environment. Zoo time zone: {TimeZone}. CORS origins: {Origins}. Reminders: {Hours}h window every {Minutes} min.",
+    "Configuration loaded from environment. Zoo time zone: {TimeZone}. CORS origins: {Origins}. Reminders: {Hours}h window every {Minutes} min. Recommendation retrain: every {RetrainMinutes} min, or after {NewReservations} new reservations, checked every {CheckMinutes} min.",
     zooClock.TimeZoneId,
     string.Join(", ", corsSettings.AllowedOrigins),
     reminderSettings.HoursBefore,
-    reminderSettings.CheckIntervalMinutes);
+    reminderSettings.CheckIntervalMinutes,
+    recommendationTrainingSettings.IntervalMinutes,
+    recommendationTrainingSettings.NewReservationsBeforeRetrain,
+    recommendationTrainingSettings.CheckIntervalMinutes);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -471,19 +479,10 @@ static async Task InitializeSentimentAsync(WebApplication app)
 
         var reviews = scope.ServiceProvider.GetRequiredService<IReviewService>();
         var updated = await reviews.BackfillSentimentAsync();
-        var report = sentiment.LastReport;
-        if (report?.HoldoutAccuracy is double accuracy)
-        {
-            logger.LogInformation(
-                "Sentiment model ready. Hold-out accuracy {Accuracy:P1} on {Holdout} rows. Backfilled {Count} reviews.",
-                accuracy,
-                report.HoldoutCount,
-                updated);
-        }
-        else
-        {
-            logger.LogInformation("Sentiment model ready. Backfilled {Count} reviews.", updated);
-        }
+        logger.LogInformation(
+            "Sentiment model loaded from {Path}. Recomputed labels on {Count} reviews.",
+            sentiment.LastReport?.ModelPath,
+            updated);
     }
     catch (Exception ex)
     {

@@ -16,8 +16,9 @@
 !.env.example
 !**/.env.example
 
-# Trained at API startup from the synthetic sentiment CSV. Do not commit.
-**/review-sentiment.zip
+# UCI sentences downloaded by the sentiment trainer. The trained zip and zoo_reviews.tsv are committed.
+eCommerce/tools/SentimentModelTrainer/data/*
+!eCommerce/tools/SentimentModelTrainer/data/zoo_reviews.tsv
 
 # Badge and zoo partner uploads created at API startup.
 eCommerce/eCommerce.WebAPI/uploads/
