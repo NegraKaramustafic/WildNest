@@ -154,6 +154,21 @@ namespace eCommerce.Services.ReservationStateMachine
                 await DbContext.Entry(entity.Schedule).Reference(s => s.Activity).LoadAsync();
             }
 
+            if (entity.PaymentId.HasValue && entity.Payment == null)
+            {
+                await DbContext.Entry(entity).Reference(r => r.Payment).LoadAsync();
+            }
+
+            if (entity.ConfirmedByUserId.HasValue && entity.ConfirmedByUser == null)
+            {
+                await DbContext.Entry(entity).Reference(r => r.ConfirmedByUser).LoadAsync();
+            }
+
+            if (entity.CancelledByUserId.HasValue && entity.CancelledByUser == null)
+            {
+                await DbContext.Entry(entity).Reference(r => r.CancelledByUser).LoadAsync();
+            }
+
             var response = Mapper.Map<ReservationResponse>(entity);
             response.AllowedActions = GetReservationState(entity.Status).GetAllowedActions();
             return response;

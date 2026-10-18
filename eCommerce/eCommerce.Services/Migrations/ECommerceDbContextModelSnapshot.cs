@@ -271,6 +271,16 @@ namespace eCommerce.Services.Migrations
                     b.Property<int?>("PaymentId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RejectedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -285,6 +295,8 @@ namespace eCommerce.Services.Migrations
                     b.HasIndex("AnimalId");
 
                     b.HasIndex("PaymentId");
+
+                    b.HasIndex("RejectedByUserId");
 
                     b.HasIndex("UserId");
 
@@ -785,10 +797,26 @@ namespace eCommerce.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CancelledByUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ConfirmedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -816,8 +844,12 @@ namespace eCommerce.Services.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CancelledByUserId");
+
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("ConfirmedByUserId");
 
                     b.HasIndex("PaymentId");
 
@@ -1682,6 +1714,11 @@ namespace eCommerce.Services.Migrations
                         .HasForeignKey("PaymentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("eCommerce.Services.Database.User", "RejectedByUser")
+                        .WithMany()
+                        .HasForeignKey("RejectedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("eCommerce.Services.Database.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1691,6 +1728,8 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("Animal");
 
                     b.Navigation("Payment");
+
+                    b.Navigation("RejectedByUser");
 
                     b.Navigation("User");
                 });
@@ -1777,6 +1816,16 @@ namespace eCommerce.Services.Migrations
 
             modelBuilder.Entity("eCommerce.Services.Database.Reservation", b =>
                 {
+                    b.HasOne("eCommerce.Services.Database.User", "CancelledByUser")
+                        .WithMany()
+                        .HasForeignKey("CancelledByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("eCommerce.Services.Database.User", "ConfirmedByUser")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("eCommerce.Services.Database.Payment", "Payment")
                         .WithMany()
                         .HasForeignKey("PaymentId")
@@ -1793,6 +1842,10 @@ namespace eCommerce.Services.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("CancelledByUser");
+
+                    b.Navigation("ConfirmedByUser");
 
                     b.Navigation("Payment");
 

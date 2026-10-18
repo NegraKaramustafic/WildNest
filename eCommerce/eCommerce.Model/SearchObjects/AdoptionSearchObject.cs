@@ -18,5 +18,20 @@ namespace eCommerce.Model.SearchObjects
         /// Filter adoptions by status.
         /// </summary>
         public AdoptionStatus? Status { get; set; }
+
+        /// <summary>
+        /// Inclusive start of the start-date range.
+        /// </summary>
+        public DateOnly? DateFrom { get; set; }
+
+        /// <summary>
+        /// Inclusive end of the start-date range.
+        /// </summary>
+        public DateOnly? DateTo { get; set; }
+
+        /// <summary>
+        /// Search customer name and animal name.
+        /// </summary>
+        public string? FTS { get; set; }
     }
 }

@@ -1,5 +1,8 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
+import 'package:ecommerce_desktop/screens/adoptions/adoptions_screen.dart';
+import 'package:ecommerce_desktop/screens/donations/donations_screen.dart';
+import 'package:ecommerce_desktop/screens/reservations/reservations_screen.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_types_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
 import 'package:ecommerce_desktop/screens/placeholder_page.dart';
@@ -75,6 +78,12 @@ class _AdminShellState extends State<AdminShell> {
         return const ActivityTypesScreen();
       case AdminSection.schedules:
         return const SchedulesScreen();
+      case AdminSection.reservations:
+        return const ReservationsScreen();
+      case AdminSection.donations:
+        return const DonationsScreen();
+      case AdminSection.adoptions:
+        return const AdoptionsScreen();
       case AdminSection.tickets:
         return const TicketVerificationScreen();
       case AdminSection.reviews:

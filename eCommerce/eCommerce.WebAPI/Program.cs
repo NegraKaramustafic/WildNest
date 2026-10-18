@@ -1,5 +1,6 @@
 using eCommerce.Common.Services;
 using eCommerce.Common.Services.CryptoService;
+using eCommerce.Model.Enums;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
@@ -140,6 +141,10 @@ TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
     .Map(dest => dest.ActivityName, src => src.Schedule != null && src.Schedule.Activity != null ? src.Schedule.Activity.Name : string.Empty)
     .Map(dest => dest.ScheduleDate, src => src.Schedule != null ? src.Schedule.Date : default)
     .Map(dest => dest.ScheduleStartTime, src => src.Schedule != null ? src.Schedule.StartTime : default)
+    .Map(dest => dest.ActivityImageUrl, src => src.Schedule != null && src.Schedule.Activity != null ? src.Schedule.Activity.ImageUrl : null)
+    .Map(dest => dest.PaymentStatus, src => src.Payment != null ? (PaymentStatus?)src.Payment.Status : null)
+    .Map(dest => dest.ConfirmedByFullName, src => src.ConfirmedByUser != null ? $"{src.ConfirmedByUser.FirstName} {src.ConfirmedByUser.LastName}".Trim() : null)
+    .Map(dest => dest.CancelledByFullName, src => src.CancelledByUser != null ? $"{src.CancelledByUser.FirstName} {src.CancelledByUser.LastName}".Trim() : null)
     .IgnoreNullValues(true);
 TypeAdapterConfig<Payment, PaymentResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<ZooPartner, ZooPartnerResponse>.NewConfig().IgnoreNullValues(true);
@@ -152,6 +157,11 @@ TypeAdapterConfig<Adoption, AdoptionResponse>.NewConfig()
             ? string.Empty
             : $"{src.User.FirstName} {src.User.LastName}".Trim();
         dest.AnimalName = src.Animal == null ? string.Empty : src.Animal.Name;
+        dest.AnimalImageUrl = src.Animal == null ? null : src.Animal.ImageUrl;
+        dest.PaymentStatus = src.Payment == null ? null : src.Payment.Status;
+        dest.RejectedByFullName = src.RejectedByUser == null
+            ? null
+            : $"{src.RejectedByUser.FirstName} {src.RejectedByUser.LastName}".Trim();
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
@@ -163,6 +173,8 @@ TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
             ? string.Empty
             : $"{src.User.FirstName} {src.User.LastName}".Trim();
         dest.ZooPartnerName = src.ZooPartner == null ? string.Empty : src.ZooPartner.Name;
+        dest.ZooPartnerImageUrl = src.ZooPartner == null ? null : src.ZooPartner.ImageUrl;
+        dest.PaymentStatus = src.Payment == null ? null : src.Payment.Status;
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Review, ReviewResponse>.NewConfig()
@@ -250,6 +262,7 @@ builder.Services.AddScoped<IValidator<TicketInsertRequest>, TicketInsertValidato
 builder.Services.AddScoped<IValidator<TicketUpdateRequest>, TicketUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReservationInsertRequest>, ReservationInsertValidator>();
 builder.Services.AddScoped<IValidator<ReservationUpdateRequest>, ReservationUpdateValidator>();
+builder.Services.AddScoped<IValidator<ReservationCancelRequest>, ReservationCancelValidator>();
 builder.Services.AddScoped<IValidator<PaymentInsertRequest>, PaymentInsertValidator>();
 builder.Services.AddScoped<IValidator<PaymentUpdateRequest>, PaymentUpdateValidator>();
 builder.Services.AddScoped<IValidator<PaymentCheckoutRequest>, PaymentCheckoutValidator>();
@@ -257,6 +270,7 @@ builder.Services.AddScoped<IValidator<ZooPartnerInsertRequest>, ZooPartnerInsert
 builder.Services.AddScoped<IValidator<ZooPartnerUpdateRequest>, ZooPartnerUpdateValidator>();
 builder.Services.AddScoped<IValidator<AdoptionInsertRequest>, AdoptionInsertValidator>();
 builder.Services.AddScoped<IValidator<AdoptionUpdateRequest>, AdoptionUpdateValidator>();
+builder.Services.AddScoped<IValidator<AdoptionRejectRequest>, AdoptionRejectValidator>();
 builder.Services.AddScoped<IValidator<DonationInsertRequest>, DonationInsertValidator>();
 builder.Services.AddScoped<IValidator<DonationUpdateRequest>, DonationUpdateValidator>();
 builder.Services.AddScoped<IValidator<ReviewInsertRequest>, ReviewInsertValidator>();

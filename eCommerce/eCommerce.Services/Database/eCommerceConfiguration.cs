@@ -107,6 +107,18 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(r => r.PaymentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.ConfirmedByUser)
+                .WithMany()
+                .HasForeignKey(r => r.ConfirmedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.CancelledByUser)
+                .WithMany()
+                .HasForeignKey(r => r.CancelledByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Adoption>()
                 .HasOne(a => a.User)
                 .WithMany()
@@ -123,6 +135,12 @@ namespace eCommerce.Services.Database
                 .HasOne(a => a.Payment)
                 .WithMany()
                 .HasForeignKey(a => a.PaymentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Adoption>()
+                .HasOne(a => a.RejectedByUser)
+                .WithMany()
+                .HasForeignKey(a => a.RejectedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Donation>()

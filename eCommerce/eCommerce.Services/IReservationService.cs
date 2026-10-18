@@ -8,6 +8,7 @@ namespace eCommerce.Services
     {
         Task<ReservationResponse> ConfirmAsync(int id);
         Task<ReservationResponse> CancelAsync(int id);
+        Task<ReservationResponse> CancelWithReasonAsync(int id, ReservationCancelRequest request);
         Task<ReservationResponse> CompleteAsync(int id);
         Task<List<string>> GetAllowedActionsAsync(int id);
     }

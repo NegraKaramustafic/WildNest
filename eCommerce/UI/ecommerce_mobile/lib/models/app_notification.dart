@@ -12,6 +12,7 @@ enum NotificationType {
   badgeEarned,
   passwordReset,
   upcomingReminder,
+  adoptionRejected,
 }
 
 class AppNotification {
@@ -97,6 +98,8 @@ NotificationType parseNotificationType(dynamic value) {
         return NotificationType.passwordReset;
       case 10:
         return NotificationType.upcomingReminder;
+      case 11:
+        return NotificationType.adoptionRejected;
       default:
         return NotificationType.paymentCompleted;
     }
@@ -122,6 +125,8 @@ NotificationType parseNotificationType(dynamic value) {
       return NotificationType.passwordReset;
     case 'upcomingreminder':
       return NotificationType.upcomingReminder;
+    case 'adoptionrejected':
+      return NotificationType.adoptionRejected;
     default:
       return NotificationType.paymentCompleted;
   }

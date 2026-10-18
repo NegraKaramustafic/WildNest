@@ -10,6 +10,7 @@ namespace eCommerce.Services
         Task NotifyReservationConfirmedAsync(ReservationResponse reservation);
         Task NotifyReservationCancelledAsync(ReservationResponse reservation);
         Task NotifyAdoptionCreatedAsync(AdoptionResponse adoption);
+        Task NotifyAdoptionRejectedAsync(AdoptionResponse adoption);
         Task NotifyDonationReceivedAsync(DonationResponse donation);
         Task NotifyPaymentCompletedAsync(int userId, int paymentId, decimal amount);
         Task NotifyBadgeEarnedAsync(int userId, int badgeId, string badgeName);

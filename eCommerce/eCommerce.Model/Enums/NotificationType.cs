@@ -15,6 +15,7 @@ namespace eCommerce.Model.Enums
         PaymentCompleted = 7,
         BadgeEarned = 8,
         PasswordReset = 9,
-        UpcomingReminder = 10
+        UpcomingReminder = 10,
+        AdoptionRejected = 11
     }
 }

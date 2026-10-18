@@ -37,6 +37,17 @@ public class ReservationController : BaseCRUDController<ReservationResponse, Res
         return Ok(result);
     }
 
+    [HttpPost("{id}/cancel-with-reason")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ReservationResponse>> CancelWithReason(int id, [FromBody] ReservationCancelRequest request)
+    {
+        var result = await _service.CancelWithReasonAsync(id, request);
+        return Ok(result);
+    }
+
     [HttpPost("{id}/complete")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status200OK)]
