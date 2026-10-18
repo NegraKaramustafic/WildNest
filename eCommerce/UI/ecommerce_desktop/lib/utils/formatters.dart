@@ -18,6 +18,13 @@ String formatDate(DateTime date) {
   return '$day ${_months[date.month - 1]} ${date.year}';
 }
 
+String formatDateTime(DateTime? value) {
+  if (value == null) return '—';
+  final local = value.toLocal();
+  final clock = formatClock(Duration(hours: local.hour, minutes: local.minute));
+  return '${formatDate(local)}, $clock';
+}
+
 String formatKm(double? value) {
   if (value == null) return '—';
   if (value == value.roundToDouble()) {

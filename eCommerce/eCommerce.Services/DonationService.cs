@@ -2,6 +2,7 @@ using System;
 using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
+using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -35,7 +36,8 @@ namespace eCommerce.Services
         {
             query = query
                 .Include(d => d.User)
-                .Include(d => d.ZooPartner);
+                .Include(d => d.ZooPartner)
+                .Include(d => d.Payment);
             return await base.IncludeRelatedEntitiesAsync(search, query);
         }
 
@@ -45,6 +47,7 @@ namespace eCommerce.Services
                 .AsNoTracking()
                 .Include(d => d.User)
                 .Include(d => d.ZooPartner)
+                .Include(d => d.Payment)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (entity == null || !CanAccessDonation(entity.UserId))
@@ -130,12 +133,62 @@ namespace eCommerce.Services
                     : query.Where(d => false);
             }
 
-            if (search?.ZooPartnerId.HasValue == true)
+            if (search != null)
             {
-                query = query.Where(d => d.ZooPartnerId == search.ZooPartnerId.Value);
+                if (search.ZooPartnerId.HasValue)
+                {
+                    query = query.Where(d => d.ZooPartnerId == search.ZooPartnerId.Value);
+                }
+
+                if (search.PaymentStatus.HasValue)
+                {
+                    var status = search.PaymentStatus.Value;
+                    query = query.Where(d => d.Payment != null && d.Payment.Status == status);
+                }
+
+                if (search.HasPayment == true)
+                {
+                    query = query.Where(d => d.PaymentId != null);
+                }
+                else if (search.HasPayment == false)
+                {
+                    query = query.Where(d => d.PaymentId == null);
+                }
+
+                EnsureDateRange(search.DateFrom, search.DateTo);
+
+                if (search.DateFrom.HasValue)
+                {
+                    var from = search.DateFrom.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(d => d.CreatedAt >= from);
+                }
+
+                if (search.DateTo.HasValue)
+                {
+                    var toExclusive = search.DateTo.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(d => d.CreatedAt < toExclusive);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.FTS))
+                {
+                    var term = search.FTS.Trim();
+                    query = query.Where(d =>
+                        d.User.FirstName.Contains(term)
+                        || d.User.LastName.Contains(term)
+                        || (d.User.FirstName + " " + d.User.LastName).Contains(term)
+                        || d.ZooPartner.Name.Contains(term));
+                }
             }
 
             return query;
+        }
+
+        private static void EnsureDateRange(DateOnly? from, DateOnly? to)
+        {
+            if (from.HasValue && to.HasValue && from.Value > to.Value)
+            {
+                throw new ClientException("From date cannot be after to date.");
+            }
         }
 
         protected override IQueryable<Donation> ApplyDefaultOrder(IQueryable<Donation> query)

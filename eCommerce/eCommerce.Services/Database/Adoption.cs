@@ -31,5 +31,15 @@ namespace eCommerce.Services.Database
 
         [ForeignKey("PaymentId")]
         public Payment? Payment { get; set; }
+
+        public int? RejectedByUserId { get; set; }
+
+        [ForeignKey(nameof(RejectedByUserId))]
+        public User? RejectedByUser { get; set; }
+
+        public DateTime? RejectedAt { get; set; }
+
+        [MaxLength(500)]
+        public string? RejectionReason { get; set; }
     }
 }

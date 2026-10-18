@@ -142,7 +142,9 @@ namespace eCommerce.Services
                 {
                     foreach (var reservation in openReservations)
                     {
-                        cancelled.Add(await _reservationService.CancelAsync(reservation.Id));
+                        cancelled.Add(await _reservationService.CancelWithReasonAsync(
+                            reservation.Id,
+                            new ReservationCancelRequest { Reason = "The schedule was cancelled." }));
                     }
 
                     await _dbContext.Entry(entity).ReloadAsync();

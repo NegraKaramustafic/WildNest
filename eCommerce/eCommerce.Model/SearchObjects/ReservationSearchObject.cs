@@ -18,5 +18,25 @@ namespace eCommerce.Model.SearchObjects
         /// Filter reservations by status.
         /// </summary>
         public ReservationStatus? Status { get; set; }
+
+        /// <summary>
+        /// Filter reservations by the schedule's activity.
+        /// </summary>
+        public int? ActivityId { get; set; }
+
+        /// <summary>
+        /// Inclusive start of the schedule date range.
+        /// </summary>
+        public DateOnly? DateFrom { get; set; }
+
+        /// <summary>
+        /// Inclusive end of the schedule date range.
+        /// </summary>
+        public DateOnly? DateTo { get; set; }
+
+        /// <summary>
+        /// Search code, customer name, and activity name.
+        /// </summary>
+        public string? FTS { get; set; }
     }
 }

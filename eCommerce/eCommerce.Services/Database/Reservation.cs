@@ -39,5 +39,22 @@ namespace eCommerce.Services.Database
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? ReminderSentAt { get; set; }
+
+        public int? ConfirmedByUserId { get; set; }
+
+        [ForeignKey(nameof(ConfirmedByUserId))]
+        public User? ConfirmedByUser { get; set; }
+
+        public DateTime? ConfirmedAt { get; set; }
+
+        public int? CancelledByUserId { get; set; }
+
+        [ForeignKey(nameof(CancelledByUserId))]
+        public User? CancelledByUser { get; set; }
+
+        public DateTime? CancelledAt { get; set; }
+
+        [MaxLength(500)]
+        public string? CancellationReason { get; set; }
     }
 }

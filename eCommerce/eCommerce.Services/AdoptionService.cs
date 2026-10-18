@@ -19,6 +19,8 @@ namespace eCommerce.Services
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly IPaymentService _paymentService;
+        private readonly INotificationEventService _notificationEvents;
+        private readonly IValidator<AdoptionRejectRequest> _rejectValidator;
 
         public AdoptionService(
             ECommerceDbContext dbContext,
@@ -27,11 +29,15 @@ namespace eCommerce.Services
             IValidator<AdoptionUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
             IPaymentService paymentService,
+            INotificationEventService notificationEvents,
+            IValidator<AdoptionRejectRequest> rejectValidator,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
             _paymentService = paymentService;
+            _notificationEvents = notificationEvents;
+            _rejectValidator = rejectValidator;
         }
 
         protected override string NotFoundMessage => "Adoption not found.";
@@ -40,7 +46,9 @@ namespace eCommerce.Services
         {
             query = query
                 .Include(a => a.User)
-                .Include(a => a.Animal);
+                .Include(a => a.Animal)
+                .Include(a => a.Payment)
+                .Include(a => a.RejectedByUser);
             return await base.IncludeRelatedEntitiesAsync(search, query);
         }
 
@@ -50,6 +58,8 @@ namespace eCommerce.Services
                 .AsNoTracking()
                 .Include(a => a.User)
                 .Include(a => a.Animal)
+                .Include(a => a.Payment)
+                .Include(a => a.RejectedByUser)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (entity == null || !CanAccessAdoption(entity.UserId))
@@ -57,7 +67,20 @@ namespace eCommerce.Services
                 ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
-            return _mapper.Map<AdoptionResponse>(entity);
+            var response = _mapper.Map<AdoptionResponse>(entity);
+            response.AllowedActions = AllowedActions(entity.Status);
+            return response;
+        }
+
+        public override async Task<PageResult<AdoptionResponse>> GetAllAsync(AdoptionSearchObject? search = null)
+        {
+            var page = await base.GetAllAsync(search);
+            foreach (var item in page.Items)
+            {
+                item.AllowedActions = AllowedActions(item.Status);
+            }
+
+            return page;
         }
 
         public override async Task<AdoptionResponse> InsertAsync(AdoptionInsertRequest request)
@@ -160,6 +183,30 @@ namespace eCommerce.Services
                 {
                     query = query.Where(a => a.Status == search.Status.Value);
                 }
+
+                EnsureDateRange(search.DateFrom, search.DateTo);
+
+                if (search.DateFrom.HasValue)
+                {
+                    var from = search.DateFrom.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(a => a.StartDate >= from);
+                }
+
+                if (search.DateTo.HasValue)
+                {
+                    var toExclusive = search.DateTo.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(a => a.StartDate < toExclusive);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.FTS))
+                {
+                    var term = search.FTS.Trim();
+                    query = query.Where(a =>
+                        a.User.FirstName.Contains(term)
+                        || a.User.LastName.Contains(term)
+                        || (a.User.FirstName + " " + a.User.LastName).Contains(term)
+                        || a.Animal.Name.Contains(term));
+                }
             }
 
             return query;
@@ -196,6 +243,125 @@ namespace eCommerce.Services
             });
 
             return await GetByIdAsync(id);
+        }
+
+        public async Task<AdoptionResponse> ApproveAsync(int id)
+        {
+            throw await ApproveNotAllowedAsync(id);
+        }
+
+        public async Task<AdoptionResponse> RejectAsync(int id, AdoptionRejectRequest request)
+        {
+            EnsureAdmin(id);
+            await ThrowFirstErrorAsync(_rejectValidator, request);
+
+            var entity = await _dbContext.Adoptions
+                .Include(a => a.User)
+                .Include(a => a.Animal)
+                .Include(a => a.Payment)
+                .FirstOrDefaultAsync(a => a.Id == id);
+            if (entity == null || !CanAccessAdoption(entity.UserId))
+            {
+                ThrowNotFound("Adoption", id, "Adoption not found.");
+            }
+
+            if (entity.Status == AdoptionStatus.Cancelled)
+            {
+                throw new ClientException("This adoption is already cancelled.");
+            }
+
+            var ownsTransaction = _dbContext.Database.CurrentTransaction == null;
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
+            {
+                entity.Status = AdoptionStatus.Cancelled;
+                entity.RejectedByUserId = RequireAdminUserId();
+                entity.RejectedAt = DateTime.UtcNow;
+                entity.RejectionReason = request.Reason.Trim();
+                if (entity.PaymentId.HasValue)
+                {
+                    // A completed adoption payment is a non-refundable contribution by design.
+                    await _paymentService.HandleEntityCancellationAsync(entity.PaymentId.Value, refundIfCompleted: false);
+                }
+
+                await _dbContext.SaveChangesAsync();
+            });
+
+            var rejected = await GetByIdAsync(id);
+            if (ownsTransaction)
+            {
+                await _notificationEvents.NotifyAdoptionRejectedAsync(rejected);
+            }
+
+            return rejected;
+        }
+
+        private async Task<Exception> ApproveNotAllowedAsync(int id)
+        {
+            if (!_userAccessor.IsInRole(Roles.Admin))
+            {
+                _logger.LogWarning("Adoption {Id} is not accessible.", id);
+                return new NotFoundException("Adoption not found.");
+            }
+
+            var status = await _dbContext.Adoptions.AsNoTracking()
+                .Where(a => a.Id == id)
+                .Select(a => (AdoptionStatus?)a.Status)
+                .FirstOrDefaultAsync();
+            if (status == null)
+            {
+                _logger.LogWarning("Adoption {Id} was not found.", id);
+                return new NotFoundException("Adoption not found.");
+            }
+
+            return status switch
+            {
+                AdoptionStatus.PendingPayment => new ClientException("This adoption cannot be approved by an administrator. It becomes active when payment is completed."),
+                AdoptionStatus.Active => new ClientException("This adoption is already active."),
+                AdoptionStatus.Cancelled => new ClientException("A cancelled adoption cannot be approved."),
+                _ => new ClientException("This adoption cannot be approved.")
+            };
+        }
+
+        private static List<string> AllowedActions(AdoptionStatus status)
+        {
+            if (status == AdoptionStatus.Cancelled)
+            {
+                return new List<string>();
+            }
+
+            return new List<string> { nameof(RejectAsync) };
+        }
+
+        private void EnsureAdmin(int id)
+        {
+            if (!_userAccessor.IsInRole(Roles.Admin))
+            {
+                _logger.LogWarning("Adoption {Id} is not accessible.", id);
+                throw new NotFoundException("Adoption not found.");
+            }
+        }
+
+        private int RequireAdminUserId()
+        {
+            return _userAccessor.GetUserId()
+                ?? throw new ClientException("Administrator id is missing.");
+        }
+
+        private static void EnsureDateRange(DateOnly? from, DateOnly? to)
+        {
+            if (from.HasValue && to.HasValue && from.Value > to.Value)
+            {
+                throw new ClientException("From date cannot be after to date.");
+            }
+        }
+
+        private static async Task ThrowFirstErrorAsync<T>(IValidator<T> validator, T request)
+        {
+            var result = await validator.ValidateAsync(request);
+            if (!result.IsValid)
+            {
+                throw new ClientException(result.Errors[0].ErrorMessage);
+            }
         }
 
         private bool CanAccessAdoption(int adoptionUserId)

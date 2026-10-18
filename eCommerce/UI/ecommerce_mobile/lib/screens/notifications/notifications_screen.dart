@@ -154,6 +154,8 @@ IconData _iconFor(NotificationType type) {
       return Icons.event_busy_outlined;
     case NotificationType.adoptionCreated:
       return Icons.favorite_border;
+    case NotificationType.adoptionRejected:
+      return Icons.heart_broken_outlined;
     case NotificationType.donationReceived:
     case NotificationType.paymentCompleted:
       return Icons.payments_outlined;

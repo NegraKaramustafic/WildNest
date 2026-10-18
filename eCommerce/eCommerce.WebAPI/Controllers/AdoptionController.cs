@@ -1,3 +1,4 @@
+using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -22,6 +23,28 @@ public class AdoptionController : BaseCRUDController<AdoptionResponse, AdoptionS
     public async Task<ActionResult<AdoptionResponse>> Cancel(int id)
     {
         var result = await _service.CancelAsync(id);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/approve")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AdoptionResponse>> Approve(int id)
+    {
+        var result = await _service.ApproveAsync(id);
+        return Ok(result);
+    }
+
+    [HttpPost("{id}/reject")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AdoptionResponse>> Reject(int id, [FromBody] AdoptionRejectRequest request)
+    {
+        var result = await _service.RejectAsync(id, request);
         return Ok(result);
     }
 }

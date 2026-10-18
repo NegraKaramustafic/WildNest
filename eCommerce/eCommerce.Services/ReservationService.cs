@@ -11,6 +11,7 @@ using eCommerce.Services.ReservationStateMachine;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using eCommerce.Model.Exceptions;
+using FluentValidation;
 
 namespace eCommerce.Services;
 
@@ -21,6 +22,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     private readonly INotificationEventService _notificationEvents;
     private readonly RecommendationModelCache _recommendationModelCache;
     private readonly IPaymentService _paymentService;
+    private readonly IValidator<ReservationCancelRequest> _cancelValidator;
 
     protected BaseReservationState ReservationState { get; }
 
@@ -32,6 +34,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         INotificationEventService notificationEvents,
         RecommendationModelCache recommendationModelCache,
         IPaymentService paymentService,
+        IValidator<ReservationCancelRequest> cancelValidator,
         ILoggerFactory loggerFactory)
         : base(mapper, dbContext, loggerFactory)
     {
@@ -40,6 +43,7 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         _notificationEvents = notificationEvents;
         _recommendationModelCache = recommendationModelCache;
         _paymentService = paymentService;
+        _cancelValidator = cancelValidator;
     }
 
     protected override Task<IQueryable<Reservation>> IncludeRelatedEntitiesAsync(ReservationSearchObject? search, IQueryable<Reservation> query = null!)
@@ -47,7 +51,10 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         query = query
             .Include(r => r.User)
             .Include(r => r.Schedule)
-                .ThenInclude(s => s.Activity);
+                .ThenInclude(s => s.Activity)
+            .Include(r => r.Payment)
+            .Include(r => r.ConfirmedByUser)
+            .Include(r => r.CancelledByUser);
         return base.IncludeRelatedEntitiesAsync(search, query);
     }
 
@@ -79,9 +86,48 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
             {
                 query = query.Where(r => r.Status == search.Status.Value);
             }
+
+            if (search.ActivityId.HasValue)
+            {
+                query = query.Where(r => r.Schedule.ActivityId == search.ActivityId.Value);
+            }
+
+            EnsureDateRange(search.DateFrom, search.DateTo);
+
+            if (search.DateFrom.HasValue)
+            {
+                query = query.Where(r => r.Schedule.Date >= search.DateFrom.Value);
+            }
+
+            if (search.DateTo.HasValue)
+            {
+                query = query.Where(r => r.Schedule.Date <= search.DateTo.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.FTS))
+            {
+                var term = search.FTS.Trim();
+                query = query.Where(r =>
+                    r.Code.Contains(term)
+                    || r.User.FirstName.Contains(term)
+                    || r.User.LastName.Contains(term)
+                    || (r.User.FirstName + " " + r.User.LastName).Contains(term)
+                    || r.Schedule.Activity.Name.Contains(term));
+            }
         }
 
         return query;
+    }
+
+    public override async Task<PageResult<ReservationResponse>> GetAllAsync(ReservationSearchObject? search = null)
+    {
+        var page = await base.GetAllAsync(search);
+        foreach (var item in page.Items)
+        {
+            item.AllowedActions = ReservationState.GetReservationState(item.Status).GetAllowedActions();
+        }
+
+        return page;
     }
 
     protected override IQueryable<Reservation> ApplyDefaultOrder(IQueryable<Reservation> query)
@@ -96,6 +142,9 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
             .Include(r => r.User)
             .Include(r => r.Schedule)
                 .ThenInclude(s => s.Activity)
+            .Include(r => r.Payment)
+            .Include(r => r.ConfirmedByUser)
+            .Include(r => r.CancelledByUser)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (entity == null || !CanAccessReservation(entity.UserId))
@@ -134,6 +183,9 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
     {
         EnsureAdmin(id);
         var entity = await GetAccessibleEntityAsync(id);
+        var adminId = RequireAdminUserId();
+        entity.ConfirmedByUserId = adminId;
+        entity.ConfirmedAt = DateTime.UtcNow;
         var state = ReservationState.GetReservationState(entity.Status);
         var confirmed = await state.ConfirmAsync(id);
         _recommendationModelCache.MarkDirty();
@@ -141,10 +193,29 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         return confirmed;
     }
 
-    public async Task<ReservationResponse> CancelAsync(int id)
+    public Task<ReservationResponse> CancelAsync(int id)
+    {
+        return CancelCoreAsync(id, reason: null, recordAdminDecision: false);
+    }
+
+    public async Task<ReservationResponse> CancelWithReasonAsync(int id, ReservationCancelRequest request)
+    {
+        EnsureAdmin(id);
+        await ThrowFirstErrorAsync(_cancelValidator, request);
+        return await CancelCoreAsync(id, request.Reason.Trim(), recordAdminDecision: true);
+    }
+
+    private async Task<ReservationResponse> CancelCoreAsync(int id, string? reason, bool recordAdminDecision)
     {
         var entity = await GetAccessibleEntityAsync(id);
         var paymentId = entity.PaymentId;
+        if (recordAdminDecision)
+        {
+            entity.CancelledByUserId = RequireAdminUserId();
+            entity.CancelledAt = DateTime.UtcNow;
+            entity.CancellationReason = reason;
+        }
+
         var ownsTransaction = _dbContext.Database.CurrentTransaction == null;
         ReservationResponse cancelled = null!;
         await DbTransactions.ExecuteAsync(_dbContext, async () =>
@@ -218,6 +289,29 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         {
             _logger.LogWarning("Reservation {Id} is not accessible.", id);
             throw new NotFoundException("Reservation not found.");
+        }
+    }
+
+    private int RequireAdminUserId()
+    {
+        return _userAccessor.GetUserId()
+            ?? throw new ClientException("Administrator id is missing.");
+    }
+
+    private static void EnsureDateRange(DateOnly? from, DateOnly? to)
+    {
+        if (from.HasValue && to.HasValue && from.Value > to.Value)
+        {
+            throw new ClientException("From date cannot be after to date.");
+        }
+    }
+
+    private static async Task ThrowFirstErrorAsync<T>(IValidator<T> validator, T request)
+    {
+        var result = await validator.ValidateAsync(request);
+        if (!result.IsValid)
+        {
+            throw new ClientException(result.Errors[0].ErrorMessage);
         }
     }
 }

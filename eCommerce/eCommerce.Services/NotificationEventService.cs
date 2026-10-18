@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using eCommerce.Model.Enums;
 using eCommerce.Model;
 using eCommerce.Model.Messages;
@@ -78,18 +80,32 @@ namespace eCommerce.Services
                 "Reservation confirmed",
                 $"Your booking for {reservation.ActivityName} ({reservation.Code}) is confirmed.",
                 "Reservation",
-                reservation.Id);
+                reservation.Id,
+                MessageIdFor($"wildnest:reservation:{reservation.Id}:confirmed"));
         }
 
         public Task NotifyReservationCancelledAsync(ReservationResponse reservation)
         {
+            var message = $"Your booking for {reservation.ActivityName} ({reservation.Code}) was cancelled.";
+            var reason = reservation.CancellationReason?.Trim();
+            if (!string.IsNullOrEmpty(reason))
+            {
+                if (!reason.EndsWith('.'))
+                {
+                    reason += ".";
+                }
+
+                message = $"Your booking for {reservation.ActivityName} ({reservation.Code}) was cancelled. Reason: {reason}";
+            }
+
             return PublishAsync(
                 reservation.UserId,
                 NotificationType.ReservationCancelled,
                 "Reservation cancelled",
-                $"Your booking for {reservation.ActivityName} ({reservation.Code}) was cancelled.",
+                message,
                 "Reservation",
-                reservation.Id);
+                reservation.Id,
+                MessageIdFor($"wildnest:reservation:{reservation.Id}:cancelled"));
         }
 
         public Task NotifyAdoptionCreatedAsync(AdoptionResponse adoption)
@@ -101,6 +117,24 @@ namespace eCommerce.Services
                 $"You are now supporting {adoption.AnimalName}.",
                 "Adoption",
                 adoption.Id);
+        }
+
+        public Task NotifyAdoptionRejectedAsync(AdoptionResponse adoption)
+        {
+            var reason = adoption.RejectionReason?.Trim() ?? string.Empty;
+            if (!reason.EndsWith('.'))
+            {
+                reason += ".";
+            }
+
+            return PublishAsync(
+                adoption.UserId,
+                NotificationType.AdoptionRejected,
+                "Adoption rejected",
+                $"Your adoption of {adoption.AnimalName} was rejected. Reason: {reason}",
+                "Adoption",
+                adoption.Id,
+                MessageIdFor($"wildnest:adoption:{adoption.Id}:rejected"));
         }
 
         public Task NotifyDonationReceivedAsync(DonationResponse donation)
@@ -142,11 +176,12 @@ namespace eCommerce.Services
             string title,
             string message,
             string relatedEntityType,
-            int relatedEntityId)
+            int relatedEntityId,
+            Guid? messageId = null)
         {
             await _publisher.PublishAsync(new NotificationMessage
             {
-                MessageId = Guid.NewGuid(),
+                MessageId = messageId ?? Guid.NewGuid(),
                 UserId = userId,
                 Title = title,
                 Message = message,
@@ -154,6 +189,12 @@ namespace eCommerce.Services
                 RelatedEntityType = relatedEntityType,
                 RelatedEntityId = relatedEntityId
             });
+        }
+
+        private static Guid MessageIdFor(string scope)
+        {
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(scope));
+            return new Guid(hash.AsSpan(0, 16));
         }
 
         private Task<List<int>> GetAdminUserIdsAsync()
