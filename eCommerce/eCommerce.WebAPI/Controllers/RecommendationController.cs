@@ -23,7 +23,8 @@ public class RecommendationController : ControllerBase
     }
 
     /// <summary>
-    /// Returns ranked Active activities the caller has not already reserved (Confirmed/Completed).
+    /// Returns active activities the caller has not already reserved, skipping inactive and past ones.
+    /// Personalized scores come from the cached reservation model. A new visitor, or a model that is not ready, gets the most popular activities.
     /// <paramref name="limit"/> defaults to 5 and must be between 1 and 20.
     /// </summary>
     [HttpGet]
@@ -37,7 +38,7 @@ public class RecommendationController : ControllerBase
     }
 
     /// <summary>
-    /// Retrains the MatrixFactorization model from current Review and Reservation rows. Admin only.
+    /// Retrains the MatrixFactorization model from confirmed and completed reservations. Admin only.
     /// </summary>
     [HttpPost("retrain")]
     [Authorize(Roles = Roles.Admin)]

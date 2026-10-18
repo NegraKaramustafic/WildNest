@@ -7,7 +7,6 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
-using eCommerce.Services.Recommendation;
 using eCommerce.Services.Sentiment;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +18,6 @@ namespace eCommerce.Services
     {
 
         private readonly IAuthenticatedUserAccessor _userAccessor;
-        private readonly RecommendationModelCache _recommendationModelCache;
         private readonly ISentimentService _sentiment;
 
         public ReviewService(
@@ -28,13 +26,11 @@ namespace eCommerce.Services
             IValidator<ReviewInsertRequest> insertValidator,
             IValidator<ReviewUpdateRequest> updateValidator,
             IAuthenticatedUserAccessor userAccessor,
-            RecommendationModelCache recommendationModelCache,
             ISentimentService sentiment,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _userAccessor = userAccessor;
-            _recommendationModelCache = recommendationModelCache;
             _sentiment = sentiment;
         }
 
@@ -77,7 +73,6 @@ namespace eCommerce.Services
             }
 
             var created = await base.InsertAsync(request);
-            _recommendationModelCache.MarkDirty();
             return await GetByIdAsync(created.Id);
         }
 
@@ -99,7 +94,6 @@ namespace eCommerce.Services
             }
 
             await base.UpdateAsync(id, request);
-            _recommendationModelCache.MarkDirty();
             return await GetByIdAsync(id);
         }
 
@@ -112,7 +106,6 @@ namespace eCommerce.Services
             }
 
             await base.DeleteAsync(id);
-            _recommendationModelCache.MarkDirty();
         }
 
         protected override void MapUpdateRequestToEntity(ReviewUpdateRequest request, Review entity)
@@ -130,8 +123,16 @@ namespace eCommerce.Services
         public async Task<int> BackfillSentimentAsync()
         {
             await _sentiment.EnsureReadyAsync();
+            if (!_sentiment.IsReady)
+            {
+                return 0;
+            }
+
             var pending = await _dbContext.Reviews
-                .Where(review => review.SentimentLabel == null && review.Comment != "")
+                .Where(review => review.Comment != "")
+                .Where(review => review.SentimentLabel == null
+                    || (review.SentimentLabel != SentimentLabels.Positive
+                        && review.SentimentLabel != SentimentLabels.Negative))
                 .ToListAsync();
 
             var updated = 0;
@@ -239,7 +240,6 @@ namespace eCommerce.Services
                     Year = group.Key.Year,
                     Month = group.Key.Month,
                     PositiveCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Positive),
-                    NeutralCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Neutral),
                     NegativeCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative)
                 })
                 .ToList();
@@ -257,8 +257,13 @@ namespace eCommerce.Services
                         ActivityId = group.Key,
                         ActivityName = group.Select(row => row.Name).FirstOrDefault() ?? string.Empty,
                         PositiveCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Positive),
-                        NeutralCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Neutral),
                         NegativeCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative),
+                        PositivePercentage = Percentage(
+                            CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Positive),
+                            count),
+                        NegativePercentage = Percentage(
+                            CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative),
+                            count),
                         AverageRating = average
                     };
                 })
@@ -273,8 +278,13 @@ namespace eCommerce.Services
                     AnimalId = group.Key,
                     AnimalName = group.Select(row => row.Name).FirstOrDefault() ?? string.Empty,
                     PositiveCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Positive),
-                    NeutralCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Neutral),
-                    NegativeCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative)
+                    NegativeCount = CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative),
+                    PositivePercentage = Percentage(
+                        CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Positive),
+                        group.Sum(row => row.Count)),
+                    NegativePercentage = Percentage(
+                        CountFor(group, row => row.Label, row => row.Count, SentimentLabels.Negative),
+                        group.Sum(row => row.Count))
                 })
                 .OrderBy(row => row.AnimalName)
                 .ThenBy(row => row.AnimalId)
@@ -312,7 +322,7 @@ namespace eCommerce.Services
                     var label = SentimentLabels.Canonical(search.SentimentLabel);
                     if (label == null)
                     {
-                        throw new ClientException("Sentiment label must be Positive, Neutral, or Negative.");
+                        throw new ClientException("Sentiment label must be Positive or Negative.");
                     }
 
                     query = query.Where(review => review.SentimentLabel == label);
@@ -371,6 +381,13 @@ namespace eCommerce.Services
             var result = _sentiment.Classify(entity.Comment);
             entity.SentimentLabel = result.Label;
             entity.SentimentScore = result.Score;
+        }
+
+        private static double Percentage(int part, int whole)
+        {
+            return whole == 0
+                ? 0
+                : Math.Round(100.0 * part / whole, 1, MidpointRounding.AwayFromZero);
         }
 
         private static int CountFor<T>(IEnumerable<T> rows, Func<T, string?> label, Func<T, int> count, string expected)

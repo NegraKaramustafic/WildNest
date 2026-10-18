@@ -17,9 +17,10 @@
 
 
   <ItemGroup>
-    <EmbeddedResource Include="Sentiment\Data\review_sentiment.csv">
-      <LogicalName>eCommerce.Services.Sentiment.review_sentiment.csv</LogicalName>
-    </EmbeddedResource>
+    <Content Include="Sentiment\Models\review-sentiment.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>ml-models\review-sentiment.zip</TargetPath>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

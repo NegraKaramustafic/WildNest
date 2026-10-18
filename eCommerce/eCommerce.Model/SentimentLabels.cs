@@ -6,10 +6,9 @@ namespace eCommerce.Model;
 public static class SentimentLabels
 {
     public const string Positive = "Positive";
-    public const string Neutral = "Neutral";
     public const string Negative = "Negative";
 
-    public static readonly IReadOnlyList<string> All = new[] { Positive, Neutral, Negative };
+    public static readonly IReadOnlyList<string> All = new[] { Positive, Negative };
 
     public static string? Canonical(string? value)
     {

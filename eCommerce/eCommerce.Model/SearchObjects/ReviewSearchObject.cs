@@ -13,7 +13,7 @@ namespace eCommerce.Model.SearchObjects
         public int? UserId { get; set; }
 
         /// <summary>
-        /// Positive, Neutral, or Negative. Any other value is rejected.
+        /// Positive or Negative. Any other value is rejected.
         /// </summary>
         public string? SentimentLabel { get; set; }
 

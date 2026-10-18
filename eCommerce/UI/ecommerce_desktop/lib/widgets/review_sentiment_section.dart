@@ -96,7 +96,7 @@ class ReviewSentimentSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
-          'Positive, neutral, and negative labels from review text',
+          'Each review text is classified as positive or negative.',
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: AppColors.textMuted),
@@ -136,7 +136,7 @@ class _SentimentBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 980 ? 4 : 2;
+        final columns = constraints.maxWidth >= 900 ? 3 : 2;
         final cardWidth = (constraints.maxWidth - (columns - 1) * 12) / columns;
         final wideCharts = constraints.maxWidth >= 760;
         return Column(
@@ -152,7 +152,7 @@ class _SentimentBody extends StatelessWidget {
                   value: formatCount(statistics.totalReviews),
                   detail: 'Average rating ${formatRating(statistics.overallAverageRating)}',
                 ),
-                for (final name in const ['Positive', 'Neutral', 'Negative'])
+                for (final name in const ['Positive', 'Negative'])
                   _SummaryCard(
                     width: cardWidth,
                     title: name,
@@ -196,7 +196,7 @@ class _SentimentBody extends StatelessWidget {
                     _BreakdownRow(
                       title: activity.activityName,
                       detail:
-                          'Positive ${formatCount(activity.positiveCount)} · Neutral ${formatCount(activity.neutralCount)} · Negative ${formatCount(activity.negativeCount)} · avg ${formatRating(activity.averageRating)}',
+                          'Positive ${formatPercent(activity.positivePercentage)} · Negative ${formatPercent(activity.negativePercentage)} · avg ${formatRating(activity.averageRating)}',
                     ),
                 ],
               ),
@@ -210,7 +210,7 @@ class _SentimentBody extends StatelessWidget {
                     _BreakdownRow(
                       title: animal.animalName,
                       detail:
-                          'Positive ${formatCount(animal.positiveCount)} · Neutral ${formatCount(animal.neutralCount)} · Negative ${formatCount(animal.negativeCount)}',
+                          'Positive ${formatPercent(animal.positivePercentage)} · Negative ${formatPercent(animal.negativePercentage)}',
                     ),
                 ],
               ),
@@ -290,7 +290,7 @@ class _DistributionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sections = <PieChartSectionData>[];
-    for (final name in const ['Positive', 'Neutral', 'Negative']) {
+    for (final name in const ['Positive', 'Negative']) {
       final count = statistics.label(name)?.count ?? 0;
       if (count <= 0) continue;
       sections.add(
@@ -324,7 +324,7 @@ class _DistributionCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final name in const ['Positive', 'Neutral', 'Negative'])
+                  for (final name in const ['Positive', 'Negative'])
                     _LegendLine(
                       label: name,
                       detail:
@@ -398,11 +398,9 @@ class _TrendCard extends StatelessWidget {
 
     var maxCount = 1;
     for (final point in points) {
-      final local = [
-        point.positiveCount,
-        point.neutralCount,
-        point.negativeCount,
-      ].reduce((a, b) => a > b ? a : b);
+      final local = point.positiveCount > point.negativeCount
+          ? point.positiveCount
+          : point.negativeCount;
       if (local > maxCount) maxCount = local;
     }
 
@@ -416,7 +414,6 @@ class _TrendCard extends StatelessWidget {
             runSpacing: 4,
             children: [
               _InlineLegend(label: 'Positive'),
-              _InlineLegend(label: 'Neutral'),
               _InlineLegend(label: 'Negative'),
             ],
           ),
@@ -477,7 +474,6 @@ class _TrendCard extends StatelessWidget {
                       barsSpace: 3,
                       barRods: [
                         _rod('Positive', points[index].positiveCount),
-                        _rod('Neutral', points[index].neutralCount),
                         _rod('Negative', points[index].negativeCount),
                       ],
                     ),

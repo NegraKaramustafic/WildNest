@@ -25,7 +25,6 @@ namespace eCommerce.Model.Responses
         public int Year { get; set; }
         public int Month { get; set; }
         public int PositiveCount { get; set; }
-        public int NeutralCount { get; set; }
         public int NegativeCount { get; set; }
     }
 
@@ -34,8 +33,9 @@ namespace eCommerce.Model.Responses
         public int ActivityId { get; set; }
         public string ActivityName { get; set; } = string.Empty;
         public int PositiveCount { get; set; }
-        public int NeutralCount { get; set; }
         public int NegativeCount { get; set; }
+        public double PositivePercentage { get; set; }
+        public double NegativePercentage { get; set; }
         public double? AverageRating { get; set; }
     }
 
@@ -44,7 +44,8 @@ namespace eCommerce.Model.Responses
         public int AnimalId { get; set; }
         public string AnimalName { get; set; } = string.Empty;
         public int PositiveCount { get; set; }
-        public int NeutralCount { get; set; }
         public int NegativeCount { get; set; }
+        public double PositivePercentage { get; set; }
+        public double NegativePercentage { get; set; }
     }
 }

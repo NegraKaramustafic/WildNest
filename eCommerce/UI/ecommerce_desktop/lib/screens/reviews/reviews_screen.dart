@@ -307,7 +307,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       items: const [
         DropdownMenuItem(value: null, child: Text('All sentiments', overflow: TextOverflow.ellipsis)),
         DropdownMenuItem(value: 'Positive', child: Text('Positive', overflow: TextOverflow.ellipsis)),
-        DropdownMenuItem(value: 'Neutral', child: Text('Neutral', overflow: TextOverflow.ellipsis)),
         DropdownMenuItem(value: 'Negative', child: Text('Negative', overflow: TextOverflow.ellipsis)),
       ],
       onChanged: (value) => _apply(() => _sentiment = value),

@@ -3,8 +3,8 @@ namespace eCommerce.Services.Sentiment
     public interface ISentimentService
     {
         /// <summary>
-        /// Loads a saved model or trains one from the synthetic CSV. Failures are logged
-        /// and reported as false so API startup can continue.
+        /// Loads the shipped binary model. A missing or invalid file is logged
+        /// and reported as false so reviews can be saved without a label.
         /// </summary>
         Task<bool> EnsureReadyAsync(CancellationToken cancellationToken = default);
 
@@ -12,7 +12,7 @@ namespace eCommerce.Services.Sentiment
 
         bool IsReady { get; }
 
-        SentimentTrainingReport? LastReport { get; }
+        SentimentModelReport? LastReport { get; }
     }
 
     public sealed class SentimentClassification
@@ -31,21 +31,13 @@ namespace eCommerce.Services.Sentiment
     }
 
     /// <summary>
-    /// Metrics from the synthetic training set. Hold-out accuracy is measured on a
-    /// stratified 20% split; the saved model is trained on every row.
+    /// Runtime load status. Hold-out accuracy is produced by SentimentModelTrainer,
+    /// not while the API is starting.
     /// </summary>
-    public sealed class SentimentTrainingReport
+    public sealed class SentimentModelReport
     {
-        public int RowCount { get; init; }
-        public int PositiveRows { get; init; }
-        public int NeutralRows { get; init; }
-        public int NegativeRows { get; init; }
-        public int BosnianRows { get; init; }
-        public int HoldoutCount { get; init; }
-        public double? HoldoutAccuracy { get; init; }
-        public double? PositiveAccuracy { get; init; }
-        public double? NeutralAccuracy { get; init; }
-        public double? NegativeAccuracy { get; init; }
         public bool LoadedFromFile { get; init; }
+
+        public string ModelPath { get; init; } = string.Empty;
     }
 }

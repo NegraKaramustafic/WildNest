@@ -64,20 +64,20 @@ void main() {
       labeledReviews: 18,
       overallAverageRating: 3.8,
       labels: [
-        SentimentLabelStatistic(label: 'Positive', count: 10, percentage: 55.6, averageRating: 4.8),
-        SentimentLabelStatistic(label: 'Neutral', count: 4, percentage: 22.2, averageRating: 3),
-        SentimentLabelStatistic(label: 'Negative', count: 4, percentage: 22.2, averageRating: 1.5),
+        SentimentLabelStatistic(label: 'Positive', count: 10, percentage: 71.4, averageRating: 4.8),
+        SentimentLabelStatistic(label: 'Negative', count: 4, percentage: 28.6, averageRating: 1.5),
       ],
       monthlyTrend: [
-        SentimentTrendPoint(year: 2026, month: 4, positiveCount: 2, neutralCount: 1, negativeCount: 1),
+        SentimentTrendPoint(year: 2026, month: 4, positiveCount: 2, negativeCount: 1),
       ],
       activities: [
         SentimentActivityBreakdown(
           activityId: 1,
           activityName: 'Elephant Feeding Experience',
           positiveCount: 3,
-          neutralCount: 0,
           negativeCount: 0,
+          positivePercentage: 100,
+          negativePercentage: 0,
           averageRating: 4.7,
         ),
       ],
@@ -97,8 +97,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('Positive'), findsWidgets);
-    expect(find.text('Neutral'), findsWidgets);
+    expect(find.text('Neutral'), findsNothing);
     expect(find.text('Negative'), findsWidgets);
+    expect(find.textContaining('Positive 100%'), findsOneWidget);
     expect(find.text('Distribution'), findsOneWidget);
     expect(find.text('Monthly trend'), findsOneWidget);
     expect(find.text('Elephant Feeding Experience'), findsOneWidget);

@@ -6,7 +6,6 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
-using eCommerce.Services.Recommendation;
 using eCommerce.Services.ReservationStateMachine;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,7 +19,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
 
     private readonly IAuthenticatedUserAccessor _userAccessor;
     private readonly INotificationEventService _notificationEvents;
-    private readonly RecommendationModelCache _recommendationModelCache;
     private readonly IPaymentService _paymentService;
     private readonly IValidator<ReservationCancelRequest> _cancelValidator;
 
@@ -32,7 +30,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         BaseReservationState reservationState,
         IAuthenticatedUserAccessor userAccessor,
         INotificationEventService notificationEvents,
-        RecommendationModelCache recommendationModelCache,
         IPaymentService paymentService,
         IValidator<ReservationCancelRequest> cancelValidator,
         ILoggerFactory loggerFactory)
@@ -41,7 +38,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         ReservationState = reservationState;
         _userAccessor = userAccessor;
         _notificationEvents = notificationEvents;
-        _recommendationModelCache = recommendationModelCache;
         _paymentService = paymentService;
         _cancelValidator = cancelValidator;
     }
@@ -188,7 +184,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         entity.ConfirmedAt = DateTime.UtcNow;
         var state = ReservationState.GetReservationState(entity.Status);
         var confirmed = await state.ConfirmAsync(id);
-        _recommendationModelCache.MarkDirty();
         await _notificationEvents.NotifyReservationConfirmedAsync(confirmed);
         return confirmed;
     }
@@ -244,7 +239,6 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
         var entity = await GetAccessibleEntityAsync(id);
         var state = ReservationState.GetReservationState(entity.Status);
         var completed = await state.CompleteAsync(id);
-        _recommendationModelCache.MarkDirty();
         return completed;
     }
 
