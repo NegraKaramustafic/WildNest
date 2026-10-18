@@ -19,6 +19,7 @@ using eCommerce.WebAPI.Services.AccessManager;
 using FluentValidation;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
@@ -35,6 +36,7 @@ CorsSettings corsSettings;
 ZooClock zooClock;
 PasswordResetSettings passwordResetSettings;
 ReminderSettings reminderSettings;
+AuthRateLimitSettings authRateLimitSettings;
 string connectionString;
 try
 {
@@ -46,6 +48,7 @@ try
     zooClock = ZooClock.FromEnvironment();
     passwordResetSettings = PasswordResetSettings.FromEnvironment();
     reminderSettings = ReminderSettings.FromEnvironment();
+    authRateLimitSettings = AuthRateLimitSettings.FromEnvironment();
 }
 catch (InvalidOperationException ex)
 {
@@ -76,6 +79,25 @@ builder.Services.AddSingleton(corsSettings);
 builder.Services.AddSingleton(zooClock);
 builder.Services.AddSingleton(passwordResetSettings);
 builder.Services.AddSingleton(reminderSettings);
+builder.Services.AddSingleton(authRateLimitSettings);
+builder.Services.AddSingleton<AuthRateLimitPolicy>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, cancellationToken) =>
+    {
+        if (context.HttpContext.Response.HasStarted)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        return new ValueTask(context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = AuthRateLimitPolicy.TooManyAttemptsMessage },
+            cancellationToken));
+    };
+    options.AddPolicy<string, AuthRateLimitPolicy>(AuthRateLimitPolicy.PolicyName);
+});
 builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
 var uploadDirectory = Path.Combine(builder.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadDirectory);
@@ -417,7 +439,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
 app.UseCors("WildNest");
+app.UseMiddleware<AuthRateLimitPreparationMiddleware>();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

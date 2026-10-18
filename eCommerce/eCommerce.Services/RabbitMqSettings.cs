@@ -16,6 +16,11 @@ namespace eCommerce.Services
         public string DeadQueueName => $"{QueueName}.dead";
         public string DeadLetterExchange => $"{QueueName}.dlx";
 
+        internal static RabbitMqSettings Create(string hostName, int port, string userName, string password, string queueName)
+        {
+            return new RabbitMqSettings(hostName, port, userName, password, queueName);
+        }
+
         private RabbitMqSettings(string hostName, int port, string userName, string password, string queueName)
         {
             HostName = hostName;

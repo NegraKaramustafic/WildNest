@@ -1,9 +1,11 @@
 ﻿using eCommerce.Model.Access;
 using eCommerce.Model.Requests;
 using eCommerce.Services;
+using eCommerce.WebAPI.Services;
 using eCommerce.WebAPI.Services.AccessManager;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace eCommerce.WebAPI.Controllers
 {
@@ -27,6 +29,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting(AuthRateLimitPolicy.PolicyName)]
         [HttpPost("Login")]
         public async Task<ActionResult> Login([FromBody] UserLoginRequest request)
         {
@@ -35,6 +38,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting(AuthRateLimitPolicy.PolicyName)]
         [HttpPost("LoginWithRefreshToken")]
         public async Task<ActionResult> LoginWithRefreshToken([FromBody] RefreshAccessTokenRequest request)
         {
@@ -51,6 +55,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting(AuthRateLimitPolicy.PolicyName)]
         [HttpPost("ForgotPassword")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
         {
@@ -59,6 +64,7 @@ namespace eCommerce.WebAPI.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting(AuthRateLimitPolicy.PolicyName)]
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
         {

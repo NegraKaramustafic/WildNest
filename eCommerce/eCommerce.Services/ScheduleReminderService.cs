@@ -65,21 +65,17 @@ namespace eCommerce.Services
                     }, cancellationToken);
                     sent++;
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
                 catch (Exception ex)
                 {
                     _logger.LogError(
                         ex,
                         "Failed to publish the reminder for reservation {ReservationId}. The claim will be released so the next run can retry.",
                         item.Id);
-                    await _dbContext.Reservations
-                        .Where(reservation => reservation.Id == item.Id && reservation.ReminderSentAt == now)
-                        .ExecuteUpdateAsync(
-                            setters => setters.SetProperty(reservation => reservation.ReminderSentAt, (DateTime?)null),
-                            cancellationToken);
+                    await ReleaseReservationClaimAsync(item.Id, now);
+                    if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                 }
             }
 
@@ -111,21 +107,17 @@ namespace eCommerce.Services
                     }, cancellationToken);
                     sent++;
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    throw;
-                }
                 catch (Exception ex)
                 {
                     _logger.LogError(
                         ex,
                         "Failed to publish the reminder for ticket {TicketId}. The claim will be released so the next run can retry.",
                         item.Id);
-                    await _dbContext.Tickets
-                        .Where(ticket => ticket.Id == item.Id && ticket.ReminderSentAt == now)
-                        .ExecuteUpdateAsync(
-                            setters => setters.SetProperty(ticket => ticket.ReminderSentAt, (DateTime?)null),
-                            cancellationToken);
+                    await ReleaseTicketClaimAsync(item.Id, now);
+                    if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                 }
             }
 
@@ -187,6 +179,24 @@ namespace eCommerce.Services
             return string.Create(
                 CultureInfo.InvariantCulture,
                 $"{date:dd MMMM yyyy} ({_clock.TimeZoneId})");
+        }
+
+        private Task ReleaseReservationClaimAsync(int id, DateTime claimedAt)
+        {
+            return _dbContext.Reservations
+                .Where(reservation => reservation.Id == id && reservation.ReminderSentAt == claimedAt)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(reservation => reservation.ReminderSentAt, (DateTime?)null),
+                    CancellationToken.None);
+        }
+
+        private Task ReleaseTicketClaimAsync(int id, DateTime claimedAt)
+        {
+            return _dbContext.Tickets
+                .Where(ticket => ticket.Id == id && ticket.ReminderSentAt == claimedAt)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(ticket => ticket.ReminderSentAt, (DateTime?)null),
+                    CancellationToken.None);
         }
 
         private static Guid MessageIdFor(string kind, int id)

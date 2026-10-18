@@ -119,6 +119,81 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
+        public async Task Update_SelfService_IgnoresPassword_AndKeepsTheStamp()
+        {
+            using var db = new SqliteDb();
+            var cache = new RecordingStampCache();
+            var service = Users(db.Context, cache, admin: false, userId: 4);
+            var before = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+
+            await service.UpdateAsync(4, Profile(before, password: "Secret1", confirm: "Secret1"));
+
+            db.Context.ChangeTracker.Clear();
+            var stored = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+            Assert.Equal(before.PasswordHash, stored.PasswordHash);
+            Assert.Equal(before.PasswordSalt, stored.PasswordSalt);
+            Assert.Equal(before.SecurityStamp, stored.SecurityStamp);
+            Assert.Empty(cache.Invalidated);
+        }
+
+        [Fact]
+        public async Task Update_OwnAccountAsAdministrator_IgnoresPassword()
+        {
+            using var db = new SqliteDb();
+            var service = Users(db.Context, new RecordingStampCache(), admin: true, userId: 1);
+            var before = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 1);
+
+            await service.UpdateAsync(1, Profile(before, password: "Secret1", confirm: "Secret1"));
+
+            db.Context.ChangeTracker.Clear();
+            var stored = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 1);
+            Assert.Equal(before.PasswordHash, stored.PasswordHash);
+            Assert.Equal(before.SecurityStamp, stored.SecurityStamp);
+        }
+
+        [Fact]
+        public async Task Update_RoleChange_RotatesStamp_RemovesRefreshTokens_AndInvalidatesCache()
+        {
+            using var db = new SqliteDb();
+            var cache = new RecordingStampCache();
+            var service = Users(db.Context, cache, admin: true, userId: 1);
+            var before = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+            db.Context.RefreshTokens.Add(new RefreshToken
+            {
+                UserId = 4,
+                Token = "refresh-token",
+                ExpiresAt = DateTime.UtcNow.AddDays(1)
+            });
+            await db.Context.SaveChangesAsync();
+
+            var updated = await service.UpdateAsync(4, Profile(before, password: null, confirm: null, role: Roles.Admin));
+
+            Assert.Equal(Roles.Admin, updated.Role);
+            Assert.Contains(4, cache.Invalidated);
+            db.Context.ChangeTracker.Clear();
+            var stored = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+            Assert.NotEqual(before.SecurityStamp, stored.SecurityStamp);
+            Assert.Equal(before.PasswordHash, stored.PasswordHash);
+            Assert.False(await db.Context.RefreshTokens.AnyAsync(token => token.UserId == 4));
+        }
+
+        [Fact]
+        public async Task Update_SameRole_DoesNotRotateTheStamp()
+        {
+            using var db = new SqliteDb();
+            var cache = new RecordingStampCache();
+            var service = Users(db.Context, cache, admin: true, userId: 1);
+            var before = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+
+            await service.UpdateAsync(4, Profile(before, password: null, confirm: null, role: Roles.Customer));
+
+            db.Context.ChangeTracker.Clear();
+            var stored = await db.Context.Users.AsNoTracking().FirstAsync(user => user.Id == 4);
+            Assert.Equal(before.SecurityStamp, stored.SecurityStamp);
+            Assert.Empty(cache.Invalidated);
+        }
+
+        [Fact]
         public async Task Insert_IgnoresRoleUnlessTheCallerIsAnAdministrator()
         {
             using var db = new SqliteDb();
@@ -349,7 +424,7 @@ namespace eCommerce.Services.Tests
             return new Mapper(config);
         }
 
-        private static UserUpdateRequest Profile(User user, string? password, string? confirm)
+        private static UserUpdateRequest Profile(User user, string? password, string? confirm, string? role = null)
         {
             return new UserUpdateRequest
             {
@@ -359,6 +434,7 @@ namespace eCommerce.Services.Tests
                 Username = user.Username,
                 PhoneNumber = user.PhoneNumber,
                 IsActive = user.IsActive,
+                Role = role,
                 Password = password,
                 ConfirmPassword = confirm
             };

@@ -31,6 +31,12 @@ namespace eCommerce.Services.Database
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Set only after the notification email was sent or deliberately skipped.
+        /// A redelivered message with this value set does not send the email again.
+        /// </summary>
+        public DateTime? EmailSentAt { get; set; }
+
         [MaxLength(50)]
         public string? RelatedEntityType { get; set; }
 

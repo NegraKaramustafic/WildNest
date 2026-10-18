@@ -18,7 +18,8 @@ namespace eCommerce.Model.Requests
         public string? Role { get; set; }
 
         /// <summary>
-        /// Optional. Hashed only when filled in. The current password is not required.
+        /// Optional administrator reset for another user. Ignored when the caller updates their own account.
+        /// A user changes their own password only through ChangePassword, which requires the current password.
         /// </summary>
         public string? Password { get; set; }
 
