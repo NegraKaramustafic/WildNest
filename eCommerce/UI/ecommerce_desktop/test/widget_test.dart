@@ -116,12 +116,12 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: TicketVerifyResultView(error: 'Ticket already used'),
+          body: TicketVerifyResultView(error: 'Ticket already used.'),
         ),
       ),
     );
 
-    expect(find.text('Ticket already used'), findsOneWidget);
+    expect(find.text('Ticket already used.'), findsOneWidget);
     expect(find.text('Ticket was not verified'), findsOneWidget);
   });
 

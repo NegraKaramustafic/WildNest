@@ -71,7 +71,7 @@ namespace eCommerce.Services
 
             if (!animal.AdoptionPrice.HasValue)
             {
-                throw new ClientException("This animal is not available for adoption");
+                throw new ClientException("This animal is not available for adoption.");
             }
 
             var entity = MapInsertRequestToEntity(request);

@@ -36,6 +36,14 @@ services:
       timeout: 5s
       retries: 5
 
+  # Local mailbox for notification and password-reset emails. Open http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: wildnest-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
   api:
     image: wildnest-api:1.0.0
     build:
@@ -69,11 +77,17 @@ services:
     environment:
       RABBITMQ_HOSTNAME: rabbitmq
       ConnectionStrings__DefaultConnection: Server=sql,1433;Database=${DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_FROM: noreply@wildnest.local
+      SMTP_ENABLE_SSL: "false"
     depends_on:
       rabbitmq:
         condition: service_healthy
       sql:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 volumes:
   sqlserver_data:

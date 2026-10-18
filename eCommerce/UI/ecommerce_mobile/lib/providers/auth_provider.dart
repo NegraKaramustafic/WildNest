@@ -147,6 +147,61 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<int> requestPasswordReset(String email) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}Access/ForgotPassword'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode >= 299) {
+      throw ApiClientException(
+        ApiErrorParser.messageFromBody(response.body) ??
+            'Could not send a reset code. Please try again.',
+      );
+    }
+
+    return _cooldownSeconds(response.body);
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}Access/ResetPassword'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'code': code,
+        'newPassword': newPassword,
+        'confirmNewPassword': confirmNewPassword,
+      }),
+    );
+
+    if (response.statusCode >= 299) {
+      throw ApiClientException(
+        ApiErrorParser.messageFromBody(response.body) ??
+            'Could not reset the password. Please try again.',
+      );
+    }
+  }
+
+  int _cooldownSeconds(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) {
+        final seconds = decoded['cooldownSeconds'];
+        if (seconds is num && seconds > 0) {
+          return seconds.toInt();
+        }
+      }
+    } catch (_) {}
+    return 60;
+  }
+
   Future<void> logout() async {
     final token = _accesstoken;
     if (token != null && token.isNotEmpty) {

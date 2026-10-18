@@ -30,6 +30,8 @@ RabbitMqSettings rabbitSettings;
 StripeSettings stripeSettings;
 CorsSettings corsSettings;
 ZooClock zooClock;
+PasswordResetSettings passwordResetSettings;
+ReminderSettings reminderSettings;
 string connectionString;
 try
 {
@@ -39,6 +41,8 @@ try
     stripeSettings = StripeSettings.FromEnvironment();
     corsSettings = CorsSettings.FromEnvironment();
     zooClock = ZooClock.FromEnvironment();
+    passwordResetSettings = PasswordResetSettings.FromEnvironment();
+    reminderSettings = ReminderSettings.FromEnvironment();
 }
 catch (InvalidOperationException ex)
 {
@@ -67,6 +71,8 @@ builder.Services.AddSingleton(rabbitSettings);
 builder.Services.AddSingleton(stripeSettings);
 builder.Services.AddSingleton(corsSettings);
 builder.Services.AddSingleton(zooClock);
+builder.Services.AddSingleton(passwordResetSettings);
+builder.Services.AddSingleton(reminderSettings);
 builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
 builder.Services.AddScoped<IAuthenticatedUserAccessor, HttpAuthenticatedUserAccessor>();
 
@@ -220,6 +226,9 @@ builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
 builder.Services.AddSingleton<INotificationPublisher, RabbitMqNotificationPublisher>();
 builder.Services.AddScoped<INotificationEventService, NotificationEventService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IScheduleReminderService, ScheduleReminderService>();
+builder.Services.AddHostedService<ScheduleReminderHostedService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
 builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 builder.Services.AddSingleton<ISentimentService>(sp =>
@@ -254,6 +263,8 @@ builder.Services.AddScoped<IValidator<ReviewInsertRequest>, ReviewInsertValidato
 builder.Services.AddScoped<IValidator<ReviewUpdateRequest>, ReviewUpdateValidator>();
 builder.Services.AddScoped<IValidator<BadgeInsertRequest>, BadgeInsertValidator>();
 builder.Services.AddScoped<IValidator<BadgeUpdateRequest>, BadgeUpdateValidator>();
+builder.Services.AddScoped<IValidator<ForgotPasswordRequest>, ForgotPasswordValidator>();
+builder.Services.AddScoped<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -335,9 +346,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 app.Logger.LogInformation(
-    "Configuration loaded from environment. Zoo time zone: {TimeZone}. CORS origins: {Origins}.",
+    "Configuration loaded from environment. Zoo time zone: {TimeZone}. CORS origins: {Origins}. Reminders: {Hours}h window every {Minutes} min.",
     zooClock.TimeZoneId,
-    string.Join(", ", corsSettings.AllowedOrigins));
+    string.Join(", ", corsSettings.AllowedOrigins),
+    reminderSettings.HoursBefore,
+    reminderSettings.CheckIntervalMinutes);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

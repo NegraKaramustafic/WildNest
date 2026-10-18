@@ -50,5 +50,7 @@ namespace eCommerce.Services.Database
         public Payment? Payment { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? ReminderSentAt { get; set; }
     }
 }

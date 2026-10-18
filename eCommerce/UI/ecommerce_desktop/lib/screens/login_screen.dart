@@ -1,4 +1,5 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/screens/forgot_password_screen.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:flutter/material.dart';
@@ -125,6 +126,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     onSubmitted: (_) => _submit(),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _submitting
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                      child: const Text('Forgot password?'),
+                    ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 16),

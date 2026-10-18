@@ -159,5 +159,9 @@ IconData _iconFor(NotificationType type) {
       return Icons.payments_outlined;
     case NotificationType.badgeEarned:
       return Icons.workspace_premium_outlined;
+    case NotificationType.passwordReset:
+      return Icons.lock_reset;
+    case NotificationType.upcomingReminder:
+      return Icons.event_outlined;
   }
 }

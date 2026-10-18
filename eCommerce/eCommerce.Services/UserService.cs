@@ -282,7 +282,7 @@ namespace eCommerce.Services
                 ThrowNotFound("User", userId, "User not found.");
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
-                throw new ClientException("Wrong credential");
+                throw new ClientException("Wrong credential.");
 
             if (!request.NewPassword.Equals(request.ConfirmNewPassword))
                 throw new ClientException("Password confirmation doesn't match the new password.");

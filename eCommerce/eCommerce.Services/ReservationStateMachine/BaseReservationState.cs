@@ -87,7 +87,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 case nameof(CancelledReservationState):
                     return ServiceProvider.GetService<CancelledReservationState>()!;
                 default:
-                    throw new ClientException($"Unknown reservation state: {stateName}");
+                    throw new ClientException($"Unknown reservation state: {stateName}.");
             }
         }
 
@@ -99,7 +99,7 @@ namespace eCommerce.Services.ReservationStateMachine
                 ReservationStatus.Confirmed => GetReservationState(nameof(ConfirmedReservationState)),
                 ReservationStatus.Completed => GetReservationState(nameof(CompletedReservationState)),
                 ReservationStatus.Cancelled => GetReservationState(nameof(CancelledReservationState)),
-                _ => throw new ClientException($"Unknown reservation status: {status}")
+                _ => throw new ClientException($"Unknown reservation status: {status}.")
             };
         }
 

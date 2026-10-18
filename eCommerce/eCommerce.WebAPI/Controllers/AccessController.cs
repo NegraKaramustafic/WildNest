@@ -14,11 +14,16 @@ namespace eCommerce.WebAPI.Controllers
     {
         private readonly IAccessManager _accessManager;
         private readonly IUserService _userService;
+        private readonly IPasswordResetService _passwordResetService;
 
-        public AccessController(IAccessManager accessManager, IUserService userService)
+        public AccessController(
+            IAccessManager accessManager,
+            IUserService userService,
+            IPasswordResetService passwordResetService)
         {
             _accessManager = accessManager;
             _userService = userService;
+            _passwordResetService = passwordResetService;
         }
 
         [AllowAnonymous]
@@ -42,7 +47,23 @@ namespace eCommerce.WebAPI.Controllers
         public async Task<IActionResult> Register([FromBody] UserInsertRequest request)
         {
             await _userService.InsertAsync(request);
-            return Ok("You have registered successfully");
+            return Ok("You have registered successfully.");
+        }
+
+        [AllowAnonymous]
+        [HttpPost("ForgotPassword")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _passwordResetService.RequestAsync(request, cancellationToken);
+            return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+        {
+            await _passwordResetService.ResetAsync(request, cancellationToken);
+            return Ok(new { message = PasswordResetMessages.ResetSuccess });
         }
 
         [HttpPost("Logout")]

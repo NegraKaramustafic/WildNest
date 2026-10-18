@@ -77,7 +77,7 @@ namespace eCommerce.Services.ActivityStateMachine
                 case nameof(InactiveActivityState):
                     return ServiceProvider.GetService<InactiveActivityState>()!;
                 default:
-                    throw new ClientException($"Unknown activity state: {stateName}");
+                    throw new ClientException($"Unknown activity state: {stateName}.");
             }
         }
 
@@ -88,7 +88,7 @@ namespace eCommerce.Services.ActivityStateMachine
                 ActivityStatus.Draft => GetActivityState(nameof(DraftActivityState)),
                 ActivityStatus.Active => GetActivityState(nameof(ActiveActivityState)),
                 ActivityStatus.Inactive => GetActivityState(nameof(InactiveActivityState)),
-                _ => throw new ClientException($"Unknown activity status: {status}")
+                _ => throw new ClientException($"Unknown activity status: {status}.")
             };
         }
 
