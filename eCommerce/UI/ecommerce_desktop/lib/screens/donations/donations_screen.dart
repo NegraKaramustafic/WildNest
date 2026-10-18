@@ -327,7 +327,10 @@ class _DonationsScreenState extends State<DonationsScreen> {
         for (final partner in _partners)
           DropdownMenuItem(
             value: partner.id,
-            child: Text(partner.name, overflow: TextOverflow.ellipsis),
+            child: Text(
+              partner.isActive ? partner.name : '${partner.name} (inactive)',
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
       ],
       onChanged: (value) => _apply(() => _partnerId = value),

@@ -5,6 +5,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Services;
 using eCommerce.Services.Database;
+using eCommerce.Services.Images;
 using eCommerce.Services.Recommendation;
 using eCommerce.Services.Sentiment;
 using eCommerce.Services.ActivityStateMachine;
@@ -75,6 +76,10 @@ builder.Services.AddSingleton(zooClock);
 builder.Services.AddSingleton(passwordResetSettings);
 builder.Services.AddSingleton(reminderSettings);
 builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
+var uploadDirectory = Path.Combine(builder.Environment.ContentRootPath, "uploads");
+Directory.CreateDirectory(uploadDirectory);
+builder.Services.AddSingleton(new UploadSettings(uploadDirectory));
+builder.Services.AddSingleton<IStoredImageService, FileStoredImageService>();
 builder.Services.AddScoped<IAuthenticatedUserAccessor, HttpAuthenticatedUserAccessor>();
 
 builder.Services.AddControllers(
@@ -92,8 +97,34 @@ builder.Services.AddMapster();
 // configure a few mappings explicitly if needed (optional)
 // Mapster will automatically map same-named properties, but configuration
 // ensures any custom rules or future needs can be added here.
-TypeAdapterConfig<User, UserResponse>.NewConfig().IgnoreNullValues(true);
-TypeAdapterConfig<UserUpdateRequest, User>.NewConfig().IgnoreNullValues(true);
+TypeAdapterConfig<User, UserResponse>.NewConfig()
+    .Ignore(dest => dest.Role)
+    .AfterMapping((User src, UserResponse dest) =>
+    {
+        var role = src.UserRoles
+            .Select(ur => ur.Role?.Name)
+            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            dest.Role = role;
+        }
+    })
+    .IgnoreNullValues(true);
+TypeAdapterConfig<User, UserSensitiveResponse>.NewConfig()
+    .Ignore(dest => dest.Role)
+    .AfterMapping((User src, UserSensitiveResponse dest) =>
+    {
+        var role = src.UserRoles
+            .Select(ur => ur.Role?.Name)
+            .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
+        dest.Role = role ?? string.Empty;
+    })
+    .IgnoreNullValues(true);
+TypeAdapterConfig<UserUpdateRequest, User>.NewConfig()
+    .Ignore(dest => dest.PasswordHash)
+    .Ignore(dest => dest.PasswordSalt)
+    .Ignore(dest => dest.SecurityStamp)
+    .IgnoreNullValues(true);
 TypeAdapterConfig<AnimalCategory, AnimalCategoryResponse>.NewConfig().IgnoreNullValues(true);
 TypeAdapterConfig<Animal, AnimalResponse>.NewConfig()
     .Ignore(dest => dest.CategoryName)
@@ -193,6 +224,7 @@ TypeAdapterConfig<UserBadge, UserBadgeResponse>.NewConfig()
     .Map(dest => dest.BadgeName, src => src.Badge != null ? src.Badge.Name : string.Empty)
     .Map(dest => dest.BadgeDescription, src => src.Badge != null ? src.Badge.Description : null)
     .Map(dest => dest.BadgeIconUrl, src => src.Badge != null ? src.Badge.IconUrl : null)
+    .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)
     .IgnoreNullValues(true);
 TypeAdapterConfig<Notification, NotificationResponse>.NewConfig()
     .Map(dest => dest.UserFullName, src => src.User != null ? $"{src.User.FirstName} {src.User.LastName}".Trim() : string.Empty)

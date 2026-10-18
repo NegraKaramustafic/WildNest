@@ -21,5 +21,15 @@ namespace eCommerce.Model.SearchObjects
         /// Filter by active/inactive users.
         /// </summary>
         public bool? IsActive { get; set; }
+
+        /// <summary>
+        /// Admin or Customer.
+        /// </summary>
+        public string? Role { get; set; }
+
+        /// <summary>
+        /// Substring matched against first name, last name, username, and email.
+        /// </summary>
+        public string? FTS { get; set; }
     }
 }

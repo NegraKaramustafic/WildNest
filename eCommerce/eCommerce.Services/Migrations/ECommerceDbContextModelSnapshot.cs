@@ -543,6 +543,9 @@ namespace eCommerce.Services.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Badges");
 
                     b.HasData(
@@ -1650,6 +1653,9 @@ namespace eCommerce.Services.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("ZooPartners");
 

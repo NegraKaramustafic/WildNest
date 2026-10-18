@@ -11,5 +11,10 @@ namespace eCommerce.Model.SearchObjects
         /// Case-insensitive substring match against Name.
         /// </summary>
         public string? Name { get; set; }
+
+        /// <summary>
+        /// Substring matched against name, location, and description.
+        /// </summary>
+        public string? FTS { get; set; }
     }
 }

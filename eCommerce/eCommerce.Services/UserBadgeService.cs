@@ -26,7 +26,7 @@ namespace eCommerce.Services
 
         protected override async Task<IQueryable<UserBadge>> IncludeRelatedEntitiesAsync(UserBadgeSearchObject? search, IQueryable<UserBadge> query = null!)
         {
-            query = query.Include(ub => ub.Badge);
+            query = query.Include(ub => ub.Badge).Include(ub => ub.User);
             return await base.IncludeRelatedEntitiesAsync(search, query);
         }
 
@@ -35,6 +35,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<UserBadge>()
                 .AsNoTracking()
                 .Include(ub => ub.Badge)
+                .Include(ub => ub.User)
                 .FirstOrDefaultAsync(ub => ub.Id == id);
 
             if (entity == null || !CanAccessUserBadge(entity.UserId))
@@ -74,6 +75,21 @@ namespace eCommerce.Services
                 query = userId.HasValue
                     ? query.Where(ub => ub.UserId == userId.Value)
                     : query.Where(ub => false);
+            }
+
+            if (search?.BadgeId.HasValue == true)
+            {
+                query = query.Where(ub => ub.BadgeId == search.BadgeId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search?.FTS))
+            {
+                var term = search.FTS.Trim();
+                query = query.Where(ub =>
+                    ub.User.FirstName.Contains(term)
+                    || ub.User.LastName.Contains(term)
+                    || ub.User.Username.Contains(term)
+                    || (ub.User.FirstName + " " + ub.User.LastName).Contains(term));
             }
 
             return query;

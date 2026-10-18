@@ -328,6 +328,34 @@ namespace eCommerce.Services
                         || review.User.LastName.Contains(term)
                         || (review.User.FirstName + " " + review.User.LastName).Contains(term));
                 }
+
+                if (search.Rating.HasValue)
+                {
+                    if (search.Rating.Value < 1 || search.Rating.Value > 5)
+                    {
+                        throw new ClientException("Rating must be between 1 and 5.");
+                    }
+
+                    var rating = search.Rating.Value;
+                    query = query.Where(review => review.Rating == rating);
+                }
+
+                if (search.DateFrom.HasValue && search.DateTo.HasValue && search.DateFrom.Value > search.DateTo.Value)
+                {
+                    throw new ClientException("From date cannot be after to date.");
+                }
+
+                if (search.DateFrom.HasValue)
+                {
+                    var from = search.DateFrom.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(review => review.CreatedAt >= from);
+                }
+
+                if (search.DateTo.HasValue)
+                {
+                    var to = search.DateTo.Value.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+                    query = query.Where(review => review.CreatedAt < to);
+                }
             }
 
             return query;

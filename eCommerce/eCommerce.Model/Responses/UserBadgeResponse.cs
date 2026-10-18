@@ -8,6 +8,7 @@ namespace eCommerce.Model.Responses
         public string BadgeName { get; set; } = string.Empty;
         public string? BadgeDescription { get; set; }
         public string? BadgeIconUrl { get; set; }
+        public string UserFullName { get; set; } = string.Empty;
         public DateTime EarnedAt { get; set; }
     }
 }
