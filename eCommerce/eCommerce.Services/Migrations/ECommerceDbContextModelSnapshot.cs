@@ -620,6 +620,99 @@ namespace eCommerce.Services.Migrations
                     b.ToTable("Donations");
                 });
 
+            modelBuilder.Entity("eCommerce.Services.Database.NewsItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorUserId");
+
+                    b.HasIndex("IsPublished", "PublishedAt");
+
+                    b.ToTable("NewsItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AuthorUserId = 1,
+                            CreatedAt = new DateTime(2026, 10, 12, 18, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "/media/00000000000000000000000000a11e01.png",
+                            IsPublished = true,
+                            PublishedAt = new DateTime(2026, 10, 12, 18, 0, 0, 0, DateTimeKind.Utc),
+                            Text = "After-dark walks with the night animals are open again this weekend. Places are limited, so reserve a schedule in the app before you arrive.",
+                            Title = "Night safari walks return this weekend"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AuthorUserId = 1,
+                            CreatedAt = new DateTime(2026, 9, 28, 10, 30, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "/media/00000000000000000000000000a11e02.png",
+                            IsPublished = true,
+                            PublishedAt = new DateTime(2026, 9, 28, 10, 30, 0, 0, DateTimeKind.Utc),
+                            Text = "Two red panda twins are now on view in the forest habitat. Keep a little distance, and follow the keeper's notes posted by the enclosure.",
+                            Title = "Meet the new red panda twins"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AuthorUserId = 1,
+                            CreatedAt = new DateTime(2026, 4, 2, 9, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "/media/00000000000000000000000000a11e03.png",
+                            IsPublished = true,
+                            PublishedAt = new DateTime(2026, 4, 2, 9, 0, 0, 0, DateTimeKind.Utc),
+                            Text = "The spring planting in the wetland habitat is finished. New shade and water plants are in place for the warmer months.",
+                            Title = "Spring habitat renewal is complete"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AuthorUserId = 1,
+                            CreatedAt = new DateTime(2026, 10, 19, 8, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "/media/00000000000000000000000000a11e04.png",
+                            IsPublished = false,
+                            PublishedAt = new DateTime(2026, 10, 19, 8, 0, 0, 0, DateTimeKind.Utc),
+                            Text = "A draft outline for the winter lectures. This item stays unpublished until the dates are confirmed.",
+                            Title = "Winter lecture series outline"
+                        });
+                });
+
             modelBuilder.Entity("eCommerce.Services.Database.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -1781,6 +1874,17 @@ namespace eCommerce.Services.Migrations
                     b.Navigation("User");
 
                     b.Navigation("ZooPartner");
+                });
+
+            modelBuilder.Entity("eCommerce.Services.Database.NewsItem", b =>
+                {
+                    b.HasOne("eCommerce.Services.Database.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("eCommerce.Services.Database.Notification", b =>

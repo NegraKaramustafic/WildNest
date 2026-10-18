@@ -104,6 +104,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
 var uploadDirectory = Path.Combine(builder.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadDirectory);
+NewsSeedImages.EnsurePresent(uploadDirectory);
 builder.Services.AddSingleton(new UploadSettings(uploadDirectory));
 builder.Services.AddSingleton<IStoredImageService, FileStoredImageService>();
 builder.Services.AddScoped<IAuthenticatedUserAccessor, HttpAuthenticatedUserAccessor>();
@@ -303,6 +304,7 @@ builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
 builder.Services.AddSingleton<INotificationPublisher, RabbitMqNotificationPublisher>();
 builder.Services.AddScoped<INotificationEventService, NotificationEventService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IScheduleReminderService, ScheduleReminderService>();
 builder.Services.AddHostedService<ScheduleReminderHostedService>();
@@ -344,6 +346,8 @@ builder.Services.AddScoped<IValidator<ReviewInsertRequest>, ReviewInsertValidato
 builder.Services.AddScoped<IValidator<ReviewUpdateRequest>, ReviewUpdateValidator>();
 builder.Services.AddScoped<IValidator<BadgeInsertRequest>, BadgeInsertValidator>();
 builder.Services.AddScoped<IValidator<BadgeUpdateRequest>, BadgeUpdateValidator>();
+builder.Services.AddScoped<IValidator<NewsInsertRequest>, NewsInsertValidator>();
+builder.Services.AddScoped<IValidator<NewsUpdateRequest>, NewsUpdateValidator>();
 builder.Services.AddScoped<IValidator<ForgotPasswordRequest>, ForgotPasswordValidator>();
 builder.Services.AddScoped<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
 builder.Services.AddScoped<IValidator<ReservationReportRequest>, ReservationReportValidator>();

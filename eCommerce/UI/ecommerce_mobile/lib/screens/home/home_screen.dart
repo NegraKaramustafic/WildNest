@@ -1,16 +1,21 @@
 import 'package:ecommerce_mobile/models/animal.dart';
+import 'package:ecommerce_mobile/models/news_item.dart';
 import 'package:ecommerce_mobile/models/recommendation.dart';
 import 'package:ecommerce_mobile/providers/animal_provider.dart';
+import 'package:ecommerce_mobile/providers/news_provider.dart';
 import 'package:ecommerce_mobile/providers/recommendation_provider.dart';
 import 'package:ecommerce_mobile/screens/activities/activities_list_screen.dart';
 import 'package:ecommerce_mobile/screens/activities/activity_detail_screen.dart';
 import 'package:ecommerce_mobile/screens/animals/animal_detail_screen.dart';
 import 'package:ecommerce_mobile/screens/donations/donations_list_screen.dart';
+import 'package:ecommerce_mobile/screens/news/news_detail_screen.dart';
+import 'package:ecommerce_mobile/screens/news/news_list_screen.dart';
 import 'package:ecommerce_mobile/screens/tickets/buy_ticket_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/animal_visuals.dart';
+import 'package:ecommerce_mobile/widgets/authorized_image.dart';
 import 'package:ecommerce_mobile/widgets/section_header.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Animal> _animals = [];
   List<RecommendationItem> _recommended = [];
+  List<NewsItem> _news = [];
   bool _loading = true;
 
   @override
@@ -42,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final animalProvider = context.read<AnimalProvider>();
       final recommendationProvider = context.read<RecommendationProvider>();
+      final newsProvider = context.read<NewsProvider>();
 
       final animalsResult = await animalProvider.get(
         filter: {'page': 1, 'pageSize': 20, 'includeTotalCount': false},
@@ -50,11 +57,19 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         recommended = await recommendationProvider.getRecommended(limit: 4);
       } catch (_) {}
+      var news = <NewsItem>[];
+      try {
+        final newsResult = await newsProvider.get(
+          filter: {'page': 1, 'pageSize': 3, 'includeTotalCount': false},
+        );
+        news = newsResult.items ?? [];
+      } catch (_) {}
 
       if (!mounted) return;
       setState(() {
         _animals = (animalsResult.items ?? []).where((a) => a.isActive).toList();
         _recommended = recommended;
+        _news = news;
         _loading = false;
       });
     } catch (e) {
@@ -197,6 +212,50 @@ class _HomeScreenState extends State<HomeScreen> {
                                     builder: (_) => ActivityDetailScreen(
                                       activityId: item.activityId,
                                     ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ],
+                      ),
+                    ),
+                  SectionHeader(
+                    title: 'News',
+                    onAction: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NewsListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (_loading && _news.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator(color: AppColors.sage)),
+                    )
+                  else if (_news.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Text(
+                        'No news has been published yet.',
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          for (final item in _news) ...[
+                            _NewsPreviewTile(
+                              item: item,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => NewsDetailScreen(newsId: item.id),
                                   ),
                                 );
                               },
@@ -457,6 +516,61 @@ class _FeaturedAnimalCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NewsPreviewTile extends StatelessWidget {
+  const _NewsPreviewTile({required this.item, required this.onTap});
+
+  final NewsItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: AuthorizedImage(url: item.imageUrl),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, height: 1.25),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formatDateTime(item.publishedAt),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
                 ],
               ),
             ),

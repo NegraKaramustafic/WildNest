@@ -1,4 +1,5 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
+import 'package:ecommerce_desktop/screens/news/news_screen.dart';
 import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
 import 'package:ecommerce_desktop/screens/dashboard/dashboard_screen.dart';
 import 'package:ecommerce_desktop/screens/reports/reports_screen.dart';
@@ -31,6 +32,7 @@ enum AdminSection {
   reviews('Reviews', Icons.chat_bubble_outline),
   badges('Badges', Icons.emoji_events_outlined),
   zooPartners('Zoo partners', Icons.park_outlined),
+  news('News', Icons.article_outlined),
   tickets('Tickets', Icons.confirmation_number_outlined);
 
   const AdminSection(this.label, this.icon);
@@ -102,6 +104,8 @@ class _AdminShellState extends State<AdminShell> {
         return const BadgesScreen();
       case AdminSection.zooPartners:
         return const ZooPartnersScreen();
+      case AdminSection.news:
+        return const NewsScreen();
     }
   }
 }

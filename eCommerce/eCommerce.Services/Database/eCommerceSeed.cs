@@ -17,6 +17,7 @@ namespace eCommerce.Services.Database
             SeedZooPartners(modelBuilder);
             SeedReviews(modelBuilder);
             SeedBadges(modelBuilder);
+            SeedNews(modelBuilder);
         }
 
         private void SeedRoles(ModelBuilder modelBuilder)
@@ -870,6 +871,61 @@ namespace eCommerce.Services.Database
                     Description = "Adopt 5 animals",
                     IconUrl = (string?)null,
                     Criteria = eCommerce.Model.Enums.BadgeCriteria.FiveAdoptions
+                }
+            );
+        }
+
+        private void SeedNews(ModelBuilder modelBuilder)
+        {
+            // Alice Admin (user 1) is the author. The last row stays unpublished so visitors do not see a draft.
+            modelBuilder.Entity<NewsItem>().HasData(
+                new
+                {
+                    Id = 1,
+                    Title = "Night safari walks return this weekend",
+                    Text = "After-dark walks with the night animals are open again this weekend. Places are limited, so reserve a schedule in the app before you arrive.",
+                    ImageUrl = global::eCommerce.Services.Images.NewsSeedImages.SafariUrl,
+                    PublishedAt = new DateTime(2026, 10, 12, 18, 0, 0, DateTimeKind.Utc),
+                    AuthorUserId = 1,
+                    IsPublished = true,
+                    CreatedAt = new DateTime(2026, 10, 12, 18, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = (DateTime?)null
+                },
+                new
+                {
+                    Id = 2,
+                    Title = "Meet the new red panda twins",
+                    Text = "Two red panda twins are now on view in the forest habitat. Keep a little distance, and follow the keeper's notes posted by the enclosure.",
+                    ImageUrl = global::eCommerce.Services.Images.NewsSeedImages.PandaUrl,
+                    PublishedAt = new DateTime(2026, 9, 28, 10, 30, 0, DateTimeKind.Utc),
+                    AuthorUserId = 1,
+                    IsPublished = true,
+                    CreatedAt = new DateTime(2026, 9, 28, 10, 30, 0, DateTimeKind.Utc),
+                    UpdatedAt = (DateTime?)null
+                },
+                new
+                {
+                    Id = 3,
+                    Title = "Spring habitat renewal is complete",
+                    Text = "The spring planting in the wetland habitat is finished. New shade and water plants are in place for the warmer months.",
+                    ImageUrl = global::eCommerce.Services.Images.NewsSeedImages.HabitatUrl,
+                    PublishedAt = new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc),
+                    AuthorUserId = 1,
+                    IsPublished = true,
+                    CreatedAt = new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = (DateTime?)null
+                },
+                new
+                {
+                    Id = 4,
+                    Title = "Winter lecture series outline",
+                    Text = "A draft outline for the winter lectures. This item stays unpublished until the dates are confirmed.",
+                    ImageUrl = global::eCommerce.Services.Images.NewsSeedImages.DraftUrl,
+                    PublishedAt = new DateTime(2026, 10, 19, 8, 0, 0, DateTimeKind.Utc),
+                    AuthorUserId = 1,
+                    IsPublished = false,
+                    CreatedAt = new DateTime(2026, 10, 19, 8, 0, 0, DateTimeKind.Utc),
+                    UpdatedAt = (DateTime?)null
                 }
             );
         }
