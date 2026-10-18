@@ -371,7 +371,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   Widget _adoptionField() {
     return TextFormField(
       controller: _adoptionPrice,
-      decoration: const InputDecoration(labelText: 'Adoption price (KM)'),
+      decoration: const InputDecoration(labelText: 'Adoption price (€)'),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {

@@ -12,6 +12,7 @@ class Adoption {
   final AdoptionStatus status;
   final DateTime startDate;
   final int? paymentId;
+  final bool isPaid;
 
   Adoption({
     required this.id,
@@ -23,6 +24,7 @@ class Adoption {
     this.status = AdoptionStatus.pendingPayment,
     required this.startDate,
     this.paymentId,
+    this.isPaid = false,
   });
 
   factory Adoption.fromJson(Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class Adoption {
       status: parseAdoptionStatus(json['status']),
       startDate: parseDateTime(json['startDate']) ?? DateTime.now(),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
+      isPaid: json['isPaid'] == true,
     );
   }
 

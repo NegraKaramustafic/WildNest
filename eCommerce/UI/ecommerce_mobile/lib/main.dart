@@ -25,9 +25,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  StripeReturnLinks.instance.ensureInitialized();
+  await StripeReturnLinks.instance.ensureInitialized();
   runApp(const WildNestApp());
 }
 
@@ -60,19 +60,34 @@ class WildNestApp extends StatelessWidget {
         title: 'WildNest',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        scaffoldMessengerKey: wildNestMessengerKey,
         home: const _AuthGate(),
       ),
     );
   }
 }
 
-class _AuthGate extends StatelessWidget {
+class _AuthGate extends StatefulWidget {
   const _AuthGate();
+
+  @override
+  State<_AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<_AuthGate> {
+  var _recoveryStarted = false;
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
+        if (auth.isInitialized && auth.isAuthenticated && !_recoveryStarted) {
+          _recoveryStarted = true;
+          final payments = context.read<PaymentProvider>();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            recoverInterruptedCheckout(payments);
+          });
+        }
         if (!auth.isInitialized) {
           return const _SplashScreen();
         }

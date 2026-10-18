@@ -95,7 +95,7 @@ namespace eCommerce.Services.Tests
                 activeAdoptionPayment);
             await db.Context.SaveChangesAsync();
 
-            var activityOne = await ScheduleFor(db.Context, 1);
+            var activityOne = await SchedulesFor(db.Context, 1, 3);
             var activityTwo = await ScheduleFor(db.Context, 2);
 
             db.Context.Tickets.AddRange(
@@ -105,10 +105,10 @@ namespace eCommerce.Services.Tests
                 Ticket("TCK-REF", 50m, today, refundedTicketPayment.Id, TicketStatus.Cancelled));
 
             db.Context.Reservations.AddRange(
-                Reservation("WN-TODAY", activityOne, 2, 40m, ReservationStatus.Confirmed, today, todayReservationPayment.Id),
-                Reservation("WN-MONTH", activityOne, 1, 12m, ReservationStatus.Pending, monthStart.AddHours(1), monthReservationPayment.Id),
+                Reservation("WN-TODAY", activityOne[0], 2, 40m, ReservationStatus.Confirmed, today, todayReservationPayment.Id),
+                Reservation("WN-MONTH", activityOne[1], 1, 12m, ReservationStatus.Pending, monthStart.AddHours(1), monthReservationPayment.Id),
                 Reservation("WN-PREV", activityTwo, 1, 10m, ReservationStatus.Confirmed, previousMonth, previousReservationPayment.Id),
-                Reservation("WN-OLD", activityOne, 1, 9m, ReservationStatus.Confirmed, outsideWindow, oldReservationPayment.Id),
+                Reservation("WN-OLD", activityOne[2], 1, 9m, ReservationStatus.Confirmed, outsideWindow, oldReservationPayment.Id),
                 Reservation("WN-CANC", activityTwo, 3, 30m, ReservationStatus.Cancelled, today, cancelledReservationPayment.Id));
 
             db.Context.Donations.AddRange(
@@ -485,11 +485,24 @@ namespace eCommerce.Services.Tests
 
         private static async Task<int> ScheduleFor(ECommerceDbContext context, int activityId)
         {
-            var existing = await context.Schedules.AsNoTracking()
+            var ids = await SchedulesFor(context, activityId, 1);
+            return ids[0];
+        }
+
+        private static async Task<List<int>> SchedulesFor(ECommerceDbContext context, int activityId, int count)
+        {
+            var ids = await context.Schedules.AsNoTracking()
                 .Where(schedule => schedule.ActivityId == activityId)
+                .OrderBy(schedule => schedule.Id)
                 .Select(schedule => schedule.Id)
-                .FirstAsync();
-            return existing;
+                .Take(count)
+                .ToListAsync();
+            if (ids.Count < count)
+            {
+                throw new InvalidOperationException($"Activity {activityId} needs {count} schedules for this test.");
+            }
+
+            return ids;
         }
 
         private static async Task SeedReportRows(ECommerceDbContext context)
@@ -503,13 +516,13 @@ namespace eCommerce.Services.Tests
             context.Payments.AddRange(paid, refunded, later, donationPaid, donationPartnerTwo, donationLater);
             await context.SaveChangesAsync();
 
-            var activityOne = await context.Schedules.Where(schedule => schedule.ActivityId == 1).Select(schedule => schedule.Id).FirstAsync();
+            var activityOne = await SchedulesFor(context, 1, 3);
             var activityTwo = await context.Schedules.Where(schedule => schedule.ActivityId == 2).Select(schedule => schedule.Id).FirstAsync();
             context.Reservations.AddRange(
-                Reservation("WN-PAID", activityOne, 2, 30m, ReservationStatus.Confirmed, new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc), paid.Id),
-                Reservation("WN-PEND", activityOne, 1, 20m, ReservationStatus.Pending, new DateTime(2026, 4, 10, 10, 0, 0, DateTimeKind.Utc), null),
+                Reservation("WN-PAID", activityOne[0], 2, 30m, ReservationStatus.Confirmed, new DateTime(2026, 4, 2, 9, 0, 0, DateTimeKind.Utc), paid.Id),
+                Reservation("WN-PEND", activityOne[1], 1, 20m, ReservationStatus.Pending, new DateTime(2026, 4, 10, 10, 0, 0, DateTimeKind.Utc), null),
                 Reservation("WN-CANC", activityTwo, 3, 15m, ReservationStatus.Cancelled, new DateTime(2026, 4, 10, 15, 0, 0, DateTimeKind.Utc), refunded.Id),
-                Reservation("WN-LATER", activityOne, 4, 100m, ReservationStatus.Confirmed, new DateTime(2026, 5, 1, 9, 0, 0, DateTimeKind.Utc), later.Id));
+                Reservation("WN-LATER", activityOne[2], 4, 100m, ReservationStatus.Confirmed, new DateTime(2026, 5, 1, 9, 0, 0, DateTimeKind.Utc), later.Id));
             context.Donations.AddRange(
                 Donation(1, 25m, new DateTime(2026, 4, 5, 9, 0, 0, DateTimeKind.Utc), donationPaid.Id),
                 Donation(1, 10m, new DateTime(2026, 4, 6, 9, 0, 0, DateTimeKind.Utc), null),

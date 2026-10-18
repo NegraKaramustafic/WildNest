@@ -24,7 +24,7 @@ class _TicketPaymentScreenState extends State<TicketPaymentScreen> {
   bool _busy = false;
 
   Future<void> _pay() async {
-    if (_busy) return;
+    if (_busy || widget.ticket.isPaid) return;
     setState(() => _busy = true);
     try {
       final ticketProvider = context.read<TicketProvider>();
@@ -34,7 +34,12 @@ class _TicketPaymentScreenState extends State<TicketPaymentScreen> {
       if (url == null || url.isEmpty) {
         throw Exception('Stripe did not return a checkout URL.');
       }
-      final outcome = await launchStripeCheckout(url);
+      final outcome = await launchStripeCheckout(
+        url,
+        payments: paymentProvider,
+        paymentId: checkout.paymentId,
+        stripeCheckoutSessionId: checkout.stripeCheckoutSessionId,
+      );
       if (!mounted) return;
       if (outcome == StripeCheckoutOutcome.failedToLaunch) {
         alertBox(
@@ -145,19 +150,29 @@ class _TicketPaymentScreenState extends State<TicketPaymentScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: ElevatedButton(
-                onPressed: _busy ? null : _pay,
-                child: _busy
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text('Pay ${formatMoney(ticket.totalPrice)}'),
-              ),
+              child: ticket.isPaid
+                  ? const Text(
+                      'Paid.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.sage,
+                        fontSize: 16,
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: _busy ? null : _pay,
+                      child: _busy
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text('Pay ${formatMoney(ticket.totalPrice)}'),
+                    ),
             ),
           ],
         ),

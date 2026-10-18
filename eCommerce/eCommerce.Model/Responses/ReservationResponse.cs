@@ -18,6 +18,7 @@ namespace eCommerce.Model.Responses
         public string? ActivityImageUrl { get; set; }
         public int? PaymentId { get; set; }
         public PaymentStatus? PaymentStatus { get; set; }
+        public bool IsPaid { get; set; }
         public DateTime CreatedAt { get; set; }
         public int? ConfirmedByUserId { get; set; }
         public string? ConfirmedByFullName { get; set; }

@@ -179,7 +179,7 @@ class TicketVerifyResultView extends StatelessWidget {
               _DetailRow(label: 'Visitor', value: verified.userFullName),
               _DetailRow(label: 'Visit date', value: formatDate(verified.visitDate)),
               _DetailRow(label: 'Visitors', value: verified.visitorCount.toString()),
-              _DetailRow(label: 'Total', value: formatKm(verified.totalPrice)),
+              _DetailRow(label: 'Total', value: formatMoney(verified.totalPrice)),
               _DetailRow(label: 'Status', value: verified.statusLabel),
               if (verified.verifiedAt != null)
                 _DetailRow(

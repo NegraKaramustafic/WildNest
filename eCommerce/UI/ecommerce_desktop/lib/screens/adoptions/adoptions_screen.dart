@@ -161,7 +161,7 @@ class _AdoptionsScreenState extends State<AdoptionsScreen> {
             children: [
               DetailLine(label: 'Customer', value: _text(adoption.userFullName)),
               DetailLine(label: 'Animal', value: _text(adoption.animalName)),
-              DetailLine(label: 'Monthly amount', value: formatKm(adoption.monthlyAmount)),
+              DetailLine(label: 'Monthly amount', value: formatMoney(adoption.monthlyAmount)),
               DetailLine(label: 'Status', value: adoptionStatusLabel(adoption.status)),
               DetailLine(label: 'Payment', value: paymentStatusLabel(adoption.paymentStatus)),
               DetailLine(label: 'Started', value: formatDateTime(adoption.startDate)),
@@ -281,7 +281,7 @@ class _AdoptionsScreenState extends State<AdoptionsScreen> {
                 const SizedBox(width: 12),
                 Expanded(flex: 3, child: EllipsisText(adoption.animalName, style: const TextStyle(fontWeight: FontWeight.w600))),
                 Expanded(flex: 2, child: EllipsisText(_text(adoption.userFullName))),
-                Expanded(flex: 2, child: EllipsisText('${formatKm(adoption.monthlyAmount)} / month')),
+                Expanded(flex: 2, child: EllipsisText('${formatMoney(adoption.monthlyAmount)} / month')),
                 Expanded(flex: 2, child: EllipsisText(formatDateTime(adoption.startDate))),
                 Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: _adoptionChip(adoption.status))),
                 SizedBox(

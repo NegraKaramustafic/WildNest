@@ -858,7 +858,10 @@ namespace eCommerce.Services.Migrations
 
                     b.HasIndex("ScheduleId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "ScheduleId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Reservations_UserId_ScheduleId_Active")
+                        .HasFilter("[Status] <> 3");
 
                     b.ToTable("Reservations");
                 });

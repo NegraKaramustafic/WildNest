@@ -39,7 +39,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _pay() async {
-    if (_busy) return;
+    if (_busy || widget.reservation.isPaid) return;
     setState(() => _busy = true);
     try {
       final paymentProvider = context.read<PaymentProvider>();
@@ -51,7 +51,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('Stripe did not return a checkout URL.');
       }
 
-      final outcome = await launchStripeCheckout(url);
+      final outcome = await launchStripeCheckout(
+        url,
+        payments: paymentProvider,
+        paymentId: checkout.paymentId,
+        stripeCheckoutSessionId: checkout.stripeCheckoutSessionId,
+      );
       if (!mounted) return;
       if (outcome == StripeCheckoutOutcome.failedToLaunch) {
         alertBox(
@@ -145,7 +150,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const Divider(color: AppColors.border),
                         _Row(
                           label: 'Total',
-                          value: formatMoney(reservation.totalPrice, decimals: true),
+                          value: formatMoney(reservation.totalPrice),
                           emphasize: true,
                         ),
                       ],
@@ -186,21 +191,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 28),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _pay,
-                    child: _busy
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                  if (reservation.isPaid)
+                    const Text(
+                      'Paid.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.sage,
+                        fontSize: 16,
+                      ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: _busy ? null : _pay,
+                      child: _busy
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Pay ${formatMoney(reservation.totalPrice)}',
                             ),
-                          )
-                        : Text(
-                            'Pay ${formatMoney(reservation.totalPrice, decimals: true)}',
-                          ),
-                  ),
+                    ),
                 ],
               ),
             ),

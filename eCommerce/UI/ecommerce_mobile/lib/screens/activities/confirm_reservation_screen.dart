@@ -160,7 +160,7 @@ class _ConfirmReservationScreenState extends State<ConfirmReservationScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Total ${formatMoney(_total, decimals: true)} · $_guests × ${formatMoney(widget.activity.price)}',
+                    'Total ${formatMoney(_total)} · $_guests × ${formatMoney(widget.activity.price)}',
                     style: const TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 13,

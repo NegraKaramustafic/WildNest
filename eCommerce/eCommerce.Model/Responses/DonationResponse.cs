@@ -13,6 +13,7 @@ namespace eCommerce.Model.Responses
         public decimal Amount { get; set; }
         public int? PaymentId { get; set; }
         public PaymentStatus? PaymentStatus { get; set; }
+        public bool IsPaid { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

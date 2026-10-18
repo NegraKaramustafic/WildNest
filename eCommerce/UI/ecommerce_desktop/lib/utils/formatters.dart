@@ -25,13 +25,13 @@ String formatDateTime(DateTime? value) {
   return '${formatDate(local)}, $clock';
 }
 
-String formatKm(double? value) {
+/// Euro amounts: €1,250.50. Stored numbers are not converted.
+String formatMoney(double? value) {
   if (value == null) return '—';
-  if (value == value.roundToDouble()) {
-    return '${_groupDigits(value.toInt().toString())} KM';
-  }
-  final parts = value.toStringAsFixed(2).split('.');
-  return '${_groupDigits(parts[0])}.${parts[1]} KM';
+  final negative = value < 0;
+  final parts = value.abs().toStringAsFixed(2).split('.');
+  final body = '${_groupDigits(parts[0])}.${parts[1]}';
+  return negative ? '-€$body' : '€$body';
 }
 
 String _groupDigits(String digits) {
@@ -66,14 +66,6 @@ String formatPercent(double value) {
 
 String formatMonth(int year, int month) {
   return '${_months[month - 1]} $year';
-}
-
-String formatAdoption(double? value) {
-  if (value == null) return '—';
-  if (value == value.roundToDouble()) {
-    return value.toInt().toString();
-  }
-  return value.toStringAsFixed(2);
 }
 
 String formatApiDate(DateTime date) {

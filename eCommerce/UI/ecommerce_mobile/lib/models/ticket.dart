@@ -14,6 +14,7 @@ class Ticket {
   final String qrCodeData;
   final TicketStatus status;
   final int? paymentId;
+  final bool isPaid;
   final DateTime? createdAt;
   final DateTime? verifiedAt;
   final String? verifiedByFullName;
@@ -31,6 +32,7 @@ class Ticket {
     this.qrCodeData = '',
     this.status = TicketStatus.pendingPayment,
     this.paymentId,
+    this.isPaid = false,
     this.createdAt,
     this.verifiedAt,
     this.verifiedByFullName,
@@ -50,6 +52,7 @@ class Ticket {
       qrCodeData: asString(json['qrCodeData']),
       status: parseTicketStatus(json['status']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
+      isPaid: json['isPaid'] == true,
       createdAt: parseDateTime(json['createdAt']),
       verifiedAt: parseDateTime(json['verifiedAt']),
       verifiedByFullName: json['verifiedByFullName'] as String?,

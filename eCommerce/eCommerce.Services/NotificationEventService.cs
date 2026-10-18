@@ -143,7 +143,7 @@ namespace eCommerce.Services
                 donation.UserId,
                 NotificationType.DonationReceived,
                 "Donation received",
-                $"Thank you for donating {donation.Amount:0.00} to {donation.ZooPartnerName}.",
+                $"Thank you for donating {MoneyFormat.Format(donation.Amount)} to {donation.ZooPartnerName}.",
                 "Donation",
                 donation.Id);
         }
@@ -154,7 +154,7 @@ namespace eCommerce.Services
                 userId,
                 NotificationType.PaymentCompleted,
                 "Payment completed",
-                $"Your payment of {amount:0.00} was completed.",
+                $"Your payment of {MoneyFormat.Format(amount)} was completed.",
                 "Payment",
                 paymentId);
         }

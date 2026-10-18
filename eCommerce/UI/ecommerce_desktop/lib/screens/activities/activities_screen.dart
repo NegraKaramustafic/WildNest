@@ -570,7 +570,7 @@ class _ActivityRow extends StatelessWidget {
             ),
           ),
           Expanded(flex: 2, child: Text(formatDurationLabel(activity.duration))),
-          Expanded(flex: 2, child: Text(formatKm(activity.price))),
+          Expanded(flex: 2, child: Text(formatMoney(activity.price))),
           Expanded(flex: 2, child: Text('${activity.capacity}')),
           Expanded(
             flex: 2,

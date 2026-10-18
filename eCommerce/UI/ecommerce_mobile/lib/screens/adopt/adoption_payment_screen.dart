@@ -33,8 +33,10 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
   double get _amount =>
       widget.existingAdoption?.monthlyAmount ?? widget.animal.adoptionPrice ?? 0;
 
+  bool get _alreadyPaid => widget.existingAdoption?.isPaid == true;
+
   Future<void> _pay() async {
-    if (_busy) return;
+    if (_busy || _alreadyPaid) return;
     setState(() => _busy = true);
     try {
       final adoptionProvider = context.read<AdoptionProvider>();
@@ -48,7 +50,12 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
       if (url == null || url.isEmpty) {
         throw Exception('Stripe did not return a checkout URL.');
       }
-      final outcome = await launchStripeCheckout(url);
+      final outcome = await launchStripeCheckout(
+        url,
+        payments: paymentProvider,
+        paymentId: checkout.paymentId,
+        stripeCheckoutSessionId: checkout.stripeCheckoutSessionId,
+      );
       if (!mounted) return;
       if (outcome == StripeCheckoutOutcome.failedToLaunch) {
         alertBox(
@@ -150,7 +157,7 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
                           ),
                         ),
                         Text(
-                          '${formatMoney(_amount, decimals: true)}/mo',
+                          '${formatMoney(_amount)}/mo',
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             color: AppColors.sage,
@@ -191,19 +198,30 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
                     style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 28),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _pay,
-                    child: _busy
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text('Adopt for ${formatMoney(_amount, decimals: true)}/month'),
-                  ),
+                  if (_alreadyPaid)
+                    const Text(
+                      'Paid.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.sage,
+                        fontSize: 16,
+                      ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: _busy ? null : _pay,
+                      child: _busy
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text('Adopt for ${formatMoney(_amount)}/month'),
+                    ),
                 ],
               ),
             ),

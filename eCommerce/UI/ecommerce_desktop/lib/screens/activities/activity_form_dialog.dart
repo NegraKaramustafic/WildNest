@@ -374,7 +374,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   Widget _priceField() {
     return TextFormField(
       controller: _price,
-      decoration: const InputDecoration(labelText: 'Price (KM)'),
+      decoration: const InputDecoration(labelText: 'Price (€)'),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {
