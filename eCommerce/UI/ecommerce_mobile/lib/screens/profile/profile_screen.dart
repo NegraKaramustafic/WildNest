@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ecommerce_mobile/models/adoption.dart';
@@ -15,6 +14,7 @@ import 'package:ecommerce_mobile/providers/ticket_provider.dart';
 import 'package:ecommerce_mobile/providers/user_badge_provider.dart';
 import 'package:ecommerce_mobile/providers/user_provider.dart';
 import 'package:ecommerce_mobile/screens/profile/donation_history_screen.dart';
+import 'package:ecommerce_mobile/screens/profile/edit_profile_screen.dart';
 import 'package:ecommerce_mobile/screens/profile/my_adoptions_screen.dart';
 import 'package:ecommerce_mobile/screens/profile/my_badges_screen.dart';
 import 'package:ecommerce_mobile/screens/profile/my_reservations_screen.dart';
@@ -22,6 +22,7 @@ import 'package:ecommerce_mobile/screens/profile/settings_screen.dart';
 import 'package:ecommerce_mobile/screens/tickets/my_tickets_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
+import 'package:ecommerce_mobile/utils/profile_image.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/status_chip.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
@@ -38,6 +39,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   User? _user;
+  Uint8List? _avatar;
   List<Reservation> _reservations = [];
   List<Ticket> _tickets = [];
   List<Adoption> _adoptions = [];
@@ -51,8 +53,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) setState(() => _loading = true);
     final userId = context.read<AuthProvider>().currentUserId;
     final userProvider = context.read<UserProvider>();
     final reservationProvider = context.read<ReservationProvider>();
@@ -85,6 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       setState(() {
         _user = user;
+        _avatar = decodeProfileImage(user?.profileImageBase64);
         _reservations = reservationsResult.items ?? [];
         _tickets = ticketsResult.items ?? [];
         _adoptions = adoptionsResult.items ?? [];
@@ -94,9 +97,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      if (!silent) setState(() => _loading = false);
       showAppError(context, e);
     }
+  }
+
+  Future<void> _openEdit() async {
+    final userId = _user?.id;
+    if (userId == null) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => EditProfileScreen(userId: userId)),
+    );
+    if (changed == true && mounted) await _showProfileUpdated();
+  }
+
+  Future<void> _showProfileUpdated() async {
+    await _load(silent: true);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
   }
 
   int get _activeAdoptions =>
@@ -141,7 +161,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       for (final donation in _donations)
         _ActivityItem(
-          title: '${formatMoney(donation.amount)} to ${donation.zooPartnerName}',
+          title:
+              '${formatMoney(donation.amount)} to ${donation.zooPartnerName}',
           date: donation.createdAt,
           chip: 'Completed',
           tone: StatusTone.neutral,
@@ -169,17 +190,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         _ProfileHeader(
                           user: _user,
+                          avatar: _avatar,
                           badgeCount: _badges.length,
                           adoptionCount: _activeAdoptions,
+                          onEdit: _user?.id == null ? null : _openEdit,
                         ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            _StatBox(value: '${_reservations.length}', label: 'Reservations'),
+                            _StatBox(
+                              value: '${_reservations.length}',
+                              label: 'Reservations',
+                            ),
                             const SizedBox(width: 10),
-                            _StatBox(value: '$_activeAdoptions', label: 'Adoptions'),
+                            _StatBox(
+                              value: '$_activeAdoptions',
+                              label: 'Adoptions',
+                            ),
                             const SizedBox(width: 10),
-                            _StatBox(value: formatMoney(_donatedTotal), label: 'Donated'),
+                            _StatBox(
+                              value: formatMoney(_donatedTotal),
+                              label: 'Donated',
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -209,7 +241,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () async {
                                   await Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => const MyReservationsScreen(),
+                                      builder: (_) =>
+                                          const MyReservationsScreen(),
                                     ),
                                   );
                                   if (mounted) _load();
@@ -234,7 +267,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () async {
                                   await Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (_) => const DonationHistoryScreen(),
+                                      builder: (_) =>
+                                          const DonationHistoryScreen(),
                                     ),
                                   );
                                   if (mounted) _load();
@@ -255,12 +289,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _LinkTile(
                                 icon: Icons.settings_outlined,
                                 label: 'Settings',
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const SettingsScreen(),
-                                    ),
-                                  );
+                                onTap: () async {
+                                  final changed = await Navigator.of(context)
+                                      .push<bool>(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SettingsScreen(),
+                                        ),
+                                      );
+                                  if (changed == true && mounted) {
+                                    _load(silent: true);
+                                  }
                                 },
                                 showDivider: false,
                               ),
@@ -326,25 +365,29 @@ class _ActivityItem {
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.user,
+    required this.avatar,
     required this.badgeCount,
     required this.adoptionCount,
+    required this.onEdit,
   });
 
   final User? user;
+  final Uint8List? avatar;
   final int badgeCount;
   final int adoptionCount;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     final name = user?.fullName ?? 'Guest';
-    final image = _decodeImage(user?.profileImageBase64);
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 34,
           backgroundColor: AppColors.mint,
-          backgroundImage: image == null ? null : MemoryImage(image),
-          child: image == null
+          backgroundImage: avatar == null ? null : MemoryImage(avatar!),
+          child: avatar == null
               ? const Icon(Icons.person, color: AppColors.sage, size: 32)
               : null,
         ),
@@ -364,29 +407,52 @@ class _ProfileHeader extends StatelessWidget {
                 'Wildlife Enthusiast',
                 style: TextStyle(color: AppColors.textMuted),
               ),
+              if ((user?.email ?? '').trim().isNotEmpty)
+                Text(
+                  user!.email!.trim(),
+                  style: const TextStyle(color: AppColors.textMuted),
+                ),
+              if ((user?.phoneNumber ?? '').trim().isNotEmpty)
+                Text(
+                  user!.phoneNumber!.trim(),
+                  style: const TextStyle(color: AppColors.textMuted),
+                ),
+              if ((user?.username ?? '').trim().isNotEmpty)
+                Text(
+                  '@${user!.username!.trim()}',
+                  style: const TextStyle(color: AppColors.textMuted),
+                ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: [
                   _MiniPill(label: '$badgeCount Badges'),
                   _MiniPill(label: '$adoptionCount Adoptions'),
                 ],
+              ),
+              const SizedBox(height: 4),
+              Tooltip(
+                message: onEdit == null
+                    ? 'Your profile could not be loaded.'
+                    : 'Edit profile.',
+                child: TextButton(
+                  onPressed: onEdit,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.sage,
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    alignment: Alignment.centerLeft,
+                  ),
+                  child: const Text('Edit profile'),
+                ),
               ),
             ],
           ),
         ),
       ],
     );
-  }
-}
-
-Uint8List? _decodeImage(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
-  try {
-    final cleaned = raw.contains(',') ? raw.split(',').last : raw;
-    return base64Decode(cleaned);
-  } catch (_) {
-    return null;
   }
 }
 
@@ -470,25 +536,42 @@ class _LinkTile extends StatelessWidget {
         ListTile(
           onTap: onTap,
           leading: Icon(icon, color: AppColors.sage),
-          title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          title: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (count != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cream,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('$count', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+              ),
             ],
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, indent: 16, endIndent: 16, color: AppColors.border),
+          const Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: AppColors.border,
+          ),
       ],
     );
   }
@@ -513,11 +596,17 @@ class _RecentTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   formatReviewDate(item.date),
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),

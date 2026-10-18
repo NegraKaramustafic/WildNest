@@ -34,9 +34,9 @@
 	<key>FlutterDeepLinkingEnabled</key>
 	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>WildNest uses the camera so staff can scan visitor ticket QR codes at the entrance.</string>
+	<string>WildNest uses the camera to take a profile picture and to scan ticket QR codes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>WildNest uses your photo library so staff can scan a ticket QR code from a saved image.</string>
+	<string>WildNest uses your photo library to choose a profile picture and to scan a ticket QR code from a saved image.</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
