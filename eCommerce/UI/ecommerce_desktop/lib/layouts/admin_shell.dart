@@ -1,5 +1,7 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
+import 'package:ecommerce_desktop/screens/dashboard/dashboard_screen.dart';
+import 'package:ecommerce_desktop/screens/reports/reports_screen.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_types_screen.dart';
 import 'package:ecommerce_desktop/screens/adoptions/adoptions_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
@@ -16,6 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum AdminSection {
+  dashboard('Dashboard', Icons.dashboard_outlined),
+  reports('Reports', Icons.picture_as_pdf_outlined),
   animals('Animals', Icons.pets_outlined),
   activities('Activities', Icons.local_activity_outlined),
   activityTypes('Activity types', Icons.label_outline),
@@ -43,7 +47,7 @@ class AdminShell extends StatefulWidget {
 }
 
 class _AdminShellState extends State<AdminShell> {
-  AdminSection _section = AdminSection.animals;
+  AdminSection _section = AdminSection.dashboard;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +74,10 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _content() {
     switch (_section) {
+      case AdminSection.dashboard:
+        return const DashboardScreen();
+      case AdminSection.reports:
+        return const ReportsScreen();
       case AdminSection.animals:
         return const AnimalsScreen();
       case AdminSection.activities:

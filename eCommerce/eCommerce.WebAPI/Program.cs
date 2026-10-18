@@ -10,6 +10,7 @@ using eCommerce.Services.Recommendation;
 using eCommerce.Services.Sentiment;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.ReservationStateMachine;
+using eCommerce.Services.Reports;
 using eCommerce.Services.Validators;
 using eCommerce.WebAPI.Configuration;
 using eCommerce.WebAPI.Filters;
@@ -264,6 +265,9 @@ builder.Services.AddScoped<IZooPartnerService, ZooPartnerService>();
 builder.Services.AddScoped<IAdoptionService, AdoptionService>();
 builder.Services.AddScoped<IDonationService, DonationService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IPdfReportRenderer, QuestPdfReportRenderer>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IBadgeService, BadgeService>();
 builder.Services.AddScoped<IBadgeAwardService, BadgeAwardService>();
 builder.Services.AddScoped<IUserBadgeService, UserBadgeService>();
@@ -311,6 +315,8 @@ builder.Services.AddScoped<IValidator<BadgeInsertRequest>, BadgeInsertValidator>
 builder.Services.AddScoped<IValidator<BadgeUpdateRequest>, BadgeUpdateValidator>();
 builder.Services.AddScoped<IValidator<ForgotPasswordRequest>, ForgotPasswordValidator>();
 builder.Services.AddScoped<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
+builder.Services.AddScoped<IValidator<ReservationReportRequest>, ReservationReportValidator>();
+builder.Services.AddScoped<IValidator<DonationReportRequest>, DonationReportValidator>();
 
 builder.Services.AddCors(options =>
 {

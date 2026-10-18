@@ -29,6 +29,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.8" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
     <PackageReference Include="Stripe.net" Version="52.4.2" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.1" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
