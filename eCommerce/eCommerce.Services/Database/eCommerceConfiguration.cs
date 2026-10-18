@@ -68,6 +68,12 @@ namespace eCommerce.Services.Database
                 .IsUnique();
 
             modelBuilder.Entity<Reservation>()
+                .HasIndex(r => new { r.UserId, r.ScheduleId })
+                .IsUnique()
+                .HasFilter("[Status] <> 3")
+                .HasDatabaseName("IX_Reservations_UserId_ScheduleId_Active");
+
+            modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)

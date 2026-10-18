@@ -1,6 +1,7 @@
 using System.Globalization;
 using eCommerce.Model.Enums;
 using eCommerce.Model.Responses;
+using eCommerce.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -306,7 +307,7 @@ namespace eCommerce.Services.Reports
             date.ToDateTime(time).ToString("dd MMM yyyy, h:mm tt", English);
 
         private static string Money(decimal amount) =>
-            amount.ToString("N2", English) + " KM";
+            MoneyFormat.Format(amount);
 
         private static string Count(int value) =>
             value.ToString("N0", English);

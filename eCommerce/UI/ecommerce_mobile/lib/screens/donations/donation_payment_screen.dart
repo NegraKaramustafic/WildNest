@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/models/donation.dart';
 import 'package:ecommerce_mobile/models/zoo_partner.dart';
 import 'package:ecommerce_mobile/providers/donation_provider.dart';
 import 'package:ecommerce_mobile/providers/payment_provider.dart';
@@ -28,9 +29,10 @@ class DonationPaymentScreen extends StatefulWidget {
 
 class _DonationPaymentScreenState extends State<DonationPaymentScreen> {
   bool _busy = false;
+  Donation? _donation;
 
   Future<void> _pay() async {
-    if (_busy) return;
+    if (_busy || _donation?.isPaid == true) return;
     setState(() => _busy = true);
     try {
       final donationProvider = context.read<DonationProvider>();
@@ -39,12 +41,22 @@ class _DonationPaymentScreenState extends State<DonationPaymentScreen> {
         zooPartnerId: widget.partner.id,
         amount: widget.amount,
       );
+      _donation = donation;
+      if (donation.isPaid) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
       final checkout = await paymentProvider.checkoutDonation(donation.id);
       final url = checkout.sessionUrl;
       if (url == null || url.isEmpty) {
         throw Exception('Stripe did not return a checkout URL.');
       }
-      final outcome = await launchStripeCheckout(url);
+      final outcome = await launchStripeCheckout(
+        url,
+        payments: paymentProvider,
+        paymentId: checkout.paymentId,
+        stripeCheckoutSessionId: checkout.stripeCheckoutSessionId,
+      );
       if (!mounted) return;
       if (outcome == StripeCheckoutOutcome.failedToLaunch) {
         alertBox(
@@ -179,7 +191,18 @@ class _DonationPaymentScreenState extends State<DonationPaymentScreen> {
                     style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
                   ),
                   const SizedBox(height: 28),
-                  ElevatedButton(
+                  if (_donation?.isPaid == true)
+                    const Text(
+                      'Paid.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.sage,
+                        fontSize: 16,
+                      ),
+                    )
+                  else
+                    ElevatedButton(
                     onPressed: _busy ? null : _pay,
                     child: _busy
                         ? const SizedBox(

@@ -5,6 +5,7 @@ using eCommerce.Model.Messages;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
+using eCommerce.Services;
 using eCommerce.Services.Database;
 using eCommerce.Services.Recommendation;
 using eCommerce.Services.ReservationStateMachine;
@@ -306,7 +307,8 @@ namespace eCommerce.Services.Tests
                 provider,
                 loggerFactory,
                 new ReservationInsertValidator(),
-                accessor);
+                accessor,
+                new ZooClock("Europe/Sarajevo"));
             provider.Add(typeof(PendingReservationState), pending);
             provider.Add(typeof(ConfirmedReservationState), confirmed);
             provider.Add(typeof(CompletedReservationState), completed);

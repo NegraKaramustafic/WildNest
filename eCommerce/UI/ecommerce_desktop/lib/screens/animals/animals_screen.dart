@@ -333,7 +333,7 @@ class _AnimalRow extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: StatusChip(active: animal.isActive),
           )),
-          Expanded(flex: 2, child: Text(formatAdoption(animal.adoptionPrice))),
+          Expanded(flex: 2, child: Text(formatMoney(animal.adoptionPrice))),
           SizedBox(
             width: 96,
             child: Row(

@@ -8,6 +8,7 @@ class Donation {
   final String zooPartnerName;
   final double amount;
   final int? paymentId;
+  final bool isPaid;
   final DateTime createdAt;
 
   Donation({
@@ -18,6 +19,7 @@ class Donation {
     this.zooPartnerName = '',
     this.amount = 0,
     this.paymentId,
+    this.isPaid = false,
     required this.createdAt,
   });
 
@@ -30,6 +32,7 @@ class Donation {
       zooPartnerName: asString(json['zooPartnerName']),
       amount: asDouble(json['amount']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
+      isPaid: json['isPaid'] == true,
       createdAt: parseDateTime(json['createdAt']) ?? DateTime.now(),
     );
   }

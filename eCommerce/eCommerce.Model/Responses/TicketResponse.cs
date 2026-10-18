@@ -19,6 +19,7 @@ namespace eCommerce.Model.Responses
         public string? VerifiedByFullName { get; set; }
         public TicketVerificationMethod? VerificationMethod { get; set; }
         public int? PaymentId { get; set; }
+        public bool IsPaid { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? Warning { get; set; }
     }

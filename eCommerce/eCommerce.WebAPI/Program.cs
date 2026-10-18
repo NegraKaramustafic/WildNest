@@ -166,6 +166,7 @@ TypeAdapterConfig<Ticket, TicketResponse>.NewConfig()
         dest.VerifiedByFullName = src.VerifiedByUser == null
             ? null
             : $"{src.VerifiedByUser.FirstName} {src.VerifiedByUser.LastName}".Trim();
+        dest.IsPaid = src.Payment != null && src.Payment.Status == PaymentStatus.Completed;
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
@@ -175,6 +176,7 @@ TypeAdapterConfig<Reservation, ReservationResponse>.NewConfig()
     .Map(dest => dest.ScheduleStartTime, src => src.Schedule != null ? src.Schedule.StartTime : default)
     .Map(dest => dest.ActivityImageUrl, src => src.Schedule != null && src.Schedule.Activity != null ? src.Schedule.Activity.ImageUrl : null)
     .Map(dest => dest.PaymentStatus, src => src.Payment != null ? (PaymentStatus?)src.Payment.Status : null)
+    .Map(dest => dest.IsPaid, src => src.Payment != null && src.Payment.Status == PaymentStatus.Completed)
     .Map(dest => dest.ConfirmedByFullName, src => src.ConfirmedByUser != null ? $"{src.ConfirmedByUser.FirstName} {src.ConfirmedByUser.LastName}".Trim() : null)
     .Map(dest => dest.CancelledByFullName, src => src.CancelledByUser != null ? $"{src.CancelledByUser.FirstName} {src.CancelledByUser.LastName}".Trim() : null)
     .IgnoreNullValues(true);
@@ -191,6 +193,7 @@ TypeAdapterConfig<Adoption, AdoptionResponse>.NewConfig()
         dest.AnimalName = src.Animal == null ? string.Empty : src.Animal.Name;
         dest.AnimalImageUrl = src.Animal == null ? null : src.Animal.ImageUrl;
         dest.PaymentStatus = src.Payment == null ? null : src.Payment.Status;
+        dest.IsPaid = src.Payment != null && src.Payment.Status == PaymentStatus.Completed;
         dest.RejectedByFullName = src.RejectedByUser == null
             ? null
             : $"{src.RejectedByUser.FirstName} {src.RejectedByUser.LastName}".Trim();
@@ -207,6 +210,7 @@ TypeAdapterConfig<Donation, DonationResponse>.NewConfig()
         dest.ZooPartnerName = src.ZooPartner == null ? string.Empty : src.ZooPartner.Name;
         dest.ZooPartnerImageUrl = src.ZooPartner == null ? null : src.ZooPartner.ImageUrl;
         dest.PaymentStatus = src.Payment == null ? null : src.Payment.Status;
+        dest.IsPaid = src.Payment != null && src.Payment.Status == PaymentStatus.Completed;
     })
     .IgnoreNullValues(true);
 TypeAdapterConfig<Review, ReviewResponse>.NewConfig()

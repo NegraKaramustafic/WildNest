@@ -178,7 +178,12 @@ namespace eCommerce.Services
                             return reused;
                         }
 
-                        existing.Status = PaymentStatus.Failed;
+                        await ExpireSupersededSessionAsync(existing);
+                        var markedFailed = await TryMarkFailedIfPendingAsync(existing);
+                        if (!markedFailed && existing.Status == PaymentStatus.Completed)
+                        {
+                            throw new ClientException("This record already has a completed payment.");
+                        }
                     }
                 }
             }
@@ -213,8 +218,7 @@ namespace eCommerce.Services
             }
             catch (StripeException ex)
             {
-                payment.Status = PaymentStatus.Failed;
-                await _dbContext.SaveChangesAsync();
+                await TryMarkFailedIfPendingAsync(payment);
                 _logger.LogError(ex, "Stripe checkout session creation failed for payment {PaymentId}.", payment.Id);
                 throw new ClientException("Unable to start Stripe checkout. Please try again.");
             }
@@ -278,7 +282,7 @@ namespace eCommerce.Services
                 await CancelPendingStripeSessionAsync(payment);
                 if (payment.Status == PaymentStatus.Pending)
                 {
-                    payment.Status = PaymentStatus.Failed;
+                    await TryMarkFailedIfPendingAsync(payment);
                 }
             }
         }
@@ -318,9 +322,9 @@ namespace eCommerce.Services
             {
                 var intent = stripeEvent.Data.Object as PaymentIntent;
                 var payment = await FindPaymentFromIntentAsync(intent);
-                if (payment != null && payment.Status == PaymentStatus.Pending)
+                if (payment != null)
                 {
-                    payment.Status = PaymentStatus.Failed;
+                    await TryMarkFailedIfPendingAsync(payment);
                 }
             }
         }
@@ -560,10 +564,121 @@ namespace eCommerce.Services
                 }
             }
 
-            payment.Status = PaymentStatus.Refunded;
-            if (persist)
+            var statusBefore = payment.Status;
+            await DbTransactions.ExecuteAsync(_dbContext, async () =>
             {
-                await _dbContext.SaveChangesAsync();
+                var claimed = await _dbContext.Payments
+                    .Where(p => p.Id == payment.Id && p.Status == statusBefore)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.Status, PaymentStatus.Refunded));
+
+                if (claimed == 1)
+                {
+                    if (statusBefore == PaymentStatus.Completed)
+                    {
+                        await SubtractDonatedAmountAsync(payment);
+                    }
+
+                    var statusEntry = _dbContext.Entry(payment).Property(p => p.Status);
+                    payment.Status = PaymentStatus.Refunded;
+                    statusEntry.OriginalValue = PaymentStatus.Refunded;
+                    statusEntry.IsModified = false;
+                }
+                else
+                {
+                    await _dbContext.Entry(payment).ReloadAsync();
+                }
+
+                if (persist)
+                {
+                    await _dbContext.SaveChangesAsync();
+                }
+            });
+        }
+
+        private async Task SubtractDonatedAmountAsync(Database.Payment payment)
+        {
+            var charged = payment.Amount;
+            if (charged <= 0)
+            {
+                return;
+            }
+
+            var partnerId = await _dbContext.Donations
+                .Where(d => d.PaymentId == payment.Id
+                    || (payment.RelatedEntityType == nameof(PaymentRelatedEntityType.Donation)
+                        && payment.RelatedEntityId != null
+                        && d.Id == payment.RelatedEntityId))
+                .Select(d => (int?)d.ZooPartnerId)
+                .FirstOrDefaultAsync();
+            if (partnerId == null)
+            {
+                return;
+            }
+
+            await _dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+                UPDATE ZooPartners
+                SET CurrentAmount = CASE
+                    WHEN CurrentAmount < {charged} THEN 0
+                    ELSE CurrentAmount - {charged}
+                END
+                WHERE Id = {partnerId.Value}
+                """);
+
+            var tracked = _dbContext.ChangeTracker.Entries<Database.ZooPartner>()
+                .FirstOrDefault(entry => entry.Entity.Id == partnerId.Value);
+            if (tracked != null)
+            {
+                await tracked.ReloadAsync();
+            }
+        }
+
+        internal async Task<bool> TryMarkFailedIfPendingAsync(Database.Payment payment)
+        {
+            var updated = await _dbContext.Payments
+                .Where(p => p.Id == payment.Id && p.Status == PaymentStatus.Pending)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(p => p.Status, PaymentStatus.Failed));
+
+            var entry = _dbContext.Entry(payment);
+            if (updated == 1)
+            {
+                payment.Status = PaymentStatus.Failed;
+                var status = entry.Property(p => p.Status);
+                status.OriginalValue = PaymentStatus.Failed;
+                status.IsModified = false;
+                return true;
+            }
+
+            if (entry.State != EntityState.Detached)
+            {
+                await entry.ReloadAsync();
+            }
+
+            return false;
+        }
+
+        private async Task ExpireSupersededSessionAsync(Database.Payment payment)
+        {
+            if (string.IsNullOrWhiteSpace(payment.StripeCheckoutSessionId))
+            {
+                return;
+            }
+
+            try
+            {
+                var sessionService = new SessionService(_stripeClient);
+                var session = await sessionService.GetAsync(payment.StripeCheckoutSessionId);
+                if (session.Status == "open")
+                {
+                    await sessionService.ExpireAsync(payment.StripeCheckoutSessionId);
+                }
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Unable to expire superseded Stripe session {SessionId} for payment {PaymentId}.",
+                    payment.StripeCheckoutSessionId,
+                    payment.Id);
             }
         }
 
@@ -662,7 +777,8 @@ namespace eCommerce.Services
                             UnitAmount = ToCents(payment.Amount),
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
-                                Name = description
+                                Name = description,
+                                Description = MoneyFormat.Format(payment.Amount)
                             }
                         }
                     }

@@ -52,7 +52,7 @@ class PaymentCheckout {
   PaymentCheckout({
     required this.paymentId,
     this.amount = 0,
-    this.currency = 'usd',
+    this.currency = 'eur',
     this.status = PaymentStatus.pending,
     this.sessionUrl,
     this.stripeCheckoutSessionId,
@@ -64,7 +64,7 @@ class PaymentCheckout {
     return PaymentCheckout(
       paymentId: asInt(json['paymentId']),
       amount: asDouble(json['amount']),
-      currency: asString(json['currency'], fallback: 'usd'),
+      currency: asString(json['currency'], fallback: 'eur'),
       status: parsePaymentStatus(json['status']),
       sessionUrl: json['sessionUrl'] as String?,
       stripeCheckoutSessionId: json['stripeCheckoutSessionId'] as String?,

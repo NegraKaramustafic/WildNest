@@ -78,7 +78,9 @@ class _AdoptScreenState extends State<AdoptScreen> {
 
   Future<void> _adopt(Animal animal) async {
     final existing = _mine[animal.id];
-    if (existing?.status == AdoptionStatus.active) return;
+    if (existing?.status == AdoptionStatus.active || existing?.isPaid == true) {
+      return;
+    }
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AdoptionPaymentScreen(
@@ -157,7 +159,8 @@ class _AdoptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alreadyAdopted = adoption?.status == AdoptionStatus.active;
+    final alreadyAdopted =
+        adoption?.status == AdoptionStatus.active || adoption?.isPaid == true;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

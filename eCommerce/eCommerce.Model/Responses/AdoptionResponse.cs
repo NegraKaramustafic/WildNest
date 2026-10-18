@@ -15,6 +15,7 @@ namespace eCommerce.Model.Responses
         public DateTime StartDate { get; set; }
         public int? PaymentId { get; set; }
         public PaymentStatus? PaymentStatus { get; set; }
+        public bool IsPaid { get; set; }
         public int? RejectedByUserId { get; set; }
         public string? RejectedByFullName { get; set; }
         public DateTime? RejectedAt { get; set; }

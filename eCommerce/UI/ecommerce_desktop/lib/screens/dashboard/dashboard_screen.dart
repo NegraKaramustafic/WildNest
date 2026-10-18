@@ -219,9 +219,9 @@ class _KpiGrid extends StatelessWidget {
           _KpiCard(
             width: width,
             title: 'Revenue this month',
-            value: formatKm(snapshot.revenueThisMonth),
+            value: formatMoney(snapshot.revenueThisMonth),
             detail:
-                'Tickets ${formatKm(snapshot.ticketRevenueThisMonth)} · Donations ${formatKm(snapshot.donationRevenueThisMonth)}',
+                'Tickets ${formatMoney(snapshot.ticketRevenueThisMonth)} · Donations ${formatMoney(snapshot.donationRevenueThisMonth)}',
           ),
           _KpiCard(
             width: width,
@@ -263,15 +263,15 @@ class _KpiGrid extends StatelessWidget {
             width: width,
             title: 'Completed donations',
             value: formatCount(snapshot.completedDonationCount),
-            detail: '${formatKm(snapshot.completedDonationAmount)} completed.',
+            detail: '${formatMoney(snapshot.completedDonationAmount)} completed.',
           ),
           _KpiCard(
             width: width,
             title: 'Total revenue',
-            value: formatKm(snapshot.totalRevenue),
+            value: formatMoney(snapshot.totalRevenue),
             detailLines: 4,
             detail:
-                'Tickets ${formatKm(snapshot.ticketPaymentTotal)} · Reservations ${formatKm(snapshot.reservationPaymentTotal)} · Adoptions ${formatKm(snapshot.adoptionPaymentTotal)} · Donations ${formatKm(snapshot.donationPaymentTotal)}',
+                'Tickets ${formatMoney(snapshot.ticketPaymentTotal)} · Reservations ${formatMoney(snapshot.reservationPaymentTotal)} · Adoptions ${formatMoney(snapshot.adoptionPaymentTotal)} · Donations ${formatMoney(snapshot.donationPaymentTotal)}',
           ),
           _KpiCard(
             width: width,
@@ -439,8 +439,9 @@ class _RevenueChart extends StatelessWidget {
               months: months,
               color: const Color(0xFF2F6B4F),
               valueOf: (month) => month.revenue,
-              tooltipOf: (month) => '${formatMonth(month.year, month.month)}\n${formatKm(month.revenue)}',
-              formatAxis: (value) => value >= 1000 ? formatCount(value) : value.toStringAsFixed(0),
+              tooltipOf: (month) => '${formatMonth(month.year, month.month)}\n${formatMoney(month.revenue)}',
+              formatAxis: formatMoney,
+              axisReservedSize: 92,
             ),
     );
   }
@@ -453,6 +454,7 @@ class _MonthLineChart extends StatelessWidget {
     required this.valueOf,
     required this.tooltipOf,
     this.formatAxis,
+    this.axisReservedSize = 36,
   });
 
   final List<DashboardMonth> months;
@@ -460,6 +462,7 @@ class _MonthLineChart extends StatelessWidget {
   final double Function(DashboardMonth month) valueOf;
   final String Function(DashboardMonth month) tooltipOf;
   final String Function(double value)? formatAxis;
+  final double axisReservedSize;
 
   @override
   Widget build(BuildContext context) {
@@ -498,11 +501,16 @@ class _MonthLineChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 36,
+                reservedSize: axisReservedSize,
                 interval: interval,
                 getTitlesWidget: (value, meta) {
                   final label = formatAxis == null ? formatCount(value) : formatAxis!(value);
-                  return Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted));
+                  return Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                  );
                 },
               ),
             ),
@@ -592,7 +600,7 @@ class _ActivityBars extends StatelessWidget {
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
                     final activity = activities[group.x];
                     return BarTooltipItem(
-                      '${activity.activityName}\n${formatCount(activity.reservationCount)} · ${formatKm(activity.revenue)}',
+                      '${activity.activityName}\n${formatCount(activity.reservationCount)} · ${formatMoney(activity.revenue)}',
                       const TextStyle(color: Colors.white, fontSize: 12),
                     );
                   },
@@ -648,7 +656,7 @@ class _ActivityBars extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: EllipsisText(
-              '${index + 1}. ${activities[index].activityName} · ${formatCount(activities[index].reservationCount)} · ${formatKm(activities[index].revenue)}',
+              '${index + 1}. ${activities[index].activityName} · ${formatCount(activities[index].reservationCount)} · ${formatMoney(activities[index].revenue)}',
               style: const TextStyle(fontSize: 12),
             ),
           ),
@@ -719,7 +727,7 @@ class _DonationPie extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: EllipsisText(
-                            '${row.status} · ${formatCount(row.count)} · ${formatKm(row.amount)}',
+                            '${row.status} · ${formatCount(row.count)} · ${formatMoney(row.amount)}',
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
@@ -868,7 +876,7 @@ class _RevenueBars extends StatelessWidget {
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
                     final month = months[group.x];
                     return BarTooltipItem(
-                      '${formatMonth(month.year, month.month)}\nTickets ${formatKm(month.ticketRevenue)}\nReservations ${formatKm(month.reservationRevenue)}\nAdoptions ${formatKm(month.adoptionRevenue)}\nDonations ${formatKm(month.donationRevenue)}',
+                      '${formatMonth(month.year, month.month)}\nTickets ${formatMoney(month.ticketRevenue)}\nReservations ${formatMoney(month.reservationRevenue)}\nAdoptions ${formatMoney(month.adoptionRevenue)}\nDonations ${formatMoney(month.donationRevenue)}',
                       const TextStyle(color: Colors.white, fontSize: 12),
                     );
                   },
@@ -882,7 +890,8 @@ class _RevenueBars extends StatelessWidget {
                   final month = formatMonth(point.year, point.month).split(' ').first;
                   return index == 0 || point.month == 1 ? '$month ${point.year % 100}' : month;
                 },
-                formatAxis: (value) => value >= 1000 ? formatCount(value) : value.toStringAsFixed(0),
+                formatAxis: formatMoney,
+                leftReservedSize: 92,
               ),
               barGroups: [
                 for (var index = 0; index < months.length; index++)
@@ -1088,7 +1097,7 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = formatKm(item.amount);
+    final amount = formatMoney(item.amount);
     final when = _formatUtc(item.occurredAtUtc);
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1151,6 +1160,7 @@ FlTitlesData _monthTitles({
   required double interval,
   required String Function(int index) labelAt,
   required String Function(double value) formatAxis,
+  double leftReservedSize = 36,
 }) {
   return FlTitlesData(
     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -1158,10 +1168,15 @@ FlTitlesData _monthTitles({
     leftTitles: AxisTitles(
       sideTitles: SideTitles(
         showTitles: true,
-        reservedSize: 36,
+        reservedSize: leftReservedSize,
         interval: interval,
         getTitlesWidget: (value, meta) {
-          return Text(formatAxis(value), style: const TextStyle(fontSize: 10, color: AppColors.textMuted));
+          return Text(
+            formatAxis(value),
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+          );
         },
       ),
     ),

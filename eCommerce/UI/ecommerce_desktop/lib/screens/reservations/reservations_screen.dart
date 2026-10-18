@@ -224,7 +224,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                   value: '${formatDate(reservation.scheduleDate)}, ${formatClock(reservation.scheduleStartTime)}',
                 ),
                 DetailLine(label: 'Guests', value: formatCount(reservation.guestCount)),
-                DetailLine(label: 'Total', value: formatKm(reservation.totalPrice)),
+                DetailLine(label: 'Total', value: formatMoney(reservation.totalPrice)),
                 DetailLine(label: 'Status', value: reservationStatusLabel(reservation.status)),
                 DetailLine(label: 'Payment', value: paymentLabel(reservation)),
                 DetailLine(label: 'Created', value: formatDateTime(reservation.createdAt)),
@@ -415,7 +415,7 @@ class _Row extends StatelessWidget {
               '${formatDate(reservation.scheduleDate)}, ${formatClock(reservation.scheduleStartTime)}',
             ),
           ),
-          Expanded(flex: 2, child: EllipsisText(formatKm(reservation.totalPrice))),
+          Expanded(flex: 2, child: EllipsisText(formatMoney(reservation.totalPrice))),
           Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: _chip(reservation.status))),
           SizedBox(
             width: 160,

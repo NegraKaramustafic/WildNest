@@ -50,6 +50,7 @@ namespace eCommerce.Services
         {
             query = query
                 .Include(t => t.User)
+                .Include(t => t.Payment)
                 .Include(t => t.VerifiedByUser);
             return await base.IncludeRelatedEntitiesAsync(search, query);
         }
@@ -59,6 +60,7 @@ namespace eCommerce.Services
             var entity = await _dbContext.Set<Ticket>()
                 .AsNoTracking()
                 .Include(t => t.User)
+                .Include(t => t.Payment)
                 .Include(t => t.VerifiedByUser)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -221,12 +223,26 @@ namespace eCommerce.Services
 
             var verifierId = _userAccessor.GetUserId()
                 ?? throw new InvalidOperationException("User id claim is missing.");
+            var verifiedAt = DateTime.UtcNow;
 
-            entity.Status = TicketStatus.Used;
-            entity.VerifiedAt = DateTime.UtcNow;
-            entity.VerifiedByUserId = verifierId;
-            entity.VerificationMethod = request.Method;
-            await _dbContext.SaveChangesAsync();
+            var claimed = await _dbContext.Tickets
+                .Where(t => t.Id == entity.Id && t.Status == TicketStatus.Active)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(t => t.Status, TicketStatus.Used)
+                    .SetProperty(t => t.VerifiedAt, verifiedAt)
+                    .SetProperty(t => t.VerifiedByUserId, verifierId)
+                    .SetProperty(t => t.VerificationMethod, request.Method));
+
+            if (claimed != 1)
+            {
+                await _dbContext.Entry(entity).ReloadAsync();
+                if (entity.Status == TicketStatus.Cancelled)
+                {
+                    throw new ClientException("Ticket is cancelled.");
+                }
+
+                throw new ClientException("Ticket already used.");
+            }
 
             var response = await GetByIdAsync(entity.Id);
             await _notificationEvents.NotifyTicketVerifiedAsync(response);

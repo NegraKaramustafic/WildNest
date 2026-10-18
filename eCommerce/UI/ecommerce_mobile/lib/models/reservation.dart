@@ -15,6 +15,7 @@ class Reservation {
   final ReservationStatus status;
   final String code;
   final int? paymentId;
+  final bool isPaid;
   final DateTime? createdAt;
   final List<String> allowedActions;
 
@@ -31,6 +32,7 @@ class Reservation {
     this.status = ReservationStatus.pending,
     this.code = '',
     this.paymentId,
+    this.isPaid = false,
     this.createdAt,
     this.allowedActions = const [],
   });
@@ -49,6 +51,7 @@ class Reservation {
       status: parseReservationStatus(json['status']),
       code: asString(json['code']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
+      isPaid: json['isPaid'] == true,
       createdAt: parseDateTime(json['createdAt']),
       allowedActions: (json['allowedActions'] as List?)
               ?.map((e) => e.toString())

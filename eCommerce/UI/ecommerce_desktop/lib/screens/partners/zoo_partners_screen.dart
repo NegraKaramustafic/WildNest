@@ -141,8 +141,8 @@ class _ZooPartnersScreenState extends State<ZooPartnersScreen> {
               const SizedBox(height: 12),
               DetailLine(label: 'Location', value: _text(partner.location)),
               DetailLine(label: 'Description', value: _text(partner.description)),
-              DetailLine(label: 'Goal', value: formatKm(partner.goalAmount)),
-              DetailLine(label: 'Raised', value: formatKm(partner.currentAmount)),
+              DetailLine(label: 'Goal', value: formatMoney(partner.goalAmount)),
+              DetailLine(label: 'Raised', value: formatMoney(partner.currentAmount)),
               DetailLine(label: 'Donations', value: '${partner.donationCount}'),
               DetailLine(label: 'Status', value: partner.isActive ? 'Active' : 'Inactive'),
             ],
@@ -239,8 +239,8 @@ class _ZooPartnersScreenState extends State<ZooPartnersScreen> {
                 const SizedBox(width: 12),
                 Expanded(flex: 3, child: EllipsisText(partner.name, style: const TextStyle(fontWeight: FontWeight.w600))),
                 Expanded(flex: 2, child: EllipsisText(_text(partner.location))),
-                Expanded(flex: 2, child: EllipsisText(formatKm(partner.currentAmount))),
-                Expanded(flex: 2, child: EllipsisText(formatKm(partner.goalAmount))),
+                Expanded(flex: 2, child: EllipsisText(formatMoney(partner.currentAmount))),
+                Expanded(flex: 2, child: EllipsisText(formatMoney(partner.goalAmount))),
                 Expanded(
                   flex: 2,
                   child: Align(
@@ -492,7 +492,7 @@ class _PartnerDialogState extends State<_PartnerDialog> {
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           autovalidateMode: AutovalidateMode.onUserInteraction,
                           decoration: const InputDecoration(
-                            labelText: 'Goal amount (KM)',
+                            labelText: 'Goal amount (€)',
                             isDense: true,
                             errorMaxLines: 2,
                           ),
@@ -501,7 +501,7 @@ class _PartnerDialogState extends State<_PartnerDialog> {
                         if (_isEdit) ...[
                           const SizedBox(height: 8),
                           Text(
-                            'Raised so far: ${formatKm(widget.partner!.currentAmount)}. This changes only when a donation is paid.',
+                            'Raised so far: ${formatMoney(widget.partner!.currentAmount)}. This changes only when a donation is paid.',
                             style: const TextStyle(color: AppColors.textMuted),
                           ),
                         ],

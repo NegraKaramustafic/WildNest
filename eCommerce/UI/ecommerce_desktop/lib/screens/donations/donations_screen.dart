@@ -180,7 +180,7 @@ class _DonationsScreenState extends State<DonationsScreen> {
             children: [
               DetailLine(label: 'Customer', value: _text(donation.userFullName)),
               DetailLine(label: 'Zoo partner', value: _text(donation.zooPartnerName)),
-              DetailLine(label: 'Amount', value: formatKm(donation.amount)),
+              DetailLine(label: 'Amount', value: formatMoney(donation.amount)),
               DetailLine(label: 'Payment', value: paymentStatusLabel(donation.paymentStatus)),
               DetailLine(label: 'Created', value: formatDateTime(donation.createdAt)),
               const SizedBox(height: 4),
@@ -289,7 +289,7 @@ class _DonationsScreenState extends State<DonationsScreen> {
                   child: EllipsisText(donation.zooPartnerName, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 Expanded(flex: 2, child: EllipsisText(_text(donation.userFullName))),
-                Expanded(flex: 2, child: EllipsisText(formatKm(donation.amount))),
+                Expanded(flex: 2, child: EllipsisText(formatMoney(donation.amount))),
                 Expanded(flex: 2, child: EllipsisText(formatDateTime(donation.createdAt))),
                 Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: _paymentChip(donation.paymentStatus))),
                 SizedBox(

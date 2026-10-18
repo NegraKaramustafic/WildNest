@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <InternalsVisibleTo Include="eCommerce.Services.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\eCommerce.Common.Services\eCommerce.Common.Services.csproj" />
     <ProjectReference Include="..\eCommerce.Model\eCommerce.Model.csproj" />
   </ItemGroup>

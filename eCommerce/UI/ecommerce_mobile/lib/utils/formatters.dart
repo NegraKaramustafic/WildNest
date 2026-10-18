@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-String formatMoney(num value, {bool decimals = false}) {
+/// Euro amounts: €1,250.50. Stored numbers are not converted.
+String formatMoney(num value) {
   final amount = value.toDouble();
-  if (!decimals && amount == amount.roundToDouble()) {
-    return '\$${_groupDigits(amount.round().toString())}';
-  }
-  final raw = amount.toStringAsFixed(2);
-  final parts = raw.split('.');
-  return '\$${_groupDigits(parts[0])}.${parts[1]}';
+  final negative = amount < 0;
+  final parts = amount.abs().toStringAsFixed(2).split('.');
+  final body = '${_groupDigits(parts[0])}.${parts[1]}';
+  return negative ? '-€$body' : '€$body';
 }
 
 String _groupDigits(String digits) {
