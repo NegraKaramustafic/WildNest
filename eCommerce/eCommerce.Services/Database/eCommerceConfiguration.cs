@@ -220,6 +220,15 @@ namespace eCommerce.Services.Database
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.IsRead });
 
+            modelBuilder.Entity<NewsItem>()
+                .HasOne(item => item.Author)
+                .WithMany()
+                .HasForeignKey(item => item.AuthorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<NewsItem>()
+                .HasIndex(item => new { item.IsPublished, item.PublishedAt });
+
             modelBuilder.Entity<PasswordResetCode>()
                 .HasOne(code => code.User)
                 .WithMany()

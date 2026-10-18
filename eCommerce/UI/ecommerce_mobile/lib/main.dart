@@ -7,6 +7,7 @@ import 'package:ecommerce_mobile/providers/animal_provider.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/badge_provider.dart';
 import 'package:ecommerce_mobile/providers/donation_provider.dart';
+import 'package:ecommerce_mobile/providers/news_provider.dart';
 import 'package:ecommerce_mobile/providers/notification_provider.dart';
 import 'package:ecommerce_mobile/providers/payment_provider.dart';
 import 'package:ecommerce_mobile/providers/recommendation_provider.dart';
@@ -53,6 +54,7 @@ class WildNestApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BadgeProvider()),
         ChangeNotifierProvider(create: (_) => UserBadgeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => NewsProvider()),
         ChangeNotifierProvider(create: (_) => TicketProvider()),
         ChangeNotifierProvider(create: (_) => RecommendationProvider()),
       ],

@@ -8,6 +8,7 @@ import 'package:ecommerce_desktop/providers/user_provider.dart';
 import 'package:ecommerce_desktop/providers/adoption_provider.dart';
 import 'package:ecommerce_desktop/providers/donation_provider.dart';
 import 'package:ecommerce_desktop/providers/reservation_provider.dart';
+import 'package:ecommerce_desktop/providers/news_provider.dart';
 import 'package:ecommerce_desktop/providers/zoo_partner_provider.dart';
 import 'package:ecommerce_desktop/providers/activity_type_provider.dart';
 import 'package:ecommerce_desktop/providers/animal_category_provider.dart';
@@ -50,6 +51,7 @@ class WildNestApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdoptionProvider()),
         ChangeNotifierProvider(create: (_) => DonationProvider()),
         ChangeNotifierProvider(create: (_) => ZooPartnerProvider()),
+        ChangeNotifierProvider(create: (_) => NewsProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),
       ],

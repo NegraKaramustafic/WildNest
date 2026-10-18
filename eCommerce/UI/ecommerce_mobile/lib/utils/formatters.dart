@@ -48,6 +48,12 @@ String formatTimeRange(Duration start, Duration end) {
   return '${formatClock(start)} - ${formatClock(end)}';
 }
 
+String formatDateTime(DateTime value) {
+  final local = value.toLocal();
+  final clock = formatClock(Duration(hours: local.hour, minutes: local.minute));
+  return '${formatReviewDate(local)}, $clock';
+}
+
 String formatReviewDate(DateTime date) {
   const months = [
     'Jan',
