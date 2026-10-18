@@ -1,5 +1,6 @@
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
 import 'package:ecommerce_mobile/providers/user_provider.dart';
+import 'package:ecommerce_mobile/screens/profile/edit_profile_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
@@ -21,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _confirm = TextEditingController();
   bool _saving = false;
   bool _obscure = true;
+  bool _profileChanged = false;
 
   @override
   void dispose() {
@@ -29,6 +31,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _confirm.dispose();
     super.dispose();
   }
+
+  Future<void> _editProfile() async {
+    final userId = context.read<AuthProvider>().currentUserId;
+    if (userId == null || _saving) return;
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => EditProfileScreen(userId: userId)),
+    );
+    if (changed == true && mounted) {
+      setState(() => _profileChanged = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
+    }
+  }
+
+  void _close() => Navigator.pop(context, _profileChanged);
 
   Future<void> _changePassword() async {
     if (!_formKey.currentState!.validate() || _saving) return;
@@ -46,9 +64,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _current.clear();
       _next.clear();
       _confirm.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password updated.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Password updated.')));
     } catch (e) {
       if (!mounted) return;
       showAppError(context, e);
@@ -70,7 +88,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log out', style: TextStyle(color: AppColors.heart)),
+            child: const Text(
+              'Log out',
+              style: TextStyle(color: AppColors.heart),
+            ),
           ),
         ],
       ),
@@ -82,97 +103,140 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            WildNestHeader(showBack: true, onBack: () => Navigator.pop(context)),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                children: [
-                  Text(
-                    'Settings',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w600,
+    final userId = context.watch<AuthProvider>().currentUserId;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _close();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              WildNestHeader(showBack: true, onBack: _close),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  children: [
+                    Text(
+                      'Settings',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Change password',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _current,
-                          obscureText: _obscure,
-                          decoration: authInputDecoration(
-                            label: 'Current password',
-                            icon: Icons.lock_outline,
-                            suffix: IconButton(
-                              onPressed: () => setState(() => _obscure = !_obscure),
-                              icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                    const SizedBox(height: 18),
+                    Tooltip(
+                      message: userId == null
+                          ? 'Your profile could not be loaded.'
+                          : 'Edit profile.',
+                      child: OutlinedButton.icon(
+                        onPressed: userId == null ? null : _editProfile,
+                        icon: const Icon(Icons.person_outline),
+                        label: const Text('Edit profile'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Update your name, email, phone, username, and profile picture.',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      'Change password',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _current,
+                            obscureText: _obscure,
+                            decoration: authInputDecoration(
+                              label: 'Current password',
+                              icon: Icons.lock_outline,
+                              suffix: IconButton(
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
                             ),
+                            validator: (value) =>
+                                (value == null || value.isEmpty)
+                                ? mandatoryField
+                                : null,
                           ),
-                          validator: (value) =>
-                              (value == null || value.isEmpty) ? mandatoryField : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _next,
-                          obscureText: _obscure,
-                          decoration: authInputDecoration(
-                            label: 'New password',
-                            icon: Icons.lock_reset_outlined,
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _next,
+                            obscureText: _obscure,
+                            decoration: authInputDecoration(
+                              label: 'New password',
+                              icon: Icons.lock_reset_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return mandatoryField;
+                              }
+                              if (value.length < 6) {
+                                return 'Use at least 6 characters.';
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) return mandatoryField;
-                            if (value.length < 6) return 'Use at least 6 characters.';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _confirm,
-                          obscureText: _obscure,
-                          decoration: authInputDecoration(
-                            label: 'Confirm new password',
-                            icon: Icons.lock_reset_outlined,
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _confirm,
+                            obscureText: _obscure,
+                            decoration: authInputDecoration(
+                              label: 'Confirm new password',
+                              icon: Icons.lock_reset_outlined,
+                            ),
+                            validator: (value) {
+                              if (value != _next.text) {
+                                return 'Passwords do not match.';
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value != _next.text) return 'Passwords do not match.';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _saving ? null : _changePassword,
-                          child: _saving
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : const Text('Update password'),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _saving ? null : _changePassword,
+                            child: _saving
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Update password'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 28),
-                  OutlinedButton(
-                    onPressed: _logout,
-                    child: const Text('Log out'),
-                  ),
-                ],
+                    const SizedBox(height: 28),
+                    OutlinedButton(
+                      onPressed: _logout,
+                      child: const Text('Log out'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
