@@ -13,6 +13,8 @@ namespace eCommerce.Model.Enums
         AdoptionCreated = 5,
         DonationReceived = 6,
         PaymentCompleted = 7,
-        BadgeEarned = 8
+        BadgeEarned = 8,
+        PasswordReset = 9,
+        UpcomingReminder = 10
     }
 }

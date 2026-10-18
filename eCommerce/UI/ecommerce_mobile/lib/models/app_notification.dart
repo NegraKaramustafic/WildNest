@@ -10,6 +10,8 @@ enum NotificationType {
   donationReceived,
   paymentCompleted,
   badgeEarned,
+  passwordReset,
+  upcomingReminder,
 }
 
 class AppNotification {
@@ -91,6 +93,10 @@ NotificationType parseNotificationType(dynamic value) {
         return NotificationType.paymentCompleted;
       case 8:
         return NotificationType.badgeEarned;
+      case 9:
+        return NotificationType.passwordReset;
+      case 10:
+        return NotificationType.upcomingReminder;
       default:
         return NotificationType.paymentCompleted;
     }
@@ -112,6 +118,10 @@ NotificationType parseNotificationType(dynamic value) {
       return NotificationType.donationReceived;
     case 'badgeearned':
       return NotificationType.badgeEarned;
+    case 'passwordreset':
+      return NotificationType.passwordReset;
+    case 'upcomingreminder':
+      return NotificationType.upcomingReminder;
     default:
       return NotificationType.paymentCompleted;
   }

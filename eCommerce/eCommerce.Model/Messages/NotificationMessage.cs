@@ -20,5 +20,16 @@ namespace eCommerce.Model.Messages
         public string? RelatedEntityType { get; set; }
         public int? RelatedEntityId { get; set; }
         public string? Email { get; set; }
+
+        /// <summary>
+        /// Optional email subject. The notification row keeps <see cref="Title"/>.
+        /// </summary>
+        public string? EmailSubject { get; set; }
+
+        /// <summary>
+        /// Optional email body. Never persisted and never written to logs.
+        /// The notification row keeps <see cref="Message"/>, which must not contain secrets.
+        /// </summary>
+        public string? EmailBody { get; set; }
     }
 }

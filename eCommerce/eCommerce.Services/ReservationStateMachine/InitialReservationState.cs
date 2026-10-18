@@ -47,7 +47,7 @@ namespace eCommerce.Services.ReservationStateMachine
 
             if (schedule.CapacityLeft < request.GuestCount)
             {
-                throw new ClientException("Not enough spots available");
+                throw new ClientException("Not enough spots available.");
             }
 
             schedule.CapacityLeft -= request.GuestCount;

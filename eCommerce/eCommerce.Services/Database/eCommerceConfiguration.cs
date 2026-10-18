@@ -187,6 +187,15 @@ namespace eCommerce.Services.Database
 
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.IsRead });
+
+            modelBuilder.Entity<PasswordResetCode>()
+                .HasOne(code => code.User)
+                .WithMany()
+                .HasForeignKey(code => code.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PasswordResetCode>()
+                .HasIndex(code => new { code.UserId, code.CreatedAt });
         }
     }
 }

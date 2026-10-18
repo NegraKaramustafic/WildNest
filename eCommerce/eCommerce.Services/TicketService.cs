@@ -204,12 +204,12 @@ namespace eCommerce.Services
 
             if (entity.Status == TicketStatus.Used)
             {
-                throw new ClientException("Ticket already used");
+                throw new ClientException("Ticket already used.");
             }
 
             if (entity.Status == TicketStatus.Cancelled)
             {
-                throw new ClientException("Ticket is cancelled");
+                throw new ClientException("Ticket is cancelled.");
             }
 
             if (entity.Status == TicketStatus.PendingPayment || !await HasCompletedPaymentAsync(entity.PaymentId))

@@ -26,4 +26,17 @@ public sealed class ZooClock
     public static ZooClock FromEnvironment() => new(EnvVariables.Require("ZOO_TIME_ZONE"));
 
     public DateOnly Today => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _zone));
+
+    public DateTime ToLocal(DateTime utc)
+    {
+        var normalized = utc.Kind == DateTimeKind.Utc
+            ? utc
+            : DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+        return TimeZoneInfo.ConvertTimeFromUtc(normalized, _zone);
+    }
+
+    public LocalReminderWindow UpcomingWindow(DateTime utcNow, TimeSpan window)
+    {
+        return new LocalReminderWindow(ToLocal(utcNow), ToLocal(utcNow.Add(window)));
+    }
 }

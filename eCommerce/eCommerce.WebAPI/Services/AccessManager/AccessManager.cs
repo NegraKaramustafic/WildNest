@@ -47,7 +47,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
 
             if (!user.IsActive)
             {
-                throw new ClientException("User is not active");
+                throw new ClientException("User is not active.");
             }
 
             var accessToken = await GenerateTokenAsync(user);
@@ -73,31 +73,31 @@ namespace eCommerce.WebAPI.Services.AccessManager
         {
             if (string.IsNullOrEmpty(request.RefreshToken))
             {
-                throw new ClientException("Refresh token is required");
+                throw new ClientException("Refresh token is required.");
             }
 
             var refreshToken = await _refreshTokenService.GetStoredTokenAsync(request.RefreshToken);
 
             if (refreshToken == null)
             {
-                throw new ClientException("Invalid refresh token");
+                throw new ClientException("Invalid refresh token.");
             }
 
             if (refreshToken.ExpiresAt < DateTime.UtcNow)
             {
-                throw new ClientException("Refresh token has expired");
+                throw new ClientException("Refresh token has expired.");
             }
 
             var user = await _userService.GetWithRoleByIdAsync(refreshToken.UserId);
 
             if (user == null)
             {
-                throw new ClientException("User not found");
+                throw new ClientException("User not found.");
             }
 
             if (!user.IsActive)
             {
-                throw new ClientException("User is not active");
+                throw new ClientException("User is not active.");
             }
 
             await _refreshTokenService.DeleteAllUserRefreshTokensAsync(user.Id);
