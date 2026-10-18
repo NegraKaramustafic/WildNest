@@ -1,20 +1,21 @@
 import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activities_screen.dart';
-import 'package:ecommerce_desktop/screens/adoptions/adoptions_screen.dart';
-import 'package:ecommerce_desktop/screens/donations/donations_screen.dart';
-import 'package:ecommerce_desktop/screens/reservations/reservations_screen.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_types_screen.dart';
+import 'package:ecommerce_desktop/screens/adoptions/adoptions_screen.dart';
 import 'package:ecommerce_desktop/screens/animals/animals_screen.dart';
-import 'package:ecommerce_desktop/screens/placeholder_page.dart';
+import 'package:ecommerce_desktop/screens/badges/badges_screen.dart';
+import 'package:ecommerce_desktop/screens/donations/donations_screen.dart';
+import 'package:ecommerce_desktop/screens/partners/zoo_partners_screen.dart';
+import 'package:ecommerce_desktop/screens/reservations/reservations_screen.dart';
 import 'package:ecommerce_desktop/screens/reviews/reviews_screen.dart';
 import 'package:ecommerce_desktop/screens/schedules/schedules_screen.dart';
 import 'package:ecommerce_desktop/screens/tickets/ticket_verification_screen.dart';
+import 'package:ecommerce_desktop/screens/users/users_screen.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum AdminSection {
-  dashboard('Dashboard', Icons.dashboard_outlined),
   animals('Animals', Icons.pets_outlined),
   activities('Activities', Icons.local_activity_outlined),
   activityTypes('Activity types', Icons.label_outline),
@@ -25,9 +26,8 @@ enum AdminSection {
   users('Users', Icons.people_outline),
   reviews('Reviews', Icons.chat_bubble_outline),
   badges('Badges', Icons.emoji_events_outlined),
-  reports('Reports', Icons.description_outlined),
-  tickets('Tickets', Icons.confirmation_number_outlined),
-  settings('Settings', Icons.settings_outlined);
+  zooPartners('Zoo partners', Icons.park_outlined),
+  tickets('Tickets', Icons.confirmation_number_outlined);
 
   const AdminSection(this.label, this.icon);
 
@@ -43,7 +43,7 @@ class AdminShell extends StatefulWidget {
 }
 
 class _AdminShellState extends State<AdminShell> {
-  AdminSection _section = AdminSection.dashboard;
+  AdminSection _section = AdminSection.animals;
 
   @override
   Widget build(BuildContext context) {
@@ -88,8 +88,12 @@ class _AdminShellState extends State<AdminShell> {
         return const TicketVerificationScreen();
       case AdminSection.reviews:
         return const ReviewsScreen();
-      default:
-        return PlaceholderPage(title: _section.label);
+      case AdminSection.users:
+        return const UsersScreen();
+      case AdminSection.badges:
+        return const BadgesScreen();
+      case AdminSection.zooPartners:
+        return const ZooPartnersScreen();
     }
   }
 }

@@ -41,6 +41,12 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   String? get sessionNotice => _sessionNotice;
 
+  int? get userId {
+    final raw = _claims?['Id'] ?? _claims?['id'];
+    if (raw is int) return raw;
+    return int.tryParse(raw?.toString() ?? '');
+  }
+
   String? get displayName {
     final first = _claims?['FirstName'] ?? _claims?['firstName'];
     final last = _claims?['LastName'] ?? _claims?['lastName'];

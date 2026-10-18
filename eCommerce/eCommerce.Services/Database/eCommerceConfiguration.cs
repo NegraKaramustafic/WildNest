@@ -177,6 +177,14 @@ namespace eCommerce.Services.Database
                 .HasForeignKey(r => r.ActivityId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Badge>()
+                .HasIndex(b => b.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<ZooPartner>()
+                .HasIndex(p => p.Name)
+                .IsUnique();
+
             modelBuilder.Entity<UserBadge>()
                 .HasIndex(ub => new { ub.UserId, ub.BadgeId })
                 .IsUnique();

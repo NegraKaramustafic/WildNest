@@ -1,34 +1,112 @@
+import 'dart:typed_data';
+
+import 'package:ecommerce_desktop/config/api_config.dart';
+import 'package:ecommerce_desktop/providers/auth_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/formatters.dart';
+import 'package:ecommerce_desktop/utils/image_bytes.dart';
 import 'package:ecommerce_desktop/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class EntityThumbnail extends StatelessWidget {
-  const EntityThumbnail({super.key, required this.url});
+  const EntityThumbnail({super.key, this.url, this.base64Image});
 
   final String? url;
+  final String? base64Image;
 
   @override
   Widget build(BuildContext context) {
+    final inline = decodeImageBytes(base64Image);
     final image = url?.trim();
+    Widget child;
+    if (inline != null) {
+      child = Image.memory(inline, fit: BoxFit.cover, gaplessPlayback: true);
+    } else if (image == null || image.isEmpty) {
+      child = const ColoredBox(
+        color: AppColors.border,
+        child: Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
+      );
+    } else if (image.startsWith('/')) {
+      child = _AuthorizedImage(path: image);
+    } else {
+      child = Image.network(
+        image,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const ColoredBox(
+          color: AppColors.border,
+          child: Icon(Icons.broken_image_outlined, size: 18, color: AppColors.textMuted),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: 42,
-        height: 42,
-        child: image == null || image.isEmpty
-            ? const ColoredBox(
-                color: AppColors.border,
-                child: Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
-              )
-            : Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const ColoredBox(
-                  color: AppColors.border,
-                  child: Icon(Icons.broken_image_outlined, size: 18, color: AppColors.textMuted),
-                ),
-              ),
+      child: SizedBox(width: 42, height: 42, child: child),
+    );
+  }
+}
+
+class _AuthorizedImage extends StatefulWidget {
+  const _AuthorizedImage({required this.path});
+
+  final String path;
+
+  @override
+  State<_AuthorizedImage> createState() => _AuthorizedImageState();
+}
+
+class _AuthorizedImageState extends State<_AuthorizedImage> {
+  Uint8List? _bytes;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AuthorizedImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path) {
+      _bytes = null;
+      _failed = false;
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    try {
+      final token = AuthProvider.accesstoken;
+      final headers = <String, String>{};
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      final relative = widget.path.startsWith('/') ? widget.path.substring(1) : widget.path;
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}$relative'), headers: headers);
+      if (!mounted) return;
+      if (response.statusCode >= 300 || response.bodyBytes.isEmpty) {
+        setState(() => _failed = true);
+        return;
+      }
+      setState(() => _bytes = response.bodyBytes);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_bytes != null) {
+      return Image.memory(_bytes!, fit: BoxFit.cover, gaplessPlayback: true);
+    }
+    return ColoredBox(
+      color: AppColors.border,
+      child: Icon(
+        _failed ? Icons.broken_image_outlined : Icons.image_outlined,
+        size: 18,
+        color: AppColors.textMuted,
       ),
     );
   }

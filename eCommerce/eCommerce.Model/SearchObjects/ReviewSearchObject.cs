@@ -21,5 +21,20 @@ namespace eCommerce.Model.SearchObjects
         /// LIKE/FTS substring matched against the comment, activity name, and author name.
         /// </summary>
         public string? FTS { get; set; }
+
+        /// <summary>
+        /// Exact star rating from 1 to 5.
+        /// </summary>
+        public int? Rating { get; set; }
+
+        /// <summary>
+        /// Inclusive start of the created-at range (UTC date).
+        /// </summary>
+        public DateOnly? DateFrom { get; set; }
+
+        /// <summary>
+        /// Inclusive end of the created-at range (UTC date).
+        /// </summary>
+        public DateOnly? DateTo { get; set; }
     }
 }

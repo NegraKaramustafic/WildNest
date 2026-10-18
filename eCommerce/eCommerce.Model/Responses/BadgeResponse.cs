@@ -9,5 +9,6 @@ namespace eCommerce.Model.Responses
         public string? Description { get; set; }
         public string? IconUrl { get; set; }
         public BadgeCriteria Criteria { get; set; }
+        public int HolderCount { get; set; }
     }
 }

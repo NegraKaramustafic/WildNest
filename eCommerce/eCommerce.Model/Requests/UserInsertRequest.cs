@@ -12,5 +12,10 @@ namespace eCommerce.Model.Requests
         public string? PhoneNumber { get; set; }
         public bool IsActive { get; set; } = true;
         public string? ProfileImageBase64 { get; set; }
+
+        /// <summary>
+        /// Admin create only. Register ignores this and always assigns Customer.
+        /// </summary>
+        public string? Role { get; set; }
     }
 }

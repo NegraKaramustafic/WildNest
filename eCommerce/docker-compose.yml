@@ -59,6 +59,8 @@ services:
       ConnectionStrings__DefaultConnection: Server=sql,1433;Database=${DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
     ports:
       - "5126:5126"
+    volumes:
+      - upload_data:/app/uploads
     depends_on:
       sql:
         condition: service_healthy
@@ -91,3 +93,4 @@ services:
 
 volumes:
   sqlserver_data:
+  upload_data:

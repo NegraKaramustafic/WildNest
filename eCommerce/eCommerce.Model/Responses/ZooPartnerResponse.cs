@@ -10,5 +10,6 @@ namespace eCommerce.Model.Responses
         public decimal GoalAmount { get; set; }
         public decimal CurrentAmount { get; set; }
         public bool IsActive { get; set; }
+        public int DonationCount { get; set; }
     }
 }

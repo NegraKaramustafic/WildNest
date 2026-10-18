@@ -69,6 +69,19 @@ public class UsersController : BaseCRUDController<UserResponse, UserSearch, User
         return NoContent();
     }
 
+    [HttpPut("{id}/active")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<UserResponse>> SetActive(int id, [FromBody] UserActiveRequest request)
+    {
+        var result = await _service.SetActiveAsync(id, request.IsActive);
+        return Ok(result);
+    }
+
     [Authorize]
     [HttpPut("ChangePassword")]
     [ProducesResponseType(StatusCodes.Status200OK)]

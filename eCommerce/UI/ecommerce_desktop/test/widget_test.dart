@@ -42,7 +42,7 @@ void main() {
     expect(find.text('Enter a username and password.'), findsOneWidget);
   });
 
-  testWidgets('shell opens placeholders and ticket verification', (tester) async {
+  testWidgets('shell opens animals, tickets, and the admin menu', (tester) async {
     tester.view.physicalSize = const Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -60,7 +60,17 @@ void main() {
       ),
     );
 
-    expect(find.text('This screen is coming in a later session.'), findsOneWidget);
+    expect(find.text('Animals'), findsWidgets);
+    expect(find.text('Users'), findsOneWidget);
+    expect(find.text('Zoo partners'), findsOneWidget);
+    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Reports'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
+    expect(find.text('This screen is coming in a later session.'), findsNothing);
+
+    await tester.pump();
+    await tester.pump();
+    expect(find.textContaining('API_BASE_URL'), findsOneWidget);
 
     await tester.tap(find.text('Tickets'));
     await tester.pump();
@@ -72,17 +82,6 @@ void main() {
     await tester.tap(find.text('Verify'));
     await tester.pump();
     expect(find.text('Enter a ticket code.'), findsOneWidget);
-
-    await tester.tap(find.text('Donations'));
-    await tester.pump();
-    expect(find.text('Donations'), findsWidgets);
-    expect(find.text('This screen is coming in a later session.'), findsOneWidget);
-
-    await tester.tap(find.text('Animals'));
-    await tester.pump();
-    await tester.pump();
-    expect(find.textContaining('API_BASE_URL'), findsOneWidget);
-    expect(find.text('Animals'), findsWidgets);
   });
 
   testWidgets('ticket result shows details and the today warning', (tester) async {

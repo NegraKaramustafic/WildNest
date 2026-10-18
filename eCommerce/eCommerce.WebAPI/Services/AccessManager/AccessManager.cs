@@ -45,10 +45,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
                 throw new ClientException("Invalid username or password.");
             }
 
-            if (!user.IsActive)
-            {
-                throw new ClientException("User is not active.");
-            }
+            _userService.EnsureActiveForSignIn(user.IsActive);
 
             var accessToken = await GenerateTokenAsync(user);
             var refreshTokenValue = GenerateRefreshToken();
@@ -95,10 +92,7 @@ namespace eCommerce.WebAPI.Services.AccessManager
                 throw new ClientException("User not found.");
             }
 
-            if (!user.IsActive)
-            {
-                throw new ClientException("User is not active.");
-            }
+            _userService.EnsureActiveForSignIn(user.IsActive);
 
             await _refreshTokenService.DeleteAllUserRefreshTokensAsync(user.Id);
 

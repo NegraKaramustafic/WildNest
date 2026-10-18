@@ -6,6 +6,8 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
+using eCommerce.Services.Images;
+using eCommerce.Services.Validators;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -69,9 +71,34 @@ namespace eCommerce.Services
                 {
                     query = query.Where(u => u.IsActive == search.IsActive.Value);
                 }
+
+                if (!string.IsNullOrWhiteSpace(search.Role))
+                {
+                    var role = RoleNames.IsKnown(search.Role)
+                        ? RoleNames.Canonical(search.Role)
+                        : search.Role.Trim();
+                    query = query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == role));
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.FTS))
+                {
+                    var term = search.FTS.Trim();
+                    query = query.Where(u =>
+                        u.FirstName.Contains(term)
+                        || u.LastName.Contains(term)
+                        || u.Username.Contains(term)
+                        || u.Email.Contains(term)
+                        || (u.FirstName + " " + u.LastName).Contains(term));
+                }
             }
 
             return query;
+        }
+
+        protected override Task<IQueryable<User>> IncludeRelatedEntitiesAsync(UserSearch? search, IQueryable<User> query = null!)
+        {
+            query = query.Include(u => u.UserRoles).ThenInclude(ur => ur.Role);
+            return Task.FromResult(query);
         }
 
         protected override IQueryable<User> ApplyDefaultOrder(IQueryable<User> query)
@@ -109,21 +136,27 @@ namespace eCommerce.Services
                 throw new ClientException($"Username '{request.Username}' is already in use.");
             }
 
+            request.ProfileImageBase64 = ImageContent.NormalizeProfileImage(request.ProfileImageBase64);
             var entity = MapInsertRequestToEntity(request);
             entity.CreatedAt = DateTime.UtcNow;
-            if (!entity.UserRoles.Any())
+            var roleName = Roles.Customer;
+            if (_userAccessor.IsInRole(Roles.Admin) && !string.IsNullOrWhiteSpace(request.Role))
             {
-                entity.UserRoles.Add(new UserRole
-                {
-                    RoleId = await GetCustomerRoleIdAsync(),
-                    DateAssigned = DateTime.UtcNow
-                });
+                roleName = RoleNames.Canonical(request.Role);
             }
+
+            entity.UserRoles.Add(new UserRole
+            {
+                RoleId = await GetRoleIdAsync(roleName),
+                DateAssigned = DateTime.UtcNow
+            });
 
             _dbContext.Users.Add(entity);
             await _dbContext.SaveChangesAsync();
 
-            return _mapper.Map<UserResponse>(entity);
+            var response = _mapper.Map<UserResponse>(entity);
+            response.Role = roleName;
+            return response;
         }
 
 
@@ -134,7 +167,18 @@ namespace eCommerce.Services
                 ThrowNotFound("User", id, "User not found.");
             }
 
-            return await base.GetByIdAsync(id);
+            var entity = await _dbContext.Users
+                .AsNoTracking()
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (entity == null)
+            {
+                ThrowNotFound("User", id, "User not found.");
+            }
+
+            return _mapper.Map<UserResponse>(entity);
         }
 
         public override async Task<UserResponse> UpdateAsync(int id, UserUpdateRequest request)
@@ -146,13 +190,30 @@ namespace eCommerce.Services
 
             await _updateValidator.ValidateAndThrowAsync(request);
 
-            var entity = await _dbContext.Users.FindAsync(id);
+            var entity = await _dbContext.Users
+                .Include(u => u.UserRoles)
+                .FirstOrDefaultAsync(u => u.Id == id);
             if (entity == null)
             {
                 ThrowNotFound("User", id, "User not found.");
             }
 
             var existingIsActive = entity.IsActive;
+            var currentUserId = _userAccessor.GetUserId();
+            var isAdmin = _userAccessor.IsInRole(Roles.Admin);
+            if (isAdmin && existingIsActive && !request.IsActive && currentUserId == id)
+            {
+                throw new ClientException("You cannot block your own account.");
+            }
+
+            if (isAdmin && !string.IsNullOrWhiteSpace(request.Role))
+            {
+                var requestedRole = RoleNames.Canonical(request.Role);
+                if (currentUserId == id && requestedRole != Roles.Admin)
+                {
+                    throw new ClientException("You cannot remove your own administrator role.");
+                }
+            }
 
             // Check if email or username already exists
             if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email && u.Id != id))
@@ -166,18 +227,67 @@ namespace eCommerce.Services
             }
 
             MapUpdateRequestToEntity(request, entity);
-            if (!_userAccessor.IsInRole(Roles.Admin))
+            if (!isAdmin)
             {
                 entity.IsActive = existingIsActive;
             }
 
+            if (request.ProfileImageBase64 != null)
+            {
+                entity.ProfileImageBase64 = ImageContent.NormalizeProfileImage(request.ProfileImageBase64);
+            }
+
+            var passwordChanged = ApplyPasswordIfProvided(entity, request.Password);
+            if (isAdmin && !string.IsNullOrWhiteSpace(request.Role))
+            {
+                await ReplaceRoleAsync(entity, RoleNames.Canonical(request.Role));
+            }
+
             var deactivated = existingIsActive && !entity.IsActive;
-            if (deactivated)
+            if (deactivated || passwordChanged)
             {
                 await RotateSecurityStampAsync(entity);
             }
 
             _dbContext.Users.Update(entity);
+            await _dbContext.SaveChangesAsync();
+            if (deactivated || passwordChanged)
+            {
+                _securityStampCache.Invalidate(entity.Id);
+            }
+
+            return await GetByIdAsync(id);
+        }
+
+        public async Task<UserResponse> SetActiveAsync(int id, bool isActive)
+        {
+            if (!_userAccessor.IsInRole(Roles.Admin))
+            {
+                throw new UnauthorizedAccessException("Only an administrator can block or unblock a user.");
+            }
+
+            var entity = await _dbContext.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
+            if (entity == null)
+            {
+                ThrowNotFound("User", id, "User not found.");
+            }
+
+            var currentUserId = _userAccessor.GetUserId();
+            if (!isActive && currentUserId == id)
+            {
+                throw new ClientException("You cannot block your own account.");
+            }
+
+            var deactivated = entity.IsActive && !isActive;
+            entity.IsActive = isActive;
+            if (deactivated)
+            {
+                await RotateSecurityStampAsync(entity);
+            }
+
             await _dbContext.SaveChangesAsync();
             if (deactivated)
             {
@@ -185,6 +295,14 @@ namespace eCommerce.Services
             }
 
             return _mapper.Map<UserResponse>(entity);
+        }
+
+        public void EnsureActiveForSignIn(bool isActive)
+        {
+            if (!isActive)
+            {
+                throw new ClientException("This account is blocked. Sign-in is not allowed.");
+            }
         }
 
         public override async Task DeleteAsync(int id)
@@ -241,7 +359,7 @@ namespace eCommerce.Services
             if (user != null)
             {
                 response = _mapper.Map<UserSensitiveResponse>(user);
-                response.Role = user.UserRoles.FirstOrDefault()?.Role.Name;
+                response.Role = user.UserRoles.FirstOrDefault()?.Role.Name ?? string.Empty;
             }
 
             return response;
@@ -345,15 +463,45 @@ namespace eCommerce.Services
             return currentUserId.HasValue && currentUserId.Value == userId;
         }
 
-        private async Task<int> GetCustomerRoleIdAsync()
+        private bool ApplyPasswordIfProvided(User entity, string? password)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            entity.PasswordSalt = _cryptoService.GenerateSlat();
+            entity.PasswordHash = _cryptoService.GenerateHash(password.Trim(), entity.PasswordSalt);
+            return true;
+        }
+
+        private async Task ReplaceRoleAsync(User entity, string roleName)
+        {
+            var roleId = await GetRoleIdAsync(roleName);
+            if (entity.UserRoles.Count == 1 && entity.UserRoles.First().RoleId == roleId)
+            {
+                return;
+            }
+
+            _dbContext.UserRoles.RemoveRange(entity.UserRoles);
+            entity.UserRoles.Clear();
+            entity.UserRoles.Add(new UserRole
+            {
+                UserId = entity.Id,
+                RoleId = roleId,
+                DateAssigned = DateTime.UtcNow
+            });
+        }
+
+        private async Task<int> GetRoleIdAsync(string roleName)
         {
             var role = await _dbContext.Roles
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Name == Roles.Customer);
+                .FirstOrDefaultAsync(r => r.Name == roleName);
 
             if (role == null)
             {
-                throw new ClientException("Customer role is not configured.");
+                throw new ClientException($"{roleName} role is not configured.");
             }
 
             return role.Id;

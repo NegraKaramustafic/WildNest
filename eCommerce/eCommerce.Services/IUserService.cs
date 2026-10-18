@@ -12,5 +12,7 @@ namespace eCommerce.Services
         Task ChangePasswordAsync(UserPasswordChangeRequest request);
         Task<string> GetSecurityStampAsync(int userId);
         Task RevokeSessionsAsync(int userId);
+        Task<UserResponse> SetActiveAsync(int id, bool isActive);
+        void EnsureActiveForSignIn(bool isActive);
     }
 }

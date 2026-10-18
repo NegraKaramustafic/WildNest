@@ -18,8 +18,18 @@ namespace eCommerce.Model.Requests
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
 
+        /// <summary>
+        /// PNG or JPEG payload. When set, it replaces ImageUrl.
+        /// </summary>
+        public string? ImageBase64 { get; set; }
+
+        /// <summary>
+        /// image/png or image/jpeg. Required together with ImageBase64.
+        /// </summary>
+        public string? ImageContentType { get; set; }
+
         [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "GoalAmount must be greater than 0.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Goal amount must be greater than 0.")]
         public decimal GoalAmount { get; set; }
 
         public bool IsActive { get; set; } = true;

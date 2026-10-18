@@ -10,7 +10,9 @@ import 'package:provider/provider.dart';
 
 /// Loads review sentiment statistics. Drop this on the reviews screen or the dashboard.
 class ReviewSentimentPanel extends StatefulWidget {
-  const ReviewSentimentPanel({super.key});
+  const ReviewSentimentPanel({super.key, this.reloadToken = 0});
+
+  final int reloadToken;
 
   @override
   State<ReviewSentimentPanel> createState() => _ReviewSentimentPanelState();
@@ -25,6 +27,14 @@ class _ReviewSentimentPanelState extends State<ReviewSentimentPanel> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant ReviewSentimentPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reloadToken != widget.reloadToken) {
+      _load();
+    }
   }
 
   Future<void> _load() async {

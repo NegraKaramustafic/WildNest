@@ -1,4 +1,5 @@
 using eCommerce.Model.Requests;
+using eCommerce.Services.Images;
 using FluentValidation;
 
 namespace eCommerce.Services.Validators
@@ -29,7 +30,17 @@ namespace eCommerce.Services.Validators
 
             RuleFor(x => x.PhoneNumber)
                 .MaximumLength(20).WithMessage("Phone number cannot exceed 20 characters.")
-                .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
+                .Matches(@"^[0-9+\-() ]{6,20}$").WithMessage("Phone number must be 6 to 20 characters and may contain only digits, spaces, and + - ( ).")
+                .When(x => !string.IsNullOrWhiteSpace(x.PhoneNumber));
+
+            RuleFor(x => x.ProfileImageBase64)
+                .MaximumLength(ImageContent.MaxBase64Length).WithMessage(ImageContent.InvalidMessage)
+                .When(x => !string.IsNullOrEmpty(x.ProfileImageBase64));
+
+            RuleFor(x => x.Role)
+                .Must(RoleNames.IsKnown)
+                .WithMessage("Role must be Admin or Customer.")
+                .When(x => !string.IsNullOrWhiteSpace(x.Role));
         }
     }
 }

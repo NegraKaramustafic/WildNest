@@ -1,4 +1,5 @@
 using eCommerce.Model.Requests;
+using eCommerce.Services.Images;
 using FluentValidation;
 
 namespace eCommerce.Services.Validators
@@ -15,10 +16,14 @@ namespace eCommerce.Services.Validators
                 .MaximumLength(300).WithMessage("Description cannot exceed 300 characters.");
 
             RuleFor(x => x.IconUrl)
-                .MaximumLength(500).WithMessage("IconUrl cannot exceed 500 characters.");
+                .MaximumLength(500).WithMessage("Icon URL cannot exceed 500 characters.");
+
+            RuleFor(x => x.ImageBase64)
+                .MaximumLength(ImageContent.MaxBase64Length).WithMessage(ImageContent.InvalidMessage)
+                .When(x => !string.IsNullOrEmpty(x.ImageBase64));
 
             RuleFor(x => x.Criteria)
-                .IsInEnum().WithMessage("Criteria is required.");
+                .IsInEnum().WithMessage("Award rule is required.");
         }
     }
 }
