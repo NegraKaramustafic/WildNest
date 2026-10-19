@@ -21,6 +21,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>ml-models\review-sentiment.zip</TargetPath>
     </Content>
+    <EmbeddedResource Include="Images\Seed\*.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -45,7 +45,7 @@ class ActivitySchedule {
   bool get isUpcoming => endDateTime.isAfter(DateTime.now());
 
   bool get isBookable =>
-      status == ScheduleStatus.active && capacityLeft > 0;
+      status == ScheduleStatus.active && capacityLeft > 0 && isUpcoming;
 }
 
 ScheduleStatus parseScheduleStatus(dynamic value) {

@@ -17,9 +17,10 @@ class ScheduleProvider extends BaseProvider<ActivitySchedule> {
         'includeTotalCount': false,
         'activityId': activityId,
         'Status': 'Active',
+        'DateFrom': _apiToday(),
       },
     );
-    final items = result.items ?? [];
+    final items = (result.items ?? []).where((schedule) => schedule.isBookable).toList();
     items.sort((a, b) {
       if (a.isUpcoming != b.isUpcoming) {
         return a.isUpcoming ? -1 : 1;
@@ -38,8 +39,16 @@ class ScheduleProvider extends BaseProvider<ActivitySchedule> {
         'pageSize': pageSize,
         'includeTotalCount': false,
         'Status': 'Active',
+        'DateFrom': _apiToday(),
       },
     );
-    return result.items ?? [];
+    return (result.items ?? []).where((schedule) => schedule.isBookable).toList();
   }
+}
+
+String _apiToday() {
+  final now = DateTime.now();
+  final month = now.month.toString().padLeft(2, '0');
+  final day = now.day.toString().padLeft(2, '0');
+  return '${now.year}-$month-$day';
 }

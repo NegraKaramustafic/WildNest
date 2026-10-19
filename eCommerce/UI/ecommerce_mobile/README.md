@@ -1,17 +1,15 @@
-# ecommerce_mobile
+# WildNest mobile
 
-A new Flutter project.
+Visitor app for WildNest. Sign in with a Customer account. An Admin account opens ticket check.
 
-## Getting Started
+Start the API first. The steps, ports, and sign-in table are in the repository root `README.md`.
 
-This project is a starting point for a Flutter application.
+From this folder, Android emulator:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5126
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+A physical phone needs the PC's LAN address, for example `http://192.168.1.20:5126`, and Windows Firewall must allow inbound TCP on port 5126.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+`API_BASE_URL` is required. A trailing slash is optional.

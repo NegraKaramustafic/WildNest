@@ -104,7 +104,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddSingleton<ISecurityStampCache, SecurityStampCache>();
 var uploadDirectory = Path.Combine(builder.Environment.ContentRootPath, "uploads");
 Directory.CreateDirectory(uploadDirectory);
-NewsSeedImages.EnsurePresent(uploadDirectory);
+var seededImages = SeedImages.EnsurePresent(uploadDirectory);
 builder.Services.AddSingleton(new UploadSettings(uploadDirectory));
 builder.Services.AddSingleton<IStoredImageService, FileStoredImageService>();
 builder.Services.AddScoped<IAuthenticatedUserAccessor, HttpAuthenticatedUserAccessor>();
@@ -441,6 +441,7 @@ app.Logger.LogInformation(
     recommendationTrainingSettings.IntervalMinutes,
     recommendationTrainingSettings.NewReservationsBeforeRetrain,
     recommendationTrainingSettings.CheckIntervalMinutes);
+app.Logger.LogInformation("Seed images ready. Newly copied files: {Count}.", seededImages);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -507,7 +508,9 @@ static async Task MigrateDatabaseAsync(WebApplication app)
             var db = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
             logger.LogInformation("Applying database migrations (attempt {Attempt}/{MaxAttempts}).", attempt, maxAttempts);
             await db.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied.");
+            var clock = scope.ServiceProvider.GetRequiredService<ZooClock>();
+            await DemoDataSeeder.SeedAsync(db, clock.Today);
+            logger.LogInformation("Database migrations applied. Demo schedules are relative to {Today}.", clock.Today);
             return;
         }
         catch (Exception ex) when (attempt < maxAttempts)

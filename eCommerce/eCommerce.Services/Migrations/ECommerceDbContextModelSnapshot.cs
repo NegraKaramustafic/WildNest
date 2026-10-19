@@ -82,6 +82,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Help keepers prepare fruit for Kavi and join a guided feeding session with our Asian elephant.",
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1001.png",
                             Name = "Elephant Feeding Experience",
                             Price = 25.00m,
                             Status = 1
@@ -94,6 +95,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "A guided evening walk through the park to spot nocturnal animals as they become active.",
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1002.png",
                             Name = "Nocturnal Safari Walk",
                             Price = 30.00m,
                             Status = 1
@@ -106,6 +108,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Learn composition and lighting tips while photographing macaws and other birds in the aviary.",
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1003.png",
                             Name = "Bird Photography Workshop",
                             Price = 40.00m,
                             Status = 1
@@ -118,6 +121,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Spend a full day with keepers caring for Bao, from breakfast bamboo to enclosure enrichment.",
                             Duration = new TimeSpan(0, 7, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1004.png",
                             Name = "Panda Keeper for a Day",
                             Price = 120.00m,
                             Status = 0
@@ -131,6 +135,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Join keepers as they prepare fruit and bamboo snacks for Zara and watch her forage in the treetops.",
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1005.png",
                             Name = "Red Panda Snack Time",
                             Price = 20.00m,
                             Status = 1
@@ -144,6 +149,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Meet Milo and his troop at sunrise, then help scatter grapes and browse during their morning forage.",
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1006.png",
                             Name = "Lemur Morning Meet",
                             Price = 18.00m,
                             Status = 1
@@ -157,6 +163,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "A quiet late-afternoon walk to Luna's mountain habitat as she becomes active on the rocky ledges.",
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1007.png",
                             Name = "Snow Leopard Twilight Safari",
                             Price = 35.00m,
                             Status = 1
@@ -170,6 +177,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Guided adventure through the savanna habitat with a close-up look at Nala and her pride's daily routine.",
                             Duration = new TimeSpan(0, 2, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1008.png",
                             Name = "Lion Savanna Adventure",
                             Price = 45.00m,
                             Status = 1
@@ -183,6 +191,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Learn how scarlet macaws communicate, then practice call-and-response with Rio in the aviary.",
                             Duration = new TimeSpan(0, 1, 30, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1009.png",
                             Name = "Macaw Voice Workshop",
                             Price = 28.00m,
                             Status = 1
@@ -196,6 +205,7 @@ namespace eCommerce.Services.Migrations
                             CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Help design and place puzzle feeders for Bao, then watch him work out how to reach the bamboo.",
                             Duration = new TimeSpan(0, 1, 0, 0, 0),
+                            ImageUrl = "/media/00000000000000000000000000ac1010.png",
                             Name = "Panda Enrichment Hour",
                             Price = 32.00m,
                             Status = 1
@@ -375,6 +385,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Kavi is a gentle 15-year-old Asian elephant rescued from a logging camp. He loves watermelons and mud baths.",
                             Diet = "Herbivore",
                             Habitat = "Tropical",
+                            ImageUrl = "/media/00000000000000000000000000a11001.png",
                             IsActive = true,
                             Lifespan = "60-70 years",
                             Name = "Kavi",
@@ -390,6 +401,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Zara is a playful red panda who spends her days napping in the treetops. She is especially fond of bamboo shoots and apple slices.",
                             Diet = "Omnivore",
                             Habitat = "Temperate",
+                            ImageUrl = "/media/00000000000000000000000000a11002.png",
                             IsActive = true,
                             Lifespan = "8-12 years",
                             Name = "Zara",
@@ -405,6 +417,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Milo is a lively ring-tailed lemur who sunbathes with his troop each morning. He never misses a chance to steal a grape.",
                             Diet = "Omnivore",
                             Habitat = "Tropical",
+                            ImageUrl = "/media/00000000000000000000000000a11003.png",
                             IsActive = true,
                             Lifespan = "16-19 years",
                             Name = "Milo",
@@ -421,6 +434,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Luna is a quiet snow leopard often seen stretching on cool rocky ledges at dusk. She is shy with crowds but very curious.",
                             Diet = "Carnivore",
                             Habitat = "Mountain",
+                            ImageUrl = "/media/00000000000000000000000000a11004.png",
                             IsActive = true,
                             Lifespan = "15-18 years",
                             Name = "Luna",
@@ -437,6 +451,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Bao is a calm giant panda with a famously picky appetite. His keepers know he will do almost anything for fresh bamboo.",
                             Diet = "Herbivore",
                             Habitat = "Temperate",
+                            ImageUrl = "/media/00000000000000000000000000a11005.png",
                             IsActive = true,
                             Lifespan = "20 years",
                             Name = "Bao",
@@ -452,6 +467,7 @@ namespace eCommerce.Services.Migrations
                             Description = "Rio is a brightly colored scarlet macaw who greets visitors with an impressive vocal range. He loves mango and showing off.",
                             Diet = "Omnivore",
                             Habitat = "Tropical",
+                            ImageUrl = "/media/00000000000000000000000000a11006.png",
                             IsActive = true,
                             Lifespan = "40-50 years",
                             Name = "Rio",
@@ -468,12 +484,30 @@ namespace eCommerce.Services.Migrations
                             Description = "Nala is a confident lioness and one of the most popular residents of the savanna habitat. She spends warm afternoons dozing in the grass.",
                             Diet = "Carnivore",
                             Habitat = "Savanna",
+                            ImageUrl = "/media/00000000000000000000000000a11007.png",
                             IsActive = true,
                             Lifespan = "10-14 years",
                             Name = "Nala",
                             Species = "African Lion",
                             Tag = 1,
                             Weight = 160m
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AdoptionPrice = 12.00m,
+                            CategoryId = 3,
+                            CreatedAt = new DateTime(2026, 3, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Tiko is a steady Aldabra giant tortoise who spends his mornings grazing and his afternoons in a warm wallow.",
+                            Diet = "Herbivore",
+                            Habitat = "Coastal",
+                            ImageUrl = "/media/00000000000000000000000000a11008.png",
+                            IsActive = true,
+                            Lifespan = "80-120 years",
+                            Name = "Tiko",
+                            Species = "Aldabra Giant Tortoise",
+                            Tag = 3,
+                            Weight = 180m
                         });
                 });
 
@@ -1756,7 +1790,9 @@ namespace eCommerce.Services.Migrations
                         {
                             Id = 1,
                             CurrentAmount = 12400m,
+                            Description = "A small sanctuary in Costa Rica that protects macaws and other forest birds.",
                             GoalAmount = 20000m,
+                            ImageUrl = "/media/00000000000000000000000000b01001.png",
                             IsActive = true,
                             Location = "Costa Rica",
                             Name = "Sunbird Sanctuary"
@@ -1765,7 +1801,9 @@ namespace eCommerce.Services.Migrations
                         {
                             Id = 2,
                             CurrentAmount = 8200m,
+                            Description = "A mountain rescue centre in Nepal that cares for injured snow leopards and red pandas.",
                             GoalAmount = 15000m,
+                            ImageUrl = "/media/00000000000000000000000000b01002.png",
                             IsActive = true,
                             Location = "Nepal",
                             Name = "Mountain Haven Rescue"
@@ -1774,7 +1812,9 @@ namespace eCommerce.Services.Migrations
                         {
                             Id = 3,
                             CurrentAmount = 18900m,
+                            Description = "A coastal wildlife group in Australia that restores habitat for shore birds and reptiles.",
                             GoalAmount = 25000m,
+                            ImageUrl = "/media/00000000000000000000000000b01003.png",
                             IsActive = true,
                             Location = "Australia",
                             Name = "Coral Coast Wildlife"
