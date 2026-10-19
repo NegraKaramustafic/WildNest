@@ -18,6 +18,9 @@ namespace eCommerce.Services.Validators
             RuleFor(x => x.CategoryId)
                 .GreaterThan(0).WithMessage("CategoryId is required and must be greater than 0.");
 
+            RuleFor(x => x.Habitat)
+                .MaximumLength(100).WithMessage("Habitat cannot exceed 100 characters.");
+
             RuleFor(x => x.Description)
                 .MaximumLength(1000).WithMessage("Description cannot exceed 1000 characters.");
 

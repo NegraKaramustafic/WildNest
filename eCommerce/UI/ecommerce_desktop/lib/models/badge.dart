@@ -36,7 +36,6 @@ const badgeCriteriaValues = [
   'FirstBooking',
   'ThreeDonations',
   'FiveAdoptions',
-  'TenAnimalVisits',
 ];
 
 String badgeCriteriaLabel(String criteria) {
@@ -49,8 +48,6 @@ String badgeCriteriaLabel(String criteria) {
       return 'Three donations';
     case 'FiveAdoptions':
       return 'Five adoptions';
-    case 'TenAnimalVisits':
-      return 'Ten animal visits';
     default:
       return criteria.isEmpty ? '—' : criteria;
   }
@@ -66,8 +63,6 @@ String badgeAwardRule(String criteria) {
       return 'Awarded after three completed donations.';
     case 'FiveAdoptions':
       return 'Awarded after five completed adoptions.';
-    case 'TenAnimalVisits':
-      return 'Not awarded automatically. Visit tracking is not connected yet.';
     default:
       return 'Award rule is not configured.';
   }

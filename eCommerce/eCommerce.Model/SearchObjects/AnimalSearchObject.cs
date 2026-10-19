@@ -15,6 +15,11 @@ namespace eCommerce.Model.SearchObjects
         public AnimalTag? Tag { get; set; }
 
         /// <summary>
+        /// Substring matched against Name only.
+        /// </summary>
+        public string? Name { get; set; }
+
+        /// <summary>
         /// LIKE/FTS substring matched against Name and Species (case-insensitive).
         /// </summary>
         public string? FTS { get; set; }

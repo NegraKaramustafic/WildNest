@@ -17,6 +17,7 @@ class Animal {
   final AnimalTag tag;
   final bool isActive;
   final double? adoptionPrice;
+  final int activeAdoptionCount;
   final DateTime? createdAt;
 
   Animal({
@@ -34,6 +35,7 @@ class Animal {
     this.tag = AnimalTag.none,
     this.isActive = true,
     this.adoptionPrice,
+    this.activeAdoptionCount = 0,
     this.createdAt,
   });
 
@@ -53,6 +55,7 @@ class Animal {
       tag: parseAnimalTag(json['tag']),
       isActive: json['isActive'] as bool? ?? true,
       adoptionPrice: asDoubleOrNull(json['adoptionPrice']),
+      activeAdoptionCount: asInt(json['activeAdoptionCount']),
       createdAt: parseDateTime(json['createdAt']),
     );
   }

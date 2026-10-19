@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using eCommerce.Model.Enums;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -43,7 +44,38 @@ namespace eCommerce.Services
                 ThrowNotFound("Animal", id, "Animal not found.");
             }
 
-            return _mapper.Map<AnimalResponse>(entity);
+            var response = _mapper.Map<AnimalResponse>(entity);
+            await AttachActiveAdoptionCountsAsync(new[] { response });
+            return response;
+        }
+
+        public override async Task<PageResult<AnimalResponse>> GetAllAsync(AnimalSearchObject? search = null)
+        {
+            var page = await base.GetAllAsync(search);
+            await AttachActiveAdoptionCountsAsync(page.Items);
+            return page;
+        }
+
+        private async Task AttachActiveAdoptionCountsAsync(IReadOnlyCollection<AnimalResponse> animals)
+        {
+            if (animals.Count == 0)
+            {
+                return;
+            }
+
+            var ids = animals.Select(animal => animal.Id).ToList();
+            var counts = await _dbContext.Adoptions
+                .AsNoTracking()
+                .Where(adoption => ids.Contains(adoption.AnimalId) && adoption.Status == AdoptionStatus.Active)
+                .GroupBy(adoption => adoption.AnimalId)
+                .Select(group => new { AnimalId = group.Key, Count = group.Count() })
+                .ToListAsync();
+
+            var byAnimal = counts.ToDictionary(row => row.AnimalId, row => row.Count);
+            foreach (var animal in animals)
+            {
+                animal.ActiveAdoptionCount = byAnimal.TryGetValue(animal.Id, out var count) ? count : 0;
+            }
         }
 
         public override async Task<AnimalResponse> InsertAsync(AnimalInsertRequest request)
@@ -80,6 +112,12 @@ namespace eCommerce.Services
                 if (search.Tag.HasValue)
                 {
                     query = query.Where(a => a.Tag == search.Tag.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(search.Name))
+                {
+                    var name = search.Name.Trim();
+                    query = query.Where(a => a.Name.Contains(name));
                 }
 
                 if (!string.IsNullOrWhiteSpace(search.FTS))

@@ -11,7 +11,7 @@ class ApiClientException implements Exception {
 
 class SessionExpiredException extends ApiClientException {
   SessionExpiredException()
-      : super('Sesija je istekla. Prijavite se ponovo.');
+      : super('Your session has expired. Sign in again.');
 }
 
 class ApiErrorParser {

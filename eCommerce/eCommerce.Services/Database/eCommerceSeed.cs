@@ -858,14 +858,6 @@ namespace eCommerce.Services.Database
                 },
                 new
                 {
-                    Id = 4,
-                    Name = "Animal Whisperer",
-                    Description = "Visit 10 animal profiles",
-                    IconUrl = (string?)null,
-                    Criteria = eCommerce.Model.Enums.BadgeCriteria.TenAnimalVisits
-                },
-                new
-                {
                     Id = 5,
                     Name = "Conservation Hero",
                     Description = "Adopt 5 animals",

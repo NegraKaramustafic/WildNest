@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ecommerce_desktop/models/animal_category.dart';
 import 'package:ecommerce_desktop/providers/animal_category_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
+import 'package:ecommerce_desktop/widgets/admin_list.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -17,9 +18,13 @@ class AnimalCategoriesScreen extends StatefulWidget {
 }
 
 class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
+  static const _pageSize = 10;
+
   final _searchController = TextEditingController();
   Timer? _debounce;
   int _requestId = 0;
+  int _page = 1;
+  int _total = 0;
   bool _loading = true;
   String? _error;
   List<AnimalCategory> _categories = [];
@@ -47,14 +52,15 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
       final result = await context.read<AnimalCategoryProvider>().get(
         filter: {
           'Name': _searchController.text.trim(),
-          'Page': 1,
-          'PageSize': 100,
+          'Page': _page,
+          'PageSize': _pageSize,
           'IncludeTotalCount': true,
         },
       );
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _categories = result.items ?? [];
+        _total = result.totalCount ?? _categories.length;
         _loading = false;
       });
     } on SessionExpiredException {
@@ -172,7 +178,11 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
               controller: _searchController,
               onChanged: (_) {
                 _debounce?.cancel();
-                _debounce = Timer(const Duration(milliseconds: 300), _load);
+                _debounce = Timer(const Duration(milliseconds: 300), () {
+                  if (!mounted) return;
+                  setState(() => _page = 1);
+                  _load();
+                });
               },
               decoration: const InputDecoration(
                 hintText: 'Search categories...',
@@ -286,6 +296,16 @@ class _AnimalCategoriesScreenState extends State<AnimalCategoriesScreen> {
                       );
                     },
                   ),
+          ),
+          const Divider(height: 1),
+          ListPager(
+            page: _page,
+            pageSize: _pageSize,
+            total: _total,
+            onPage: (page) {
+              setState(() => _page = page);
+              _load();
+            },
           ),
         ],
       ),

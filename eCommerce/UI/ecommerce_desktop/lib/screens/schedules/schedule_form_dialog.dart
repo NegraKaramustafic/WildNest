@@ -9,18 +9,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-Future<bool> showScheduleFormDialog(BuildContext context, {Schedule? schedule}) async {
+Future<bool> showScheduleFormDialog(
+  BuildContext context, {
+  Schedule? schedule,
+  DateTime? initialDate,
+}) async {
   final saved = await showDialog<bool>(
     context: context,
-    builder: (_) => ScheduleFormDialog(schedule: schedule),
+    builder: (_) => ScheduleFormDialog(schedule: schedule, initialDate: initialDate),
   );
   return saved == true;
 }
 
 class ScheduleFormDialog extends StatefulWidget {
-  const ScheduleFormDialog({super.key, this.schedule});
+  const ScheduleFormDialog({super.key, this.schedule, this.initialDate});
 
   final Schedule? schedule;
+  final DateTime? initialDate;
 
   @override
   State<ScheduleFormDialog> createState() => _ScheduleFormDialogState();
@@ -45,7 +50,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   void initState() {
     super.initState();
     final schedule = widget.schedule;
-    final now = DateTime.now();
+    final now = widget.initialDate ?? DateTime.now();
     _date = schedule?.date ?? DateTime(now.year, now.month, now.day);
     _start = _timeFromDuration(schedule?.startTime) ?? const TimeOfDay(hour: 9, minute: 0);
     _end = _timeFromDuration(schedule?.endTime) ?? const TimeOfDay(hour: 10, minute: 0);

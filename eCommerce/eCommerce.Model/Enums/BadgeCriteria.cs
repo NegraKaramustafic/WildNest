@@ -8,7 +8,7 @@ namespace eCommerce.Model.Enums
         FirstAdoption = 0,
         FirstBooking = 1,
         ThreeDonations = 2,
-        TenAnimalVisits = 3,
+        // 3 was TenAnimalVisits. The number stays unused so FiveAdoptions remains 4.
         FiveAdoptions = 4
     }
 }
