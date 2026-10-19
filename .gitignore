@@ -410,3 +410,6 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 eCommerce/UI/ecommerce_mobile/FIT_RS2_LAB_Flutter_Cart_Orders_Reviews.md
+
+# Local delivery pack (release builds, encrypted env archive, release notes). Not part of git history.
+delivery/
