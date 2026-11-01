@@ -6,7 +6,7 @@ This note describes the code that is in the repository. It does not describe an 
 
 The recommender is an ML.NET `MatrixFactorization` model. It is trained only on activity reservations.
 
-A training row is one distinct visitor and one activity. The reservation counts only when its status is Confirmed or Completed. Each such pair is a positive interaction with label `1`. Reviews, ratings, animal, category, and adoption are not training rows and are not added to the score.
+A training row is one distinct visitor and one activity. The reservation counts only when its status is Confirmed or Completed. Each such pair is a positive interaction with label `1`. Reviews, ratings, animal, category, and adoption are not training rows. When an activity has at least one review, the model score or the popularity count is multiplied by the average rating divided by 5, and that product is stored as the score. An activity with no reviews keeps the base score. A lower average therefore ranks below an otherwise equal activity. Each suggestion still returns the average rating and the review count.
 
 Training runs in `RecommendationTrainer`. It does not run inside a recommendation request. `RecommendationTrainingHostedService` trains once when the API process starts, then checks again every `RECOMMENDATION_TRAINING_CHECK_MINUTES` (default 5). It trains again when `RECOMMENDATION_RETRAIN_INTERVAL_MINUTES` have passed (default 360) or when at least `RECOMMENDATION_RETRAIN_AFTER_NEW_RESERVATIONS` new confirmed or completed reservations exist since the last attempt (default 10). An administrator can train immediately with `POST /api/Recommendation/retrain`.
 
@@ -18,7 +18,7 @@ Matrix factorization is skipped, and the cache stays empty, unless there are at 
 
 `GET /api/Recommendation` reads the signed-in user from the JWT. `limit` defaults to 5 and must be from 1 to 20.
 
-Candidates are active activities that still have an active schedule today (not yet started) or on a later day. Activities the caller has already reserved, except a cancelled reservation, are left out.
+Candidates are active activities that still have an active schedule today (not yet started) or on a later day, and that schedule still has seats left (`CapacityLeft` greater than 0). An activity whose only future schedules are full is not a candidate. Activities the caller has already reserved, except a cancelled reservation, are left out.
 
 The caller gets matrix-factorization scores only when all of these are true:
 
@@ -28,7 +28,9 @@ The caller gets matrix-factorization scores only when all of these are true:
 
 Otherwise the list is the popularity fallback. The same fallback is used when the model returns no usable scores.
 
-Popularity is the number of confirmed and completed reservations for that activity. Activities with a count of zero are omitted. The highest counts come first.
+Popularity is the number of confirmed and completed reservations for that activity. That count is the base score. When the activity has at least one review, the score is the count multiplied by the average rating divided by 5. Activities with a count of zero are left out of this ranking. The highest scores come first, then the name.
+
+If the personalised list or the popularity list is shorter than `limit`, the remaining candidates are appended. Activities with no confirmed or completed reservations come first, the newest `CreatedAt` first, then the name. Each appended activity has one reason, `NewActivity`. An activity that already has a model or popularity reason does not receive that reason. An activity with an open future schedule is kept even when it has never been reserved.
 
 ### Reasons shown to the user
 
@@ -38,6 +40,7 @@ Each suggestion has one reason.
 | --- | --- | --- |
 | Personalised score | `SimilarReservations` | Visitors with similar reservations also booked this. |
 | Popularity fallback | `Popular` | Popular with visitors. |
+| New-activity backfill | `NewActivity` | New at the zoo. |
 
 The mobile home screen shows that sentence on the recommendation tile.
 

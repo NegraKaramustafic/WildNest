@@ -60,6 +60,8 @@ namespace eCommerce.Services
                 }
             }
 
+            items = AppendRemainingCandidates(context, items, take);
+
             return new RecommendationResponse
             {
                 GeneratedAt = DateTime.UtcNow,
@@ -119,6 +121,7 @@ namespace eCommerce.Services
                 .Where(activity => activity.Status == ActivityStatus.Active)
                 .Where(activity => activity.Schedules.Any(schedule =>
                     schedule.Status == ScheduleStatus.Active
+                    && schedule.CapacityLeft > 0
                     && (schedule.Date > today
                         || (schedule.Date == today && schedule.StartTime >= time))));
 
@@ -219,7 +222,7 @@ namespace eCommerce.Services
                 return new List<RecommendationItemResponse>();
             }
 
-            var scored = new List<(Activity Activity, float Score)>();
+            var scored = new List<(Activity Activity, double Score)>();
             for (var index = 0; index < activities.Count; index++)
             {
                 var score = scores[index];
@@ -228,7 +231,7 @@ namespace eCommerce.Services
                     continue;
                 }
 
-                scored.Add((activities[index], score));
+                scored.Add((activities[index], RoundScore(ApplyRating(activities[index], context, score))));
             }
 
             if (scored.Count < activities.Count)
@@ -246,7 +249,7 @@ namespace eCommerce.Services
                 .Select(item => BuildItem(
                     item.Activity,
                     context,
-                    Math.Round(item.Score, 4),
+                    item.Score,
                     RecommendationWeights.SimilarReservations,
                     RecommendationWeights.SimilarReservationsText))
                 .ToList();
@@ -261,17 +264,69 @@ namespace eCommerce.Services
                     return (Activity: activity, Count: count);
                 })
                 .Where(item => item.Count > 0)
-                .OrderByDescending(item => item.Count)
+                .Select(item => (
+                    Activity: item.Activity,
+                    Score: RoundScore(ApplyRating(item.Activity, context, item.Count))))
+                .OrderByDescending(item => item.Score)
                 .ThenBy(item => item.Activity.Name)
                 .Take(take)
                 .Select(item => BuildItem(
                     item.Activity,
                     context,
-                    item.Count,
+                    item.Score,
                     RecommendationWeights.Popular,
                     RecommendationWeights.PopularText))
                 .ToList();
         }
+
+        private static List<RecommendationItemResponse> AppendRemainingCandidates(
+            ScoringContext context,
+            List<RecommendationItemResponse> items,
+            int take)
+        {
+            var room = take - items.Count;
+            if (room <= 0)
+            {
+                return items;
+            }
+
+            var listed = items.Select(item => item.ActivityId).ToHashSet();
+            var extras = context.Candidates
+                .Where(activity => !listed.Contains(activity.Id))
+                .OrderByDescending(activity => ReservationCount(context, activity) == 0)
+                .ThenByDescending(activity => activity.CreatedAt)
+                .ThenBy(activity => activity.Name)
+                .Take(room)
+                .Select(activity => BuildItem(
+                    activity,
+                    context,
+                    RoundScore(ApplyRating(activity, context, ReservationCount(context, activity))),
+                    RecommendationWeights.NewActivity,
+                    RecommendationWeights.NewActivityText))
+                .ToList();
+
+            items.AddRange(extras);
+            return items;
+        }
+
+        private static int ReservationCount(ScoringContext context, Activity activity)
+        {
+            context.Popularity.TryGetValue(activity.Id, out var count);
+            return count;
+        }
+
+        private static double ApplyRating(Activity activity, ScoringContext context, double baseScore)
+        {
+            if (!context.ReviewStats.TryGetValue(activity.Id, out var stats) || stats.Count <= 0)
+            {
+                return baseScore;
+            }
+
+            var average = Math.Round(stats.Avg, 2);
+            return baseScore * (average / 5d);
+        }
+
+        private static double RoundScore(double score) => Math.Round(score, 4);
 
         private static RecommendationItemResponse BuildItem(
             Activity activity,

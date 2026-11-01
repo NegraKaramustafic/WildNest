@@ -170,6 +170,7 @@ namespace eCommerce.Services.Tests
                 UserMapper(),
                 new UserInsertValidator(),
                 new UserUpdateValidator(),
+                new UserPasswordChangeRequestValidator(),
                 new FakeCrypto(),
                 new TestUserAccessor { Admin = admin, UserId = userId },
                 cache,
