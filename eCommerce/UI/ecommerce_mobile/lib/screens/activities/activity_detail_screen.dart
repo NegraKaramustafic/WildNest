@@ -1,8 +1,10 @@
 import 'package:ecommerce_mobile/models/activity.dart';
 import 'package:ecommerce_mobile/models/activity_schedule.dart';
+import 'package:ecommerce_mobile/models/reservation.dart';
 import 'package:ecommerce_mobile/models/review.dart';
 import 'package:ecommerce_mobile/providers/activity_provider.dart';
 import 'package:ecommerce_mobile/providers/auth_provider.dart';
+import 'package:ecommerce_mobile/providers/reservation_provider.dart';
 import 'package:ecommerce_mobile/providers/review_provider.dart';
 import 'package:ecommerce_mobile/providers/schedule_provider.dart';
 import 'package:ecommerce_mobile/screens/activities/confirm_reservation_screen.dart';
@@ -31,6 +33,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
   List<Review> _reviews = [];
   ActivitySchedule? _selected;
   bool _hasReviewed = false;
+  bool _canReview = false;
   bool _loading = true;
   String? _error;
 
@@ -49,6 +52,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
       final activityProvider = context.read<ActivityProvider>();
       final scheduleProvider = context.read<ScheduleProvider>();
       final reviewProvider = context.read<ReviewProvider>();
+      final reservationProvider = context.read<ReservationProvider>();
       final userId = context.read<AuthProvider>().currentUserId;
       final activity = await activityProvider.getById(widget.activityId);
 
@@ -80,6 +84,28 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
         }
       }
 
+      var canReview = false;
+      if (userId != null && !hasReviewed) {
+        try {
+          final reservations = await reservationProvider.get(
+            filter: {
+              'activityId': widget.activityId,
+              'status': 'Completed',
+              'userId': userId,
+              'page': 1,
+              'pageSize': 1,
+            },
+          );
+          canReview = (reservations.items ?? []).any(
+            (reservation) =>
+                reservation.userId == userId &&
+                reservation.status == ReservationStatus.completed,
+          );
+        } catch (_) {
+          canReview = false;
+        }
+      }
+
       if (!mounted) return;
       final bookable = schedules.where((s) => s.isBookable).toList();
       setState(() {
@@ -87,6 +113,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
         _schedules = bookable;
         _reviews = reviews;
         _hasReviewed = hasReviewed;
+        _canReview = canReview;
         _selected = _selected != null
             ? bookable.where((s) => s.id == _selected!.id).firstOrNull
             : (bookable.isEmpty ? null : bookable.first);
@@ -350,7 +377,7 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
                             child: _ReviewTile(review: review),
                           ),
                         ),
-                      if (!_hasReviewed) ...[
+                      if (_canReview && !_hasReviewed) ...[
                         const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,

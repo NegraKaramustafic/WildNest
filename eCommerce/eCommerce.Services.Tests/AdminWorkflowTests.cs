@@ -131,7 +131,7 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
-        public async Task CustomerCancel_DoesNotRecordAnAdmin_AndStillReleasesCapacity()
+        public async Task CustomerCancel_RecordsTheCustomer_AndStillReleasesCapacity()
         {
             using var db = new SqliteDb();
             var world = await SeedWorldAsync(db.Context);
@@ -141,13 +141,19 @@ namespace eCommerce.Services.Tests
             var cancelled = await service.CancelAsync(world.UnpaidReservationId);
 
             Assert.Equal(ReservationStatus.Cancelled, cancelled.Status);
-            Assert.Null(cancelled.CancelledByUserId);
-            Assert.Null(cancelled.CancellationReason);
+            Assert.Equal(world.CustomerId, cancelled.CancelledByUserId);
+            Assert.Equal("Cancelled by the customer.", cancelled.CancellationReason);
+            Assert.NotNull(cancelled.CancelledAt);
             db.Context.ChangeTracker.Clear();
+            var stored = await db.Context.Reservations.FindAsync(world.UnpaidReservationId);
+            Assert.Equal(world.CustomerId, stored!.CancelledByUserId);
+            Assert.Equal("Cancelled by the customer.", stored.CancellationReason);
+            Assert.NotNull(stored.CancelledAt);
             var schedule = await db.Context.Schedules.FindAsync(world.UnpaidScheduleId);
             Assert.Equal(6, schedule!.CapacityLeft);
             var message = Assert.Single(publisher.Messages);
-            Assert.DoesNotContain("Reason:", message.Message);
+            Assert.Equal(NotificationType.ReservationCancelled, message.Type);
+            Assert.Contains("Reason: Cancelled by the customer.", message.Message);
             Assert.EndsWith(".", message.Message);
         }
 

@@ -54,6 +54,11 @@ namespace eCommerce.Services.ReservationStateMachine
                 throw new ClientException("This schedule is not active.");
             }
 
+            if (schedule.Activity.Status != ActivityStatus.Active)
+            {
+                throw new ClientException("This activity is not available for reservation.");
+            }
+
             var startsAt = schedule.Date.ToDateTime(schedule.StartTime);
             if (startsAt < _zooClock.ToLocal(DateTime.UtcNow))
             {
@@ -75,9 +80,12 @@ namespace eCommerce.Services.ReservationStateMachine
             await using var transaction = await DbContext.Database.BeginTransactionAsync();
             try
             {
+                await EnsureActivityAvailableAsync(schedule.ActivityId);
+
                 var claimed = await DbContext.Schedules
                     .Where(s => s.Id == schedule.Id
                         && s.Status == ScheduleStatus.Active
+                        && s.Activity.Status == ActivityStatus.Active
                         && s.CapacityLeft >= request.GuestCount)
                     .ExecuteUpdateAsync(setters => setters.SetProperty(
                         s => s.CapacityLeft,
@@ -85,6 +93,16 @@ namespace eCommerce.Services.ReservationStateMachine
 
                 if (claimed != 1)
                 {
+                    var activityStatus = await DbContext.Activities
+                        .AsNoTracking()
+                        .Where(activity => activity.Id == schedule.ActivityId)
+                        .Select(activity => (ActivityStatus?)activity.Status)
+                        .FirstOrDefaultAsync();
+                    if (activityStatus != ActivityStatus.Active)
+                    {
+                        throw new ClientException("This activity is not available for reservation.");
+                    }
+
                     throw new ClientException("Not enough spots available.");
                 }
 
@@ -117,6 +135,19 @@ namespace eCommerce.Services.ReservationStateMachine
             }
 
             return await MapResponseAsync(entity);
+        }
+
+        private async Task EnsureActivityAvailableAsync(int activityId)
+        {
+            var status = await DbContext.Activities
+                .AsNoTracking()
+                .Where(activity => activity.Id == activityId)
+                .Select(activity => (ActivityStatus?)activity.Status)
+                .FirstOrDefaultAsync();
+            if (status != ActivityStatus.Active)
+            {
+                throw new ClientException("This activity is not available for reservation.");
+            }
         }
 
         private static bool IsDuplicateBooking(DbUpdateException ex)

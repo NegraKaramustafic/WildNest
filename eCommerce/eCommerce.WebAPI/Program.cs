@@ -308,6 +308,8 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IScheduleReminderService, ScheduleReminderService>();
 builder.Services.AddHostedService<ScheduleReminderHostedService>();
+builder.Services.AddScoped<IReservationHoldService, ReservationHoldService>();
+builder.Services.AddHostedService<ReservationHoldHostedService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
 builder.Services.AddSingleton<RecommendationTrainer>();
 builder.Services.AddHostedService<RecommendationTrainingHostedService>();

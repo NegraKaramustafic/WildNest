@@ -17,7 +17,7 @@ namespace eCommerce.Model.Requests
         [Required]
         public TimeOnly EndTime { get; set; }
 
-        public int? CapacityLeft { get; set; }
+        public int? Capacity { get; set; }
 
         public ScheduleStatus Status { get; set; } = ScheduleStatus.Active;
     }
