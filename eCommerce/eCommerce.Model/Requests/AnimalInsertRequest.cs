@@ -26,7 +26,18 @@ namespace eCommerce.Model.Requests
         [MaxLength(1000)]
         public string? Description { get; set; }
 
+        [MaxLength(500)]
         public string? ImageUrl { get; set; }
+
+        /// <summary>
+        /// PNG or JPEG payload. When set, it replaces ImageUrl.
+        /// </summary>
+        public string? ImageBase64 { get; set; }
+
+        /// <summary>
+        /// image/png or image/jpeg. Required together with ImageBase64.
+        /// </summary>
+        public string? ImageContentType { get; set; }
 
         public AnimalTag Tag { get; set; } = AnimalTag.None;
 

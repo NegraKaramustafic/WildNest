@@ -329,6 +329,8 @@ builder.Services.AddScoped<IValidator<ActivityTypeInsertRequest>, ActivityTypeIn
 builder.Services.AddScoped<IValidator<ActivityTypeUpdateRequest>, ActivityTypeUpdateValidator>();
 builder.Services.AddScoped<IValidator<AnimalInsertRequest>, AnimalInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalUpdateRequest>, AnimalUpdateValidator>();
+builder.Services.AddScoped<IValidator<ActivityInsertRequest>, ActivityInsertValidator>();
+builder.Services.AddScoped<IValidator<ActivityUpdateRequest>, ActivityUpdateValidator>();
 builder.Services.AddScoped<IValidator<ScheduleInsertRequest>, ScheduleInsertValidator>();
 builder.Services.AddScoped<IValidator<ScheduleUpdateRequest>, ScheduleUpdateValidator>();
 builder.Services.AddScoped<IValidator<TicketInsertRequest>, TicketInsertValidator>();

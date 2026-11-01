@@ -6,7 +6,9 @@ import 'package:ecommerce_desktop/providers/animal_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:ecommerce_desktop/utils/formatters.dart';
+import 'package:ecommerce_desktop/utils/image_bytes.dart';
 import 'package:ecommerce_desktop/utils/json_parsers.dart';
+import 'package:ecommerce_desktop/widgets/image_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -63,7 +65,12 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   late final TextEditingController _duration;
   late final TextEditingController _price;
   late final TextEditingController _capacity;
-  late final TextEditingController _imageUrl;
+  Uint8List? _pickedBytes;
+  String? _pickedBase64;
+  String? _pickedType;
+  String? _existingUrl;
+  bool _clearImage = false;
+  String? _imageError;
 
   List<Animal> _animals = [];
   late List<ActivityType> _types;
@@ -90,7 +97,7 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
     _capacity = TextEditingController(
       text: activity == null ? '' : activity.capacity.toString(),
     );
-    _imageUrl = TextEditingController(text: activity?.imageUrl ?? '');
+    _existingUrl = activity?.imageUrl;
     _animalId = activity?.animalId;
     _types = List<ActivityType>.of(widget.types);
     _activityTypeId = activity?.activityTypeId;
@@ -121,7 +128,6 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
     _duration.dispose();
     _price.dispose();
     _capacity.dispose();
-    _imageUrl.dispose();
     super.dispose();
   }
 
@@ -166,8 +172,24 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
     return double.tryParse(text);
   }
 
+  Future<void> _pickImage() async {
+    final result = await pickPngOrJpeg();
+    if (!mounted) return;
+    setState(() {
+      _imageError = result.error;
+      if (result.image != null) {
+        _pickedBytes = result.image!.bytes;
+        _pickedBase64 = result.image!.base64;
+        _pickedType = result.image!.contentType;
+        _clearImage = false;
+      }
+    });
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final imageMessage = _pickedBytes == null ? null : imageValidationMessage(_pickedBytes!);
+    setState(() => _imageError = imageMessage);
+    if (!_formKey.currentState!.validate() || imageMessage != null) return;
 
     final minutes = int.parse(_duration.text.trim());
     final body = {
@@ -178,7 +200,9 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
       'duration': minutesToTimeSpan(minutes),
       'price': _parseNumber(_price.text),
       'capacity': int.parse(_capacity.text.trim()),
-      'imageUrl': blankToNull(_imageUrl.text),
+      'imageUrl': _clearImage ? '' : _existingUrl,
+      'imageBase64': _pickedBase64,
+      'imageContentType': _pickedType,
     };
 
     setState(() {
@@ -403,15 +427,20 @@ class _ActivityFormDialogState extends State<ActivityFormDialog> {
   }
 
   Widget _imageField() {
-    return TextFormField(
-      controller: _imageUrl,
-      decoration: const InputDecoration(labelText: 'Image URL'),
-      validator: (value) {
-        if ((value?.trim().length ?? 0) > 500) {
-          return 'Image URL cannot be longer than 500 characters.';
-        }
-        return null;
-      },
+    return ImageField(
+      bytes: _clearImage ? null : _pickedBytes,
+      existingUrl: _clearImage ? null : _existingUrl,
+      error: _imageError,
+      onPick: _pickImage,
+      onClear: (_pickedBytes != null || (_existingUrl != null && !_clearImage))
+          ? () => setState(() {
+              _pickedBytes = null;
+              _pickedBase64 = null;
+              _pickedType = null;
+              _clearImage = true;
+              _imageError = null;
+            })
+          : null,
     );
   }
 }

@@ -4,7 +4,9 @@ import 'package:ecommerce_desktop/providers/animal_category_provider.dart';
 import 'package:ecommerce_desktop/providers/animal_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
+import 'package:ecommerce_desktop/utils/image_bytes.dart';
 import 'package:ecommerce_desktop/utils/json_parsers.dart';
+import 'package:ecommerce_desktop/widgets/image_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -35,8 +37,13 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
   late final TextEditingController _weight;
   late final TextEditingController _lifespan;
   late final TextEditingController _description;
-  late final TextEditingController _imageUrl;
   late final TextEditingController _adoptionPrice;
+  Uint8List? _pickedBytes;
+  String? _pickedBase64;
+  String? _pickedType;
+  String? _existingUrl;
+  bool _clearImage = false;
+  String? _imageError;
 
   List<AnimalCategory> _categories = [];
   int? _categoryId;
@@ -61,7 +68,7 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
     );
     _lifespan = TextEditingController(text: animal?.lifespan ?? '');
     _description = TextEditingController(text: animal?.description ?? '');
-    _imageUrl = TextEditingController(text: animal?.imageUrl ?? '');
+    _existingUrl = animal?.imageUrl;
     _adoptionPrice = TextEditingController(
       text: animal?.adoptionPrice == null ? '' : _numberText(animal!.adoptionPrice!),
     );
@@ -85,7 +92,6 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
     _weight.dispose();
     _lifespan.dispose();
     _description.dispose();
-    _imageUrl.dispose();
     _adoptionPrice.dispose();
     super.dispose();
   }
@@ -127,8 +133,24 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
     return double.tryParse(text);
   }
 
+  Future<void> _pickImage() async {
+    final result = await pickPngOrJpeg();
+    if (!mounted) return;
+    setState(() {
+      _imageError = result.error;
+      if (result.image != null) {
+        _pickedBytes = result.image!.bytes;
+        _pickedBase64 = result.image!.base64;
+        _pickedType = result.image!.contentType;
+        _clearImage = false;
+      }
+    });
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final imageMessage = _pickedBytes == null ? null : imageValidationMessage(_pickedBytes!);
+    setState(() => _imageError = imageMessage);
+    if (!_formKey.currentState!.validate() || imageMessage != null) return;
     if (_categoryId == null) {
       setState(() => _error = 'Select a category.');
       return;
@@ -143,7 +165,9 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
       'weight': _parseNumber(_weight.text) ?? 0,
       'lifespan': blankToNull(_lifespan.text),
       'description': blankToNull(_description.text),
-      'imageUrl': blankToNull(_imageUrl.text),
+      'imageUrl': _clearImage ? '' : _existingUrl,
+      'imageBase64': _pickedBase64,
+      'imageContentType': _pickedType,
       'tag': animalTagApiValue(_tag),
       'isActive': _isActive,
       'adoptionPrice': _parseNumber(_adoptionPrice.text),
@@ -229,7 +253,21 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
                         const SizedBox(height: 12),
                         _adoptionField(),
                         const SizedBox(height: 12),
-                        _optionalField(_imageUrl, 'Image URL', 500),
+                        ImageField(
+                          bytes: _clearImage ? null : _pickedBytes,
+                          existingUrl: _clearImage ? null : _existingUrl,
+                          error: _imageError,
+                          onPick: _pickImage,
+                          onClear: (_pickedBytes != null || (_existingUrl != null && !_clearImage))
+                              ? () => setState(() {
+                                  _pickedBytes = null;
+                                  _pickedBase64 = null;
+                                  _pickedType = null;
+                                  _clearImage = true;
+                                  _imageError = null;
+                                })
+                              : null,
+                        ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _description,

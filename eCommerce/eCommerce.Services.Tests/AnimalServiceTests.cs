@@ -2,6 +2,7 @@ using eCommerce.Model.Enums;
 using eCommerce.Model.Requests;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
+using eCommerce.Services.Images;
 using eCommerce.Services.Validators;
 using FluentValidation;
 using MapsterMapper;
@@ -85,7 +86,19 @@ namespace eCommerce.Services.Tests
                 new AnimalInsertValidator(),
                 new AnimalUpdateValidator(),
                 new ZooClock("Europe/Sarajevo"),
+                new UnusedImages(),
                 new SilentLoggerFactory());
+        }
+
+        private sealed class UnusedImages : IStoredImageService
+        {
+            public string Save(byte[] content) => throw new InvalidOperationException("This test does not upload an image.");
+
+            public void Delete(string? relativeUrl)
+            {
+            }
+
+            public StoredImageFile? Read(string fileName) => null;
         }
 
         private static Adoption Adoption(int userId, int animalId, AdoptionStatus status)

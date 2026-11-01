@@ -8,6 +8,8 @@ using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.ActivityStateMachine;
 using eCommerce.Services.Database;
+using eCommerce.Services.Images;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -19,17 +21,26 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
     protected BaseActivityState ActivityState { get; }
 
     private readonly IAuthenticatedUserAccessor _userAccessor;
+    private readonly IValidator<ActivityInsertRequest> _insertValidator;
+    private readonly IValidator<ActivityUpdateRequest> _updateValidator;
+    private readonly IStoredImageService _images;
 
     public ActivityService(
         ECommerceDbContext dbContext,
         MapsterMapper.IMapper mapper,
         BaseActivityState activityState,
         IAuthenticatedUserAccessor userAccessor,
+        IValidator<ActivityInsertRequest> insertValidator,
+        IValidator<ActivityUpdateRequest> updateValidator,
+        IStoredImageService images,
         ILoggerFactory loggerFactory)
         : base(mapper, dbContext, loggerFactory)
     {
         ActivityState = activityState;
         _userAccessor = userAccessor;
+        _insertValidator = insertValidator;
+        _updateValidator = updateValidator;
+        _images = images;
     }
 
     protected override Task<IQueryable<Activity>> IncludeRelatedEntitiesAsync(ActivitySearchObject? search, IQueryable<Activity> query = null!)
@@ -83,34 +94,97 @@ public class ActivityService : BaseReadService<Activity, ActivityResponse, Activ
         return page;
     }
 
-    public Task<ActivityResponse> InsertAsync(ActivityInsertRequest request)
+    public async Task<ActivityResponse> InsertAsync(ActivityInsertRequest request)
     {
-        var state = ActivityState.GetActivityState(nameof(InitialActivityState));
-        return state.InsertAsync(request);
+        await ValidateInsertAsync(request);
+
+        string? created = null;
+        try
+        {
+            created = ImageUpload.StoreIfPresent(_images, request.ImageBase64, request.ImageContentType);
+            request.ImageUrl = ImageUpload.ResolveUploaded(null, request.ImageUrl, created);
+            request.ImageBase64 = null;
+            var state = ActivityState.GetActivityState(nameof(InitialActivityState));
+            var saved = await state.InsertAsync(request);
+            created = null;
+            return saved;
+        }
+        catch
+        {
+            _images.Delete(created);
+            throw;
+        }
     }
 
     public async Task<ActivityResponse> UpdateAsync(int id, ActivityUpdateRequest request)
     {
-        var entity = await _dbContext.Activities.FindAsync(id);
+        await ValidateUpdateAsync(request);
+
+        var entity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == id);
         if (entity == null)
         {
             ThrowNotFound("Activity", id, "Activity not found.");
         }
 
         var state = ActivityState.GetActivityState(entity.Status);
-        return await state.UpdateAsync(id, request);
+        if (!state.GetAllowedActions().Contains(nameof(DraftActivityState.UpdateAsync)))
+        {
+            return await state.UpdateAsync(id, request);
+        }
+
+        var previousImage = entity.ImageUrl;
+        string? created = null;
+        try
+        {
+            created = ImageUpload.StoreIfPresent(_images, request.ImageBase64, request.ImageContentType);
+            request.ImageUrl = ImageUpload.ResolveUploaded(previousImage, request.ImageUrl, created);
+            request.ImageBase64 = null;
+            var saved = await state.UpdateAsync(id, request);
+            created = null;
+            if (!string.Equals(previousImage, saved.ImageUrl, StringComparison.Ordinal))
+            {
+                _images.Delete(previousImage);
+            }
+
+            return saved;
+        }
+        catch
+        {
+            _images.Delete(created);
+            throw;
+        }
     }
 
     public async Task DeleteAsync(int id)
     {
-        var entity = await _dbContext.Activities.FindAsync(id);
+        var entity = await _dbContext.Activities.FirstOrDefaultAsync(activity => activity.Id == id);
         if (entity == null)
         {
             ThrowNotFound("Activity", id, "Activity not found.");
         }
 
+        var image = entity.ImageUrl;
         var state = ActivityState.GetActivityState(entity.Status);
         await state.DeleteAsync(id);
+        _images.Delete(image);
+    }
+
+    private async Task ValidateInsertAsync(ActivityInsertRequest request)
+    {
+        var result = await _insertValidator.ValidateAsync(request);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
+    }
+
+    private async Task ValidateUpdateAsync(ActivityUpdateRequest request)
+    {
+        var result = await _updateValidator.ValidateAsync(request);
+        if (!result.IsValid)
+        {
+            throw new ValidationException(result.Errors);
+        }
     }
 
     public async Task<ActivityResponse> ActivateAsync(int id)

@@ -1,6 +1,7 @@
 import 'package:ecommerce_mobile/models/animal.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/widgets/animal_visuals.dart';
+import 'package:ecommerce_mobile/widgets/authorized_image.dart';
 import 'package:flutter/material.dart';
 
 class AnimalCard extends StatelessWidget {
@@ -34,10 +35,9 @@ class AnimalCard extends StatelessWidget {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(24),
                         ),
-                        child: Image.network(
-                          animal.imageUrl!,
+                        child: AuthorizedImage(
+                          url: animal.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _Emoji(animal: animal),
                         ),
                       )
                     : _Emoji(animal: animal),

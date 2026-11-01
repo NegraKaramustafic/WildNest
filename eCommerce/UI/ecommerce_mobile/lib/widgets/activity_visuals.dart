@@ -1,4 +1,5 @@
 import 'package:ecommerce_mobile/theme/app_colors.dart';
+import 'package:ecommerce_mobile/widgets/authorized_image.dart';
 import 'package:flutter/material.dart';
 
 class ActivityVisual extends StatelessWidget {
@@ -15,12 +16,10 @@ class ActivityVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = imageUrl?.trim();
     if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
+      return AuthorizedImage(
+        url: url,
         fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (_, _, _) => _fallback(),
+        fallbackIcon: Icons.local_activity_outlined,
       );
     }
     return _fallback();
