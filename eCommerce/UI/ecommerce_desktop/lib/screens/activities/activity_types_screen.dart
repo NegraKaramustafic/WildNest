@@ -452,7 +452,17 @@ class _ActivityTypeDialogState extends State<_ActivityTypeDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_isEdit ? 'Edit activity type' : 'New activity type'),
+      titlePadding: const EdgeInsets.fromLTRB(24, 8, 8, 0),
+      title: Row(
+        children: [
+          Expanded(child: Text(_isEdit ? 'Edit activity type' : 'New activity type')),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: _saving ? null : () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
       content: SizedBox(
         width: 420,
         child: Form(

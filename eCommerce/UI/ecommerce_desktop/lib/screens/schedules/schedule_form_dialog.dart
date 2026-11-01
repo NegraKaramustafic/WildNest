@@ -249,16 +249,27 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 680),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+          padding: const EdgeInsets.fromLTRB(24, 16, 16, 18),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _isEdit ? 'Edit schedule' : 'New schedule',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _isEdit ? 'Edit schedule' : 'New schedule',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: _saving ? null : () => Navigator.pop(context, false),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Flexible(

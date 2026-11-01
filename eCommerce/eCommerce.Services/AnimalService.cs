@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using eCommerce.Model.Enums;
+using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -162,9 +163,37 @@ namespace eCommerce.Services
                 ThrowNotFound("Animal", id, "Animal not found.");
             }
 
+            var activityCount = await _dbContext.Activities.CountAsync(activity => activity.AnimalId == id);
+            var adoptionCount = await _dbContext.Adoptions.CountAsync(adoption => adoption.AnimalId == id);
+            if (activityCount > 0 || adoptionCount > 0)
+            {
+                throw new ClientException(InUseMessage(activityCount, adoptionCount));
+            }
+
             var image = entity.ImageUrl;
             await base.DeleteAsync(id);
             _images.Delete(image);
+        }
+
+        private static string InUseMessage(int activityCount, int adoptionCount)
+        {
+            var parts = new List<string>();
+            if (activityCount > 0)
+            {
+                parts.Add(CountLabel(activityCount, "activity", "activities"));
+            }
+
+            if (adoptionCount > 0)
+            {
+                parts.Add(CountLabel(adoptionCount, "adoption", "adoptions"));
+            }
+
+            return $"This animal is used by {string.Join(" and ", parts)} and cannot be deleted.";
+        }
+
+        private static string CountLabel(int count, string singular, string plural)
+        {
+            return $"{count} {(count == 1 ? singular : plural)}";
         }
 
         private async Task ValidateInsertAsync(AnimalInsertRequest request)

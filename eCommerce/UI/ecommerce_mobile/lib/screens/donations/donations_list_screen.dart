@@ -12,7 +12,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class DonationsListScreen extends StatefulWidget {
-  const DonationsListScreen({super.key});
+  const DonationsListScreen({super.key, this.showBack = true});
+
+  final bool showBack;
 
   @override
   State<DonationsListScreen> createState() => _DonationsListScreenState();
@@ -59,7 +61,10 @@ class _DonationsListScreenState extends State<DonationsListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            WildNestHeader(showBack: true, onBack: () => Navigator.pop(context)),
+            WildNestHeader(
+              showBack: widget.showBack,
+              onBack: () => Navigator.pop(context),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Text(
