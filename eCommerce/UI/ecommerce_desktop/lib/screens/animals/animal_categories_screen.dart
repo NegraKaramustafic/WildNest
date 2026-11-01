@@ -342,7 +342,17 @@ class _CategoryNameDialogState extends State<_CategoryNameDialog> {
   Widget build(BuildContext context) {
     final isEdit = widget.initial.isNotEmpty;
     return AlertDialog(
-      title: Text(isEdit ? 'Edit category' : 'New category'),
+      titlePadding: const EdgeInsets.fromLTRB(24, 8, 8, 0),
+      title: Row(
+        children: [
+          Expanded(child: Text(isEdit ? 'Edit category' : 'New category')),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
       content: Form(
         key: _formKey,
         child: TextFormField(

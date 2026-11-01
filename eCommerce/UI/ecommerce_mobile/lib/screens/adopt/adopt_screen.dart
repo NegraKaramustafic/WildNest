@@ -14,7 +14,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class AdoptScreen extends StatefulWidget {
-  const AdoptScreen({super.key});
+  const AdoptScreen({super.key, this.showBack = false});
+
+  final bool showBack;
 
   @override
   State<AdoptScreen> createState() => _AdoptScreenState();
@@ -100,7 +102,10 @@ class _AdoptScreenState extends State<AdoptScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const WildNestHeader(),
+          WildNestHeader(
+            showBack: widget.showBack,
+            onBack: () => Navigator.of(context).maybePop(),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
             child: Text(

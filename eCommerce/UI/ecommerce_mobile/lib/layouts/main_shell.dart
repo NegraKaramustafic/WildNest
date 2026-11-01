@@ -1,5 +1,6 @@
-import 'package:ecommerce_mobile/screens/adopt/adopt_screen.dart';
+import 'package:ecommerce_mobile/screens/activities/activities_list_screen.dart';
 import 'package:ecommerce_mobile/screens/animals/animals_list_screen.dart';
+import 'package:ecommerce_mobile/screens/donations/donations_list_screen.dart';
 import 'package:ecommerce_mobile/screens/home/home_screen.dart';
 import 'package:ecommerce_mobile/screens/profile/profile_screen.dart';
 import 'package:ecommerce_mobile/providers/notification_provider.dart';
@@ -18,12 +19,13 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
   final _homeKey = GlobalKey<NavigatorState>();
   final _animalsKey = GlobalKey<NavigatorState>();
-  final _adoptKey = GlobalKey<NavigatorState>();
+  final _activitiesKey = GlobalKey<NavigatorState>();
+  final _donateKey = GlobalKey<NavigatorState>();
   final _profileKey = GlobalKey<NavigatorState>();
   NotificationProvider? _notifications;
 
   List<GlobalKey<NavigatorState>> get _keys =>
-      [_homeKey, _animalsKey, _adoptKey, _profileKey];
+      [_homeKey, _animalsKey, _activitiesKey, _donateKey, _profileKey];
 
   @override
   void didChangeDependencies() {
@@ -69,8 +71,12 @@ class _MainShellState extends State<MainShell> {
               child: const AnimalsListScreen(),
             ),
             _TabNavigator(
-              navigatorKey: _adoptKey,
-              child: const AdoptScreen(),
+              navigatorKey: _activitiesKey,
+              child: const ActivitiesListScreen(showBack: false),
+            ),
+            _TabNavigator(
+              navigatorKey: _donateKey,
+              child: const DonationsListScreen(showBack: false),
             ),
             _TabNavigator(
               navigatorKey: _profileKey,
@@ -111,9 +117,14 @@ class _MainShellState extends State<MainShell> {
                 label: 'Animals',
               ),
               NavigationDestination(
+                icon: Icon(Icons.local_activity_outlined, color: AppColors.navUnselected),
+                selectedIcon: Icon(Icons.local_activity, color: AppColors.sage),
+                label: 'Activities',
+              ),
+              NavigationDestination(
                 icon: Icon(Icons.favorite_border, color: AppColors.navUnselected),
                 selectedIcon: Icon(Icons.favorite, color: AppColors.sage),
-                label: 'Adopt',
+                label: 'Donate',
               ),
               NavigationDestination(
                 icon: Icon(Icons.person_outline, color: AppColors.navUnselected),

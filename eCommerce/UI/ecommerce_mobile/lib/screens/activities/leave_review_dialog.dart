@@ -54,11 +54,6 @@ class _LeaveReviewDialogState extends State<LeaveReviewDialog> {
       Navigator.pop(context, true);
     } on ApiClientException catch (e) {
       if (!mounted) return;
-      final already = e.message.toLowerCase().contains('already reviewed');
-      if (already) {
-        Navigator.pop(context, true);
-        return;
-      }
       alertBox(context, 'Error', e.message);
     } catch (e) {
       if (!mounted) return;

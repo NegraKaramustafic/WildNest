@@ -5,6 +5,7 @@ import 'package:ecommerce_mobile/providers/animal_provider.dart';
 import 'package:ecommerce_mobile/providers/news_provider.dart';
 import 'package:ecommerce_mobile/providers/recommendation_provider.dart';
 import 'package:ecommerce_mobile/screens/activities/activities_list_screen.dart';
+import 'package:ecommerce_mobile/screens/adopt/adopt_screen.dart';
 import 'package:ecommerce_mobile/screens/activities/activity_detail_screen.dart';
 import 'package:ecommerce_mobile/screens/animals/animal_detail_screen.dart';
 import 'package:ecommerce_mobile/screens/donations/donations_list_screen.dart';
@@ -35,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Animal> _animals = [];
   List<RecommendationItem> _recommended = [];
   List<NewsItem> _news = [];
+  String? _recommendedError;
+  String? _newsError;
   bool _loading = true;
 
   @override
@@ -44,7 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _recommendedError = null;
+      _newsError = null;
+    });
     try {
       final animalProvider = context.read<AnimalProvider>();
       final recommendationProvider = context.read<RecommendationProvider>();
@@ -54,22 +61,38 @@ class _HomeScreenState extends State<HomeScreen> {
         filter: {'page': 1, 'pageSize': 20, 'includeTotalCount': false},
       );
       var recommended = <RecommendationItem>[];
+      String? recommendedError;
       try {
         recommended = await recommendationProvider.getRecommended(limit: 4);
-      } catch (_) {}
+      } catch (error) {
+        if (shouldIgnoreError(error)) {
+          if (mounted) setState(() => _loading = false);
+          return;
+        }
+        recommendedError = error.toString();
+      }
       var news = <NewsItem>[];
+      String? newsError;
       try {
         final newsResult = await newsProvider.get(
           filter: {'page': 1, 'pageSize': 3, 'includeTotalCount': false},
         );
         news = newsResult.items ?? [];
-      } catch (_) {}
+      } catch (error) {
+        if (shouldIgnoreError(error)) {
+          if (mounted) setState(() => _loading = false);
+          return;
+        }
+        newsError = error.toString();
+      }
 
       if (!mounted) return;
       setState(() {
         _animals = (animalsResult.items ?? []).where((a) => a.isActive).toList();
         _recommended = recommended;
         _news = news;
+        _recommendedError = recommendedError;
+        _newsError = newsError;
         _loading = false;
       });
     } catch (e) {
@@ -122,7 +145,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         _QuickAction(
                           emoji: '💚',
                           label: 'Adopt',
-                          onTap: () => widget.onOpenTab(2),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const Scaffold(
+                                  backgroundColor: AppColors.background,
+                                  body: AdoptScreen(showBack: true),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 10),
                         _QuickAction(
@@ -190,6 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: CircularProgressIndicator(color: AppColors.sage),
                       ),
                     )
+                  else if (_recommendedError != null)
+                    _SectionError(message: _recommendedError!, onRetry: _load)
                   else if (_recommended.isEmpty)
                     const Padding(
                       padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -236,6 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(child: CircularProgressIndicator(color: AppColors.sage)),
                     )
+                  else if (_newsError != null)
+                    _SectionError(message: _newsError!, onRetry: _load)
                   else if (_news.isEmpty)
                     const Padding(
                       padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
@@ -282,6 +318,28 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionError extends StatelessWidget {
+  const _SectionError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(message, style: const TextStyle(color: AppColors.heart)),
+          const SizedBox(height: 8),
+          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
         ],
       ),
     );

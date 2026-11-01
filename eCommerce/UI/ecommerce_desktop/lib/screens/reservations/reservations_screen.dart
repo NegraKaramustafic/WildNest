@@ -207,30 +207,61 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   }
 
   Future<void> _details(Reservation reservation) async {
+    final cancelled = reservation.status == ReservationStatus.cancelled;
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(reservation.code),
         content: SizedBox(
-          width: 480,
+          width: 520,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                DetailLine(label: 'Customer', value: _text(reservation.userFullName)),
-                DetailLine(label: 'Activity', value: _text(reservation.activityName)),
-                DetailLine(
-                  label: 'Schedule',
-                  value: '${formatDate(reservation.scheduleDate)}, ${formatClock(reservation.scheduleStartTime)}',
+                _DetailSection(
+                  title: 'Visitor and activity',
+                  children: [
+                    DetailLine(label: 'Customer', value: _text(reservation.userFullName)),
+                    DetailLine(label: 'Activity', value: _text(reservation.activityName)),
+                    _ChipLine(label: 'Status', chip: _chip(reservation.status)),
+                  ],
                 ),
-                DetailLine(label: 'Guests', value: formatCount(reservation.guestCount)),
-                DetailLine(label: 'Total', value: formatMoney(reservation.totalPrice)),
-                DetailLine(label: 'Status', value: reservationStatusLabel(reservation.status)),
-                DetailLine(label: 'Payment', value: paymentLabel(reservation)),
-                DetailLine(label: 'Created', value: formatDateTime(reservation.createdAt)),
-                DetailLine(label: 'Confirmed by', value: _decision(reservation.confirmedByFullName, reservation.confirmedAt)),
-                DetailLine(label: 'Cancelled by', value: _decision(reservation.cancelledByFullName, reservation.cancelledAt)),
-                DetailLine(label: 'Cancel reason', value: _text(reservation.cancellationReason)),
+                _DetailSection(
+                  title: 'Schedule and guest count',
+                  children: [
+                    DetailLine(
+                      label: 'Schedule',
+                      value: '${formatDate(reservation.scheduleDate)}, ${formatClock(reservation.scheduleStartTime)}',
+                    ),
+                    DetailLine(label: 'Guests', value: formatCount(reservation.guestCount)),
+                  ],
+                ),
+                _DetailSection(
+                  title: 'Payment',
+                  children: [
+                    _AmountLine(label: 'Total', value: formatMoney(reservation.totalPrice)),
+                    _ChipLine(label: 'Payment', chip: _paymentChip(reservation)),
+                  ],
+                ),
+                _DetailSection(
+                  title: 'Status history',
+                  showDivider: false,
+                  children: [
+                    DetailLine(label: 'Created', value: formatDateTime(reservation.createdAt)),
+                    DetailLine(
+                      label: 'Confirmed by',
+                      value: _decision(reservation.confirmedByFullName, reservation.confirmedAt),
+                    ),
+                    if (cancelled)
+                      DetailLine(
+                        label: 'Cancelled by',
+                        value: _decision(reservation.cancelledByFullName, reservation.cancelledAt),
+                      ),
+                    if (cancelled)
+                      DetailLine(label: 'Cancel reason', value: _text(reservation.cancellationReason)),
+                  ],
+                ),
               ],
             ),
           ),
@@ -486,6 +517,96 @@ String _decision(String? name, DateTime? at) {
   return '$who, ${formatDateTime(at)}';
 }
 
-String paymentLabel(Reservation reservation) {
-  return paymentStatusLabel(reservation.paymentStatus);
+Widget _paymentChip(Reservation reservation) {
+  switch (reservation.paymentStatus) {
+    case PaymentStatus.pending:
+      return labeledStatusChip(label: paymentStatusLabel(reservation.paymentStatus), tone: 'warning');
+    case PaymentStatus.completed:
+      return labeledStatusChip(label: paymentStatusLabel(reservation.paymentStatus), tone: 'success');
+    case PaymentStatus.failed:
+      return labeledStatusChip(label: paymentStatusLabel(reservation.paymentStatus), tone: 'danger');
+    case PaymentStatus.refunded:
+      return labeledStatusChip(label: paymentStatusLabel(reservation.paymentStatus), tone: 'neutral');
+    case null:
+      return labeledStatusChip(label: paymentStatusLabel(null), tone: 'neutral');
+  }
+}
+
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({
+    required this.title,
+    required this.children,
+    this.showDivider = true,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text),
+        ),
+        const SizedBox(height: 8),
+        ...children,
+        if (showDivider) const Divider(height: 20, color: AppColors.border),
+      ],
+    );
+  }
+}
+
+class _ChipLine extends StatelessWidget {
+  const _ChipLine({required this.label, required this.chip});
+
+  final String label;
+  final Widget chip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 148,
+            child: Text(label, style: const TextStyle(color: AppColors.textMuted)),
+          ),
+          chip,
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountLine extends StatelessWidget {
+  const _AmountLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 148,
+            child: Text(label, style: const TextStyle(color: AppColors.textMuted)),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.greenDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

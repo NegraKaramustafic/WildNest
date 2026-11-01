@@ -13,6 +13,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   final _formKey = GlobalKey<FormState>();
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
@@ -112,13 +114,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   decoration: authInputDecoration(
                     label: 'Email',
                     icon: Icons.mail_outline,
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return mandatoryField;
-                    if (!v.contains('@')) return 'Enter a valid email';
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return mandatoryField;
+                    if (!_emailPattern.hasMatch(text)) return 'Enter a valid email';
                     return null;
                   },
                 ),

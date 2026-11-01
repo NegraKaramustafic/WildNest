@@ -203,16 +203,27 @@ class _AnimalFormDialogState extends State<AnimalFormDialog> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720, maxHeight: 760),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+          padding: const EdgeInsets.fromLTRB(24, 16, 16, 18),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _isEdit ? 'Edit animal' : 'New animal',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _isEdit ? 'Edit animal' : 'New animal',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: _saving ? null : () => Navigator.pop(context, false),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Flexible(
