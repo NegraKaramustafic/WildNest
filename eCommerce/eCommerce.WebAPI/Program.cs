@@ -323,6 +323,7 @@ builder.Services.AddSingleton<ISentimentService>(sp =>
 
 builder.Services.AddScoped<IValidator<UserInsertRequest>, UserInsertValidator>();
 builder.Services.AddScoped<IValidator<UserUpdateRequest>, UserUpdateValidator>();
+builder.Services.AddScoped<IValidator<UserPasswordChangeRequest>, UserPasswordChangeRequestValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryInsertRequest>, AnimalCategoryInsertValidator>();
 builder.Services.AddScoped<IValidator<AnimalCategoryUpdateRequest>, AnimalCategoryUpdateValidator>();
 builder.Services.AddScoped<IValidator<ActivityTypeInsertRequest>, ActivityTypeInsertValidator>();

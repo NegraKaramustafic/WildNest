@@ -25,12 +25,14 @@ namespace eCommerce.Services
         private readonly ICryptoService _cryptoService;
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly ISecurityStampCache _securityStampCache;
+        private readonly IValidator<UserPasswordChangeRequest> _passwordChangeValidator;
 
         public UserService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<UserInsertRequest> insertValidator,
             IValidator<UserUpdateRequest> updateValidator,
+            IValidator<UserPasswordChangeRequest> passwordChangeValidator,
             ICryptoService cryptoService,
             IAuthenticatedUserAccessor userAccessor,
             ISecurityStampCache securityStampCache,
@@ -40,6 +42,7 @@ namespace eCommerce.Services
             _cryptoService = cryptoService;
             _userAccessor = userAccessor;
             _securityStampCache = securityStampCache;
+            _passwordChangeValidator = passwordChangeValidator;
         }
 
         protected override string NotFoundMessage => "User not found.";
@@ -388,6 +391,8 @@ namespace eCommerce.Services
 
         public async Task ChangePasswordAsync(UserPasswordChangeRequest request)
         {
+            await _passwordChangeValidator.ValidateAndThrowAsync(request);
+
             var userId = _userAccessor.GetUserId()
                 ?? throw new ClientException("User id claim is missing.");
 
@@ -403,9 +408,6 @@ namespace eCommerce.Services
 
             if (!_cryptoService.Verify(user.PasswordHash, user.PasswordSalt, request.Password))
                 throw new ClientException("Wrong credential.");
-
-            if (!request.NewPassword.Equals(request.ConfirmNewPassword))
-                throw new ClientException("Password confirmation doesn't match the new password.");
 
             user.PasswordSalt = _cryptoService.GenerateSlat();
             user.PasswordHash = _cryptoService.GenerateHash(request.NewPassword, user.PasswordSalt);

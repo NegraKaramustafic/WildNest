@@ -3,7 +3,7 @@ using FluentValidation;
 namespace eCommerce.Services.Validators
 {
     /// <summary>
-    /// Password rules shared by registration and password reset.
+    /// Password rules shared by registration, password change, and password reset.
     /// </summary>
     public static class PasswordRules
     {

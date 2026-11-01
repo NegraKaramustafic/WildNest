@@ -1,9 +1,10 @@
 namespace eCommerce.Services.Recommendation
 {
     /// <summary>
-    /// Limits and the two explanation texts the recommender is allowed to show.
-    /// Scoring is the matrix-factorization score, or reservation-count popularity
-    /// when that model cannot be used. No other weight is applied.
+    /// Limits and the explanation texts the recommender is allowed to show.
+    /// Scoring starts from the matrix-factorization score, or from reservation-count
+    /// popularity when that model cannot be used. When the activity has at least one
+    /// review, that base score is multiplied by the average rating divided by 5.
     /// </summary>
     public static class RecommendationWeights
     {
@@ -26,8 +27,10 @@ namespace eCommerce.Services.Recommendation
 
         public const string SimilarReservations = "SimilarReservations";
         public const string Popular = "Popular";
+        public const string NewActivity = "NewActivity";
 
         public const string SimilarReservationsText = "Visitors with similar reservations also booked this.";
         public const string PopularText = "Popular with visitors.";
+        public const string NewActivityText = "New at the zoo.";
     }
 }
