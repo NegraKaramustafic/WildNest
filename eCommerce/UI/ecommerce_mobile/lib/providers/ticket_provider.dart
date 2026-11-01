@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ecommerce_mobile/models/entry_check.dart';
 import 'package:ecommerce_mobile/models/ticket.dart';
 import 'package:ecommerce_mobile/providers/base_provider.dart';
 import 'package:ecommerce_mobile/utils/api_client_exception.dart';
@@ -24,7 +25,7 @@ class TicketProvider extends BaseProvider<Ticket> {
     });
   }
 
-  Future<Ticket> verify(
+  Future<EntryCheck> verify(
     String code, {
     required TicketVerificationMethod method,
   }) async {
@@ -44,7 +45,7 @@ class TicketProvider extends BaseProvider<Ticket> {
     }
 
     await validateResponse(response);
-    return Ticket.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return EntryCheck.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<Ticket> cancel(int id) async {

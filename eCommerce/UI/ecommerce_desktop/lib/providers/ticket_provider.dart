@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:ecommerce_desktop/models/entry_check.dart';
 import 'package:ecommerce_desktop/models/ticket.dart';
 import 'package:ecommerce_desktop/providers/base_provider.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
@@ -13,7 +14,7 @@ class TicketProvider extends BaseProvider<Ticket> {
     return Ticket.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<Ticket> verifyManualCode(String code) async {
+  Future<EntryCheck> verifyManualCode(String code) async {
     final response = await http.post(
       Uri.parse('${BaseProvider.baseUrl}$endpoint/verify'),
       headers: createHeaders(),
@@ -30,6 +31,6 @@ class TicketProvider extends BaseProvider<Ticket> {
     }
 
     await validateResponse(response);
-    return Ticket.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return EntryCheck.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 }

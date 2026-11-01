@@ -69,7 +69,7 @@ namespace eCommerce.Services.Database
             await EnsureReservationsAsync(db, today, cancellationToken);
             await EnsureTicketsAsync(db, today, cancellationToken);
             await EnsureDonationsAsync(db, cancellationToken);
-            await EnsureAdoptionsAsync(db, cancellationToken);
+            await EnsureAdoptionsAsync(db, today, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
 
             await EnsureBadgesAsync(db, cancellationToken);
@@ -504,7 +504,7 @@ namespace eCommerce.Services.Database
             });
         }
 
-        private static async Task EnsureAdoptionsAsync(ECommerceDbContext db, CancellationToken cancellationToken)
+        private static async Task EnsureAdoptionsAsync(ECommerceDbContext db, DateOnly today, CancellationToken cancellationToken)
         {
             var customer1 = await UserIdAsync(db, "customer1", cancellationToken);
             var customer2 = await UserIdAsync(db, "customer2", cancellationToken);
@@ -516,12 +516,12 @@ namespace eCommerce.Services.Database
             }
 
             await AddAdoptionAsync(db, "seed-adoption-kavi", mobile.Value, 1, 15m, AdoptionStatus.Active,
-                PaymentStatus.Completed, null, null, null, cancellationToken);
+                PaymentStatus.Completed, null, null, null, today, cancellationToken);
             await AddAdoptionAsync(db, "seed-adoption-bao", customer1.Value, 5, 25m, AdoptionStatus.Active,
-                PaymentStatus.Completed, null, null, null, cancellationToken);
+                PaymentStatus.Completed, null, null, null, today, cancellationToken);
             await AddAdoptionAsync(db, "seed-adoption-luna", customer2.Value, 4, 20m, AdoptionStatus.Cancelled,
                 PaymentStatus.Refunded, admin.Value, DateTime.UtcNow.AddDays(-6),
-                "The visitor asked to stop this monthly gift.", cancellationToken);
+                "The visitor asked to stop this monthly gift.", today, cancellationToken);
         }
 
         private static async Task AddAdoptionAsync(
@@ -535,6 +535,7 @@ namespace eCommerce.Services.Database
             int? rejectedBy,
             DateTime? rejectedAt,
             string? rejectionReason,
+            DateOnly today,
             CancellationToken cancellationToken)
         {
             if (await db.Payments.AnyAsync(payment => payment.StripeCheckoutSessionId == sessionId, cancellationToken))
@@ -561,6 +562,7 @@ namespace eCommerce.Services.Database
                 MonthlyAmount = monthlyAmount,
                 Status = status,
                 StartDate = started,
+                ValidUntil = status == AdoptionStatus.Active ? today.AddMonths(1) : null,
                 Payment = payment,
                 RejectedByUserId = rejectedBy,
                 RejectedAt = rejectedAt,

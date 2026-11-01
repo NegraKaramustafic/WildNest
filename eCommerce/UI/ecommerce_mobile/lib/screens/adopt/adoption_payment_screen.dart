@@ -33,7 +33,12 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
   double get _amount =>
       widget.existingAdoption?.monthlyAmount ?? widget.animal.adoptionPrice ?? 0;
 
-  bool get _alreadyPaid => widget.existingAdoption?.isPaid == true;
+  bool get _extending =>
+      widget.existingAdoption != null &&
+      (widget.existingAdoption!.status == AdoptionStatus.active ||
+          widget.existingAdoption!.status == AdoptionStatus.expired);
+
+  bool get _alreadyPaid => !_extending && widget.existingAdoption?.isPaid == true;
 
   Future<void> _pay() async {
     if (_busy || _alreadyPaid) return;
@@ -42,8 +47,12 @@ class _AdoptionPaymentScreenState extends State<AdoptionPaymentScreen> {
       final adoptionProvider = context.read<AdoptionProvider>();
       final paymentProvider = context.read<PaymentProvider>();
       var adoption = widget.existingAdoption;
-      if (adoption == null || adoption.status != AdoptionStatus.pendingPayment) {
+      if (!_extending &&
+          (adoption == null || adoption.status != AdoptionStatus.pendingPayment)) {
         adoption = await adoptionProvider.createPending(widget.animal.id);
+      }
+      if (adoption == null) {
+        throw Exception('This adoption is not available for payment.');
       }
       final checkout = await paymentProvider.checkoutAdoption(adoption.id);
       final url = checkout.sessionUrl;

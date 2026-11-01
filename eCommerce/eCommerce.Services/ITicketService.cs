@@ -6,7 +6,7 @@ namespace eCommerce.Services
 {
     public interface ITicketService : IBaseCRUDService<TicketResponse, TicketSearchObject, TicketInsertRequest, TicketUpdateRequest>
     {
-        Task<TicketResponse> VerifyAsync(TicketVerifyRequest request);
+        Task<EntryCheckResponse> VerifyAsync(TicketVerifyRequest request);
         Task<TicketResponse> CancelAsync(int id);
     }
 }

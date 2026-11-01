@@ -14,14 +14,18 @@ namespace eCommerce.Services
 {
     public class AnimalService : BaseCRUDService<Animal, AnimalResponse, AnimalSearchObject, AnimalInsertRequest, AnimalUpdateRequest>, IAnimalService
     {
+        private readonly ZooClock _zooClock;
+
         public AnimalService(
             ECommerceDbContext dbContext,
             MapsterMapper.IMapper mapper,
             IValidator<AnimalInsertRequest> insertValidator,
             IValidator<AnimalUpdateRequest> updateValidator,
+            ZooClock zooClock,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
+            _zooClock = zooClock;
         }
 
         protected override string NotFoundMessage => "Animal not found.";
@@ -64,9 +68,11 @@ namespace eCommerce.Services
             }
 
             var ids = animals.Select(animal => animal.Id).ToList();
+            var today = _zooClock.Today;
             var counts = await _dbContext.Adoptions
                 .AsNoTracking()
-                .Where(adoption => ids.Contains(adoption.AnimalId) && adoption.Status == AdoptionStatus.Active)
+                .Where(adoption => ids.Contains(adoption.AnimalId))
+                .Where(AdoptionActivity.CurrentlyActive(today))
                 .GroupBy(adoption => adoption.AnimalId)
                 .Select(group => new { AnimalId = group.Key, Count = group.Count() })
                 .ToListAsync();

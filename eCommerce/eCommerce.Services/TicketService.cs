@@ -24,6 +24,7 @@ namespace eCommerce.Services
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly INotificationEventService _notificationEvents;
         private readonly IPaymentService _paymentService;
+        private readonly IReservationService _reservationService;
         private readonly ZooClock _zooClock;
 
         public TicketService(
@@ -35,6 +36,7 @@ namespace eCommerce.Services
             INotificationEventService notificationEvents,
             IPaymentService paymentService,
             ZooClock zooClock,
+            IReservationService reservationService,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
@@ -42,6 +44,7 @@ namespace eCommerce.Services
             _notificationEvents = notificationEvents;
             _paymentService = paymentService;
             _zooClock = zooClock;
+            _reservationService = reservationService;
         }
 
         protected override string NotFoundMessage => "Ticket not found.";
@@ -192,7 +195,7 @@ namespace eCommerce.Services
             return query.OrderByDescending(t => t.CreatedAt).ThenByDescending(t => t.Id);
         }
 
-        public async Task<TicketResponse> VerifyAsync(TicketVerifyRequest request)
+        public async Task<EntryCheckResponse> VerifyAsync(TicketVerifyRequest request)
         {
             var code = request.Code?.Trim().ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(code))
@@ -207,7 +210,7 @@ namespace eCommerce.Services
 
             if (entity == null)
             {
-                ThrowNotFound("Ticket", code, "A ticket with this code does not exist.");
+                return await VerifyReservationAsync(code);
             }
 
             if (entity.Status == TicketStatus.Used)
@@ -252,7 +255,77 @@ namespace eCommerce.Services
 
             var response = await GetByIdAsync(entity.Id);
             await _notificationEvents.NotifyTicketVerifiedAsync(response);
-            return response;
+            return new EntryCheckResponse
+            {
+                Kind = "Ticket",
+                Ticket = response
+            };
+        }
+
+        private async Task<EntryCheckResponse> VerifyReservationAsync(string code)
+        {
+            var reservation = await _dbContext.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Schedule)
+                    .ThenInclude(s => s.Activity)
+                .FirstOrDefaultAsync(r => r.Code == code);
+
+            if (reservation == null)
+            {
+                ThrowNotFound("Ticket", code, "A ticket with this code does not exist.");
+            }
+
+            if (reservation.Status == ReservationStatus.Completed)
+            {
+                throw new ClientException("Reservation already used.");
+            }
+
+            if (reservation.Status == ReservationStatus.Cancelled)
+            {
+                throw new ClientException("Reservation is cancelled.");
+            }
+
+            if (reservation.Status != ReservationStatus.Confirmed || !await HasCompletedPaymentAsync(reservation.PaymentId))
+            {
+                throw new ClientException("Reservation is not confirmed.");
+            }
+
+            if (reservation.Schedule == null)
+            {
+                throw new ClientException("Reservation is not confirmed.");
+            }
+
+            var scheduleDate = reservation.Schedule.Date;
+            var today = Today();
+            if (scheduleDate < today)
+            {
+                throw new ClientException($"Reservation expired. It was valid for {scheduleDate:dd.MM.yyyy}.");
+            }
+
+            if (scheduleDate > today)
+            {
+                throw new ClientException($"Reservation is valid for {scheduleDate:dd.MM.yyyy}, not today.");
+            }
+
+            await _reservationService.CompleteAsync(reservation.Id);
+
+            var visitorName = reservation.User == null
+                ? string.Empty
+                : $"{reservation.User.FirstName} {reservation.User.LastName}".Trim();
+
+            return new EntryCheckResponse
+            {
+                Kind = "Reservation",
+                Reservation = new ReservationCheckResponse
+                {
+                    Code = reservation.Code,
+                    VisitorName = visitorName,
+                    ActivityName = reservation.Schedule.Activity?.Name ?? string.Empty,
+                    ScheduleDate = scheduleDate,
+                    GuestCount = reservation.GuestCount,
+                    Total = reservation.TotalPrice
+                }
+            };
         }
 
         private DateOnly Today() => _zooClock.Today;
@@ -293,7 +366,9 @@ namespace eCommerce.Services
                 }
 
                 var code = $"WN-{new string(suffix)}";
-                if (!await _dbContext.Tickets.AnyAsync(t => t.Code == code))
+                var usedByTicket = await _dbContext.Tickets.AnyAsync(t => t.Code == code);
+                var usedByReservation = await _dbContext.Reservations.AnyAsync(r => r.Code == code);
+                if (!usedByTicket && !usedByReservation)
                 {
                     return code;
                 }

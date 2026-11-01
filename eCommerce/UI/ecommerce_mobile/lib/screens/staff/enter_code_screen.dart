@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/models/entry_check.dart';
 import 'package:ecommerce_mobile/models/ticket.dart';
 import 'package:ecommerce_mobile/providers/ticket_provider.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
@@ -19,7 +20,7 @@ class EnterCodeScreen extends StatefulWidget {
 class _EnterCodeScreenState extends State<EnterCodeScreen> {
   final _codeController = TextEditingController();
   bool _verifying = false;
-  Ticket? _ticket;
+  EntryCheck? _result;
   String? _error;
   String _errorTitle = 'Ticket rejected';
 
@@ -34,7 +35,7 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
     if (!isWildNestTicketCode(code)) {
       setState(() {
         _verifying = false;
-        _ticket = null;
+        _result = null;
         _errorTitle = 'Invalid code';
         _error = 'Enter a code like WN-A1B2C3.';
       });
@@ -43,18 +44,18 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
 
     setState(() {
       _verifying = true;
-      _ticket = null;
+      _result = null;
       _error = null;
     });
 
     try {
-      final ticket = await context.read<TicketProvider>().verify(
+      final result = await context.read<TicketProvider>().verify(
         code,
         method: TicketVerificationMethod.manualCode,
       );
       if (!mounted) return;
       setState(() {
-        _ticket = ticket;
+        _result = result;
         _verifying = false;
       });
       await HapticFeedback.lightImpact();
@@ -83,14 +84,14 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
   void _checkAnother() {
     _codeController.clear();
     setState(() {
-      _ticket = null;
+      _result = null;
       _error = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasResult = _verifying || _ticket != null || _error != null;
+    final hasResult = _verifying || _result != null || _error != null;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -134,10 +135,11 @@ class _EnterCodeScreenState extends State<EnterCodeScreen> {
           const SizedBox(height: 16),
           TicketVerificationResult(
             loading: _verifying,
-            ticket: _ticket,
+            ticket: _result?.ticket,
+            reservation: _result?.reservation,
             error: _error,
             errorTitle: _errorTitle,
-            onNext: _verifying || (_ticket == null && _error == null)
+            onNext: _verifying || (_result == null && _error == null)
                 ? null
                 : _checkAnother,
             nextLabel: 'Check another',

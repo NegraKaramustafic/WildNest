@@ -24,6 +24,7 @@ namespace eCommerce.Services
         private readonly IAuthenticatedUserAccessor _userAccessor;
         private readonly INotificationEventService _notificationEvents;
         private readonly IBadgeAwardService _badgeAwardService;
+        private readonly IAdoptionTermService _adoptionTerm;
         private readonly StripeSettings _stripeSettings;
         private readonly IValidator<PaymentCheckoutRequest> _checkoutValidator;
         private readonly StripeClient _stripeClient;
@@ -38,6 +39,7 @@ namespace eCommerce.Services
             INotificationEventService notificationEvents,
             IBadgeAwardService badgeAwardService,
             StripeSettings stripeSettings,
+            IAdoptionTermService adoptionTerm,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
@@ -46,6 +48,7 @@ namespace eCommerce.Services
             _notificationEvents = notificationEvents;
             _badgeAwardService = badgeAwardService;
             _stripeSettings = stripeSettings;
+            _adoptionTerm = adoptionTerm;
             _stripeClient = new StripeClient(_stripeSettings.SecretKey);
         }
 
@@ -160,6 +163,7 @@ namespace eCommerce.Services
             }
 
             var payable = await ResolvePayableAsync(request.RelatedEntityType, request.RelatedEntityId);
+            var allowAnotherCompletedPayment = request.RelatedEntityType == PaymentRelatedEntityType.Adoption;
             if (payable.ExistingPaymentId.HasValue)
             {
                 var existing = await _dbContext.Payments.FindAsync(payable.ExistingPaymentId.Value);
@@ -167,10 +171,12 @@ namespace eCommerce.Services
                 {
                     if (existing.Status == PaymentStatus.Completed)
                     {
-                        throw new ClientException("This record already has a completed payment.");
+                        if (!allowAnotherCompletedPayment)
+                        {
+                            throw new ClientException("This record already has a completed payment.");
+                        }
                     }
-
-                    if (existing.Status == PaymentStatus.Pending)
+                    else if (existing.Status == PaymentStatus.Pending)
                     {
                         var reused = await TryReuseOpenSessionAsync(existing, request.RelatedEntityType, request.RelatedEntityId);
                         if (reused != null)
@@ -180,7 +186,7 @@ namespace eCommerce.Services
 
                         await ExpireSupersededSessionAsync(existing);
                         var markedFailed = await TryMarkFailedIfPendingAsync(existing);
-                        if (!markedFailed && existing.Status == PaymentStatus.Completed)
+                        if (!markedFailed && existing.Status == PaymentStatus.Completed && !allowAnotherCompletedPayment)
                         {
                             throw new ClientException("This record already has a completed payment.");
                         }
@@ -422,10 +428,7 @@ namespace eCommerce.Services
                         .FirstOrDefaultAsync(a => a.PaymentId == payment.Id || a.Id == payment.RelatedEntityId);
                     if (adoption != null)
                     {
-                        if (adoption.Status == AdoptionStatus.PendingPayment)
-                        {
-                            adoption.Status = AdoptionStatus.Active;
-                        }
+                        _adoptionTerm.ApplyCompletedPayment(adoption);
 
                         var adoptionResponse = _mapper.Map<AdoptionResponse>(adoption);
                         adoptionResponse.UserFullName = adoption.User != null

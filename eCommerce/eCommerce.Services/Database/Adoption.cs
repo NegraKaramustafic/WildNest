@@ -27,6 +27,11 @@ namespace eCommerce.Services.Database
 
         public DateTime StartDate { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Last zoo-local day the adoption is active, inclusive. One completed payment covers one calendar month.
+        /// </summary>
+        public DateOnly? ValidUntil { get; set; }
+
         public int? PaymentId { get; set; }
 
         [ForeignKey("PaymentId")]

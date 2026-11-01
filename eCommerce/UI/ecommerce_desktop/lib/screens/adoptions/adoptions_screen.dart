@@ -330,6 +330,8 @@ Widget _adoptionChip(AdoptionStatus status) {
       return labeledStatusChip(label: 'Active', tone: 'success');
     case AdoptionStatus.cancelled:
       return labeledStatusChip(label: 'Cancelled', tone: 'danger');
+    case AdoptionStatus.expired:
+      return labeledStatusChip(label: 'Expired', tone: 'neutral');
   }
 }
 
