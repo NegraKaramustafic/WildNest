@@ -35,5 +35,25 @@ namespace eCommerce.Services.Images
 
             return requestedUrl.Trim();
         }
+
+        /// <summary>
+        /// Uses a newly stored file when one was uploaded.
+        /// An empty requested URL clears the image.
+        /// Any other client-supplied path is ignored, so the existing server path stays.
+        /// </summary>
+        public static string? ResolveUploaded(string? existingUrl, string? requestedUrl, string? storedUrl)
+        {
+            if (!string.IsNullOrEmpty(storedUrl))
+            {
+                return storedUrl;
+            }
+
+            if (requestedUrl != null && string.IsNullOrWhiteSpace(requestedUrl))
+            {
+                return null;
+            }
+
+            return string.IsNullOrWhiteSpace(existingUrl) ? null : existingUrl.Trim();
+        }
     }
 }

@@ -29,6 +29,7 @@ namespace eCommerce.Services.ActivityStateMachine
             await EnsureActivityTypeExistsAsync(request.ActivityTypeId);
             entity.ActivityType = null;
             Mapper.Map(request, entity);
+            entity.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
             await DbContext.SaveChangesAsync();
             return await MapResponseAsync(entity);
         }

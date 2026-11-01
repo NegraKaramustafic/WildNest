@@ -22,6 +22,7 @@ namespace eCommerce.Services.ActivityStateMachine
         {
             await EnsureActivityTypeExistsAsync(request.ActivityTypeId);
             var entity = Mapper.Map<Activity>(request);
+            entity.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
             entity.Status = ActivityStatus.Draft;
             entity.CreatedAt = DateTime.UtcNow;
             DbContext.Activities.Add(entity);

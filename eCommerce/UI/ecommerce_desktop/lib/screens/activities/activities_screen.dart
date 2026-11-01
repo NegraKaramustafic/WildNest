@@ -6,6 +6,7 @@ import 'package:ecommerce_desktop/providers/activity_provider.dart';
 import 'package:ecommerce_desktop/providers/activity_type_provider.dart';
 import 'package:ecommerce_desktop/screens/activities/activity_form_dialog.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
+import 'package:ecommerce_desktop/widgets/admin_list.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
 import 'package:ecommerce_desktop/utils/formatters.dart';
 import 'package:ecommerce_desktop/widgets/status_chip.dart';
@@ -549,7 +550,7 @@ class _ActivityRow extends StatelessWidget {
             flex: 4,
             child: Row(
               children: [
-                _Thumbnail(url: activity.imageUrl),
+                EntityThumbnail(url: activity.imageUrl),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -662,37 +663,6 @@ Widget _statusChip(ActivityStatus status) {
         background: Color(0xFFE8E6E1),
         foreground: AppColors.textMuted,
       );
-  }
-}
-
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.url});
-
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    final image = url?.trim();
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: 42,
-        height: 42,
-        child: image == null || image.isEmpty
-            ? const ColoredBox(
-                color: AppColors.border,
-                child: Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
-              )
-            : Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const ColoredBox(
-                  color: AppColors.border,
-                  child: Icon(Icons.broken_image_outlined, size: 18, color: AppColors.textMuted),
-                ),
-              ),
-      ),
-    );
   }
 }
 

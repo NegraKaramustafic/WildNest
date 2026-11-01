@@ -7,6 +7,7 @@ import 'package:ecommerce_mobile/screens/adopt/adoption_payment_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
 import 'package:ecommerce_mobile/widgets/animal_visuals.dart';
+import 'package:ecommerce_mobile/widgets/authorized_image.dart';
 import 'package:ecommerce_mobile/widgets/wildnest_header.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -157,15 +158,9 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
                       width: double.infinity,
                       color: AppColors.mint,
                       child: animal.imageUrl != null && animal.imageUrl!.isNotEmpty
-                          ? Image.network(
-                              animal.imageUrl!,
+                          ? AuthorizedImage(
+                              url: animal.imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Center(
-                                child: Text(
-                                  animalEmoji(animal),
-                                  style: const TextStyle(fontSize: 96),
-                                ),
-                              ),
                             )
                           : Center(
                               child: Text(

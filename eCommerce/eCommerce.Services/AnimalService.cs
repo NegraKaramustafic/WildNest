@@ -6,6 +6,7 @@ using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
 using eCommerce.Services.Database;
+using eCommerce.Services.Images;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ namespace eCommerce.Services
     public class AnimalService : BaseCRUDService<Animal, AnimalResponse, AnimalSearchObject, AnimalInsertRequest, AnimalUpdateRequest>, IAnimalService
     {
         private readonly ZooClock _zooClock;
+        private readonly IStoredImageService _images;
 
         public AnimalService(
             ECommerceDbContext dbContext,
@@ -22,10 +24,12 @@ namespace eCommerce.Services
             IValidator<AnimalInsertRequest> insertValidator,
             IValidator<AnimalUpdateRequest> updateValidator,
             ZooClock zooClock,
+            IStoredImageService images,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
             _zooClock = zooClock;
+            _images = images;
         }
 
         protected override string NotFoundMessage => "Animal not found.";
@@ -87,15 +91,98 @@ namespace eCommerce.Services
         public override async Task<AnimalResponse> InsertAsync(AnimalInsertRequest request)
         {
             await EnsureCategoryExistsAsync(request.CategoryId);
-            var created = await base.InsertAsync(request);
-            return await GetByIdAsync(created.Id);
+            await ValidateInsertAsync(request);
+
+            string? created = null;
+            int createdId;
+            try
+            {
+                created = ImageUpload.StoreIfPresent(_images, request.ImageBase64, request.ImageContentType);
+                request.ImageUrl = ImageUpload.ResolveUploaded(null, request.ImageUrl, created);
+                request.ImageBase64 = null;
+                var entity = MapInsertRequestToEntity(request);
+                entity.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
+                entity.CreatedAt = DateTime.UtcNow;
+                _dbContext.Animals.Add(entity);
+                await _dbContext.SaveChangesAsync();
+                createdId = entity.Id;
+                created = null;
+            }
+            catch
+            {
+                _images.Delete(created);
+                throw;
+            }
+
+            return await GetByIdAsync(createdId);
         }
 
         public override async Task<AnimalResponse> UpdateAsync(int id, AnimalUpdateRequest request)
         {
             await EnsureCategoryExistsAsync(request.CategoryId);
-            await base.UpdateAsync(id, request);
+            await ValidateUpdateAsync(request);
+
+            var entity = await _dbContext.Animals.FirstOrDefaultAsync(animal => animal.Id == id);
+            if (entity == null)
+            {
+                ThrowNotFound("Animal", id, "Animal not found.");
+            }
+
+            var previousImage = entity.ImageUrl;
+            string? created = null;
+            try
+            {
+                created = ImageUpload.StoreIfPresent(_images, request.ImageBase64, request.ImageContentType);
+                var imageUrl = ImageUpload.ResolveUploaded(previousImage, request.ImageUrl, created);
+                request.ImageUrl = imageUrl;
+                request.ImageBase64 = null;
+                MapUpdateRequestToEntity(request, entity);
+                entity.ImageUrl = imageUrl;
+                await _dbContext.SaveChangesAsync();
+                created = null;
+                if (!string.Equals(previousImage, entity.ImageUrl, StringComparison.Ordinal))
+                {
+                    _images.Delete(previousImage);
+                }
+            }
+            catch
+            {
+                _images.Delete(created);
+                throw;
+            }
+
             return await GetByIdAsync(id);
+        }
+
+        public override async Task DeleteAsync(int id)
+        {
+            var entity = await _dbContext.Animals.FirstOrDefaultAsync(animal => animal.Id == id);
+            if (entity == null)
+            {
+                ThrowNotFound("Animal", id, "Animal not found.");
+            }
+
+            var image = entity.ImageUrl;
+            await base.DeleteAsync(id);
+            _images.Delete(image);
+        }
+
+        private async Task ValidateInsertAsync(AnimalInsertRequest request)
+        {
+            var result = await _insertValidator.ValidateAsync(request);
+            if (!result.IsValid)
+            {
+                throw new ValidationException(result.Errors);
+            }
+        }
+
+        private async Task ValidateUpdateAsync(AnimalUpdateRequest request)
+        {
+            var result = await _updateValidator.ValidateAsync(request);
+            if (!result.IsValid)
+            {
+                throw new ValidationException(result.Errors);
+            }
         }
 
         private async Task EnsureCategoryExistsAsync(int categoryId)
