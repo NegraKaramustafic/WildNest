@@ -1,4 +1,3 @@
-using eCommerce.Model;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
 using eCommerce.Model.SearchObjects;
@@ -44,20 +43,5 @@ public class PaymentController : BaseCRUDController<PaymentResponse, PaymentSear
         var signature = Request.Headers["Stripe-Signature"].ToString();
         await _service.HandleWebhookAsync(json, signature);
         return Ok();
-    }
-
-    /// <summary>
-    /// Admin-only refund of a completed Stripe payment for the originally charged amount.
-    /// Ticket and Reservation cancel flows also call this automatically.
-    /// </summary>
-    [HttpPost("{id}/refund")]
-    [Authorize(Roles = Roles.Admin)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PaymentResponse>> Refund(int id)
-    {
-        var result = await _service.RefundAsync(id);
-        return Ok(result);
     }
 }

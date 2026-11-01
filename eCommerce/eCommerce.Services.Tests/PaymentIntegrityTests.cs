@@ -21,8 +21,8 @@ namespace eCommerce.Services.Tests
             var partnerId = await Partner(db.Context, 20m);
             var paymentId = await CompletedDonation(db.Context, partnerId, 10m);
 
-            await service.RefundAsync(paymentId);
-            await service.RefundAsync(paymentId);
+            await service.HandleEntityCancellationAsync(paymentId);
+            await service.HandleEntityCancellationAsync(paymentId);
 
             db.Context.ChangeTracker.Clear();
             var amount = await db.Context.ZooPartners.Where(z => z.Id == partnerId).Select(z => z.CurrentAmount).SingleAsync();
@@ -32,7 +32,7 @@ namespace eCommerce.Services.Tests
 
             var smallPartner = await Partner(db.Context, 4m);
             var largeRefund = await CompletedDonation(db.Context, smallPartner, 10m);
-            await service.RefundAsync(largeRefund);
+            await service.HandleEntityCancellationAsync(largeRefund);
             db.Context.ChangeTracker.Clear();
             var clamped = await db.Context.ZooPartners.Where(z => z.Id == smallPartner).Select(z => z.CurrentAmount).SingleAsync();
             Assert.Equal(0m, clamped);

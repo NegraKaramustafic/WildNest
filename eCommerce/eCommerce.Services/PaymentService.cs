@@ -257,14 +257,6 @@ namespace eCommerce.Services
             await RecordProcessedEventAsync(stripeEvent);
         }
 
-        public async Task<PaymentResponse> RefundAsync(int id)
-        {
-            EnsureAdmin();
-            var entity = await GetEntityOrThrowAsync(id);
-            await RefundCompletedPaymentAsync(entity);
-            return _mapper.Map<PaymentResponse>(entity);
-        }
-
         public async Task HandleEntityCancellationAsync(int paymentId, bool refundIfCompleted = true)
         {
             var payment = await _dbContext.Payments.FindAsync(paymentId);

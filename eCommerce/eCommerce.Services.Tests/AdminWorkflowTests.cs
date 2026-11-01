@@ -597,7 +597,6 @@ namespace eCommerce.Services.Tests
 
         public Task<PaymentCheckoutResponse> CreateCheckoutAsync(PaymentCheckoutRequest request) => throw new NotImplementedException();
         public Task HandleWebhookAsync(string json, string? stripeSignature) => throw new NotImplementedException();
-        public Task<PaymentResponse> RefundAsync(int id) => throw new NotImplementedException();
         public Task<PageResult<PaymentResponse>> GetAllAsync(PaymentSearchObject? search = null) => throw new NotImplementedException();
         public Task<PaymentResponse> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<PaymentResponse> InsertAsync(PaymentInsertRequest request) => throw new NotImplementedException();
