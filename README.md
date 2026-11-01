@@ -175,7 +175,7 @@ Test cards (any future expiry, any CVC, any postal code):
 | --- | --- |
 | `4242 4242 4242 4242` | Payment succeeds |
 | `4000 0000 0000 0002` | Card is declined |
-| `4000 0025 0000 3156` | Authentication is required |
+| `4000 0025 0000 3155` | Authentication is required |
 
 ## Recommendation and sentiment notes
 
