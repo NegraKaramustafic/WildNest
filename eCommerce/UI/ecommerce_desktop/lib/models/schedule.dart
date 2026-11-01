@@ -11,6 +11,7 @@ class Schedule {
   final Duration startTime;
   final Duration endTime;
   final int capacityLeft;
+  final int slotCapacity;
   final ScheduleStatus status;
 
   Schedule({
@@ -22,6 +23,7 @@ class Schedule {
     this.startTime = Duration.zero,
     this.endTime = Duration.zero,
     this.capacityLeft = 0,
+    this.slotCapacity = 0,
     this.status = ScheduleStatus.active,
   });
 
@@ -35,6 +37,7 @@ class Schedule {
       startTime: parseDuration(json['startTime']),
       endTime: parseDuration(json['endTime']),
       capacityLeft: asInt(json['capacityLeft']),
+      slotCapacity: asInt(json['slotCapacity']),
       status: parseScheduleStatus(json['status']),
     );
   }

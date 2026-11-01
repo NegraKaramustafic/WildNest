@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 String scheduleOccupancyLabel(Schedule schedule) {
-  final total = schedule.activityCapacity;
+  final total = schedule.slotCapacity;
   if (total <= 0) {
     return '${schedule.capacityLeft} left';
   }

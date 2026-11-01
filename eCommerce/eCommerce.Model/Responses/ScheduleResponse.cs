@@ -13,6 +13,7 @@ namespace eCommerce.Model.Responses
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public int CapacityLeft { get; set; }
+        public int SlotCapacity { get; set; }
         public ScheduleStatus Status { get; set; }
     }
 }

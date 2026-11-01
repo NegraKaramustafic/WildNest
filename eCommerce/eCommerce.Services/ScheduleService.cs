@@ -55,7 +55,16 @@ namespace eCommerce.Services
                 ThrowNotFound("Schedule", id, "Schedule not found.");
             }
 
-            return _mapper.Map<ScheduleResponse>(entity);
+            var response = _mapper.Map<ScheduleResponse>(entity);
+            await AttachSlotCapacityAsync(new[] { response });
+            return response;
+        }
+
+        public override async Task<PageResult<ScheduleResponse>> GetAllAsync(ScheduleSearchObject? search = null)
+        {
+            var page = await base.GetAllAsync(search);
+            await AttachSlotCapacityAsync(page.Items);
+            return page;
         }
 
         public override async Task<ScheduleResponse> InsertAsync(ScheduleInsertRequest request)
@@ -282,6 +291,33 @@ namespace eCommerce.Services
             return await _dbContext.Reservations
                 .Where(reservation => reservation.ScheduleId == scheduleId && reservation.Status != ReservationStatus.Cancelled)
                 .SumAsync(reservation => (int?)reservation.GuestCount) ?? 0;
+        }
+
+        private async Task AttachSlotCapacityAsync(IReadOnlyCollection<ScheduleResponse> schedules)
+        {
+            if (schedules.Count == 0)
+            {
+                return;
+            }
+
+            var ids = schedules.Select(schedule => schedule.Id).ToList();
+            var reserved = await _dbContext.Reservations
+                .AsNoTracking()
+                .Where(reservation => ids.Contains(reservation.ScheduleId) && reservation.Status != ReservationStatus.Cancelled)
+                .GroupBy(reservation => reservation.ScheduleId)
+                .Select(group => new
+                {
+                    ScheduleId = group.Key,
+                    Guests = group.Sum(reservation => reservation.GuestCount)
+                })
+                .ToListAsync();
+
+            var guestsBySchedule = reserved.ToDictionary(row => row.ScheduleId, row => row.Guests);
+            foreach (var schedule in schedules)
+            {
+                var occupied = guestsBySchedule.TryGetValue(schedule.Id, out var guests) ? guests : 0;
+                schedule.SlotCapacity = schedule.CapacityLeft + occupied;
+            }
         }
 
         private static void EnsureSlotCapacity(int total, int occupied, int activityCapacity)

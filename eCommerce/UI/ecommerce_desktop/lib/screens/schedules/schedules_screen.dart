@@ -851,8 +851,8 @@ class _ScheduleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canCancel = schedule.status == ScheduleStatus.active;
-    final capacity = schedule.activityCapacity > 0
-        ? '${schedule.capacityLeft} / ${schedule.activityCapacity}'
+    final capacity = schedule.slotCapacity > 0
+        ? '${schedule.capacityLeft} / ${schedule.slotCapacity}'
         : '${schedule.capacityLeft}';
 
     return Padding(
