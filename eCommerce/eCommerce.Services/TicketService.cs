@@ -97,6 +97,12 @@ namespace eCommerce.Services
                 throw new ClientException("A used or cancelled ticket cannot be edited.");
             }
 
+            var changesVisit = request.VisitDate != entity.VisitDate || request.VisitorCount != entity.VisitorCount;
+            if (changesVisit && await VisitDetailsAreLockedAsync(entity))
+            {
+                throw new ClientException("Visit date and visitor count cannot be changed on a paid ticket.");
+            }
+
             await base.UpdateAsync(id, request);
             return await GetByIdAsync(id);
         }
@@ -326,6 +332,16 @@ namespace eCommerce.Services
             });
 
             return await GetByIdAsync(id);
+        }
+
+        private async Task<bool> VisitDetailsAreLockedAsync(Ticket entity)
+        {
+            if (entity.Status != TicketStatus.PendingPayment)
+            {
+                return true;
+            }
+
+            return await PaymentSettlement.IsCompletedOrRefundedAsync(_dbContext, entity.PaymentId);
         }
 
         private async Task<bool> HasCompletedPaymentAsync(int? paymentId)

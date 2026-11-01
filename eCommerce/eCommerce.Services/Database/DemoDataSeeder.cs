@@ -584,9 +584,9 @@ namespace eCommerce.Services.Database
                 var reservationCount = await db.Reservations.CountAsync(
                     reservation => reservation.UserId == user.Id && reservation.Payment != null && reservation.Payment.Status == PaymentStatus.Completed,
                     cancellationToken);
-                var donationCount = await db.Donations.CountAsync(
-                    donation => donation.UserId == user.Id && donation.Payment != null && donation.Payment.Status == PaymentStatus.Completed,
-                    cancellationToken);
+                var completedDonationTotal = await db.Donations
+                    .Where(donation => donation.UserId == user.Id && donation.Payment != null && donation.Payment.Status == PaymentStatus.Completed)
+                    .SumAsync(donation => (decimal?)donation.Amount, cancellationToken) ?? 0m;
 
                 foreach (var badge in badges)
                 {
@@ -594,7 +594,7 @@ namespace eCommerce.Services.Database
                     {
                         BadgeCriteria.FirstAdoption => adoptionCount >= 1,
                         BadgeCriteria.FirstBooking => reservationCount >= 1,
-                        BadgeCriteria.ThreeDonations => donationCount >= 3,
+                        BadgeCriteria.DonationTotal => completedDonationTotal >= DonationBadgeRule.TotalEuros,
                         BadgeCriteria.FiveAdoptions => adoptionCount >= 5,
                         _ => false
                     };

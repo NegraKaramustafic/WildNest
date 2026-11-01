@@ -3,7 +3,7 @@ import 'package:ecommerce_mobile/utils/json_parsers.dart';
 enum BadgeCriteria {
   firstAdoption,
   firstBooking,
-  threeDonations,
+  donationTotal,
   tenAnimalVisits,
   fiveAdoptions,
 }
@@ -40,7 +40,7 @@ BadgeCriteria parseBadgeCriteria(dynamic value) {
       case 1:
         return BadgeCriteria.firstBooking;
       case 2:
-        return BadgeCriteria.threeDonations;
+        return BadgeCriteria.donationTotal;
       case 3:
         return BadgeCriteria.tenAnimalVisits;
       case 4:
@@ -52,8 +52,8 @@ BadgeCriteria parseBadgeCriteria(dynamic value) {
   switch (value?.toString().toLowerCase()) {
     case 'firstbooking':
       return BadgeCriteria.firstBooking;
-    case 'threedonations':
-      return BadgeCriteria.threeDonations;
+    case 'donationtotal':
+      return BadgeCriteria.donationTotal;
     case 'tenanimalvisits':
       return BadgeCriteria.tenAnimalVisits;
     case 'fiveadoptions':

@@ -206,15 +206,16 @@ namespace eCommerce.Services.Tests
 
         private static TicketService Tickets(ECommerceDbContext context)
         {
+            var clock = new ZooClock("Europe/Sarajevo");
             return new TicketService(
                 context,
                 new Mapper(),
-                new TicketInsertValidator(),
-                new TicketUpdateValidator(),
+                new TicketInsertValidator(clock),
+                new TicketUpdateValidator(clock),
                 new TestUserAccessor { UserId = 1, Admin = true },
                 new NotificationEventService(new CapturingPublisher(), context),
                 new RecordingPaymentService(),
-                new ZooClock("Europe/Sarajevo"),
+                clock,
                 new SilentLoggerFactory());
         }
 

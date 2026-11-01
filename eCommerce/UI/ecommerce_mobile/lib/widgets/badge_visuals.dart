@@ -28,7 +28,7 @@ IconData badgeIconFor({
       return Icons.shield_rounded;
     case BadgeCriteria.firstBooking:
       return Icons.explore_rounded;
-    case BadgeCriteria.threeDonations:
+    case BadgeCriteria.donationTotal:
       return Icons.favorite_rounded;
     case BadgeCriteria.tenAnimalVisits:
       return Icons.pets_rounded;
@@ -42,7 +42,7 @@ IconData badgeIconFor({
 Color badgeAccentFor({BadgeCriteria? criteria, String? name}) {
   final haystack = name?.toLowerCase() ?? '';
   if (haystack.contains('heart') ||
-      criteria == BadgeCriteria.threeDonations) {
+      criteria == BadgeCriteria.donationTotal) {
     return AppColors.sage;
   }
   if (haystack.contains('explorer') ||
