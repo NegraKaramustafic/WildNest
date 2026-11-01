@@ -424,7 +424,6 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
         'date': formatApiDate(schedule.date),
         'startTime': formatApiClock(schedule.startTime),
         'endTime': formatApiClock(schedule.endTime),
-        'capacityLeft': schedule.capacityLeft,
         'status': scheduleStatusApiValue(ScheduleStatus.cancelled),
       });
       if (mounted) await _reloadVisible();

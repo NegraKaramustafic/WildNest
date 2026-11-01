@@ -2,6 +2,7 @@ using System;
 using eCommerce.Model;
 using System.Collections.Generic;
 using System.Linq;
+using eCommerce.Model.Enums;
 using eCommerce.Model.Exceptions;
 using eCommerce.Model.Requests;
 using eCommerce.Model.Responses;
@@ -70,6 +71,15 @@ namespace eCommerce.Services
             if (alreadyReviewed)
             {
                 throw new ClientException("You have already reviewed this activity.");
+            }
+
+            var visited = await _dbContext.Reservations.AnyAsync(reservation =>
+                reservation.UserId == userId
+                && reservation.Status == ReservationStatus.Completed
+                && reservation.Schedule.ActivityId == request.ActivityId);
+            if (!visited)
+            {
+                throw new ClientException("You can review this activity after a completed visit.");
             }
 
             var created = await base.InsertAsync(request);

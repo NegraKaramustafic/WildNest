@@ -7,26 +7,26 @@ namespace eCommerce.Services.Validators
 {
     public class ScheduleUpdateValidator : AbstractValidator<ScheduleUpdateRequest>
     {
-        public ScheduleUpdateValidator(ECommerceDbContext dbContext)
+        public ScheduleUpdateValidator(ECommerceDbContext dbContext, ZooClock zooClock)
         {
             RuleFor(x => x.ActivityId)
                 .GreaterThan(0).WithMessage("Activity is required.");
 
             RuleFor(x => x.Date)
-                .Must(date => date != default)
-                .WithMessage("Date is required.");
+                .Must(date => date != default && date >= zooClock.Today)
+                .WithMessage("The date cannot be in the past.");
 
             RuleFor(x => x.EndTime)
                 .GreaterThan(x => x.StartTime)
                 .WithMessage("End time must be after start time.");
 
-            RuleFor(x => x.CapacityLeft)
-                .GreaterThanOrEqualTo(0).When(x => x.CapacityLeft.HasValue)
-                .WithMessage("Remaining capacity cannot be negative.");
+            RuleFor(x => x.Capacity)
+                .GreaterThanOrEqualTo(0).When(x => x.Capacity.HasValue)
+                .WithMessage("Capacity cannot be negative.");
 
             RuleFor(x => x).CustomAsync(async (request, context, cancellation) =>
             {
-                if (!request.CapacityLeft.HasValue)
+                if (!request.Capacity.HasValue)
                 {
                     return;
                 }
@@ -34,11 +34,11 @@ namespace eCommerce.Services.Validators
                 var activity = await dbContext.Activities
                     .AsNoTracking()
                     .FirstOrDefaultAsync(item => item.Id == request.ActivityId, cancellation);
-                if (activity != null && request.CapacityLeft.Value > activity.Capacity)
+                if (activity != null && request.Capacity.Value > activity.Capacity)
                 {
                     context.AddFailure(
-                        nameof(ScheduleUpdateRequest.CapacityLeft),
-                        $"Remaining capacity cannot exceed the activity capacity ({activity.Capacity}).");
+                        nameof(ScheduleUpdateRequest.Capacity),
+                        $"Capacity cannot exceed the activity capacity ({activity.Capacity}).");
                 }
             });
         }

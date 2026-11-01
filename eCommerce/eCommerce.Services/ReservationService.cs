@@ -210,6 +210,13 @@ public class ReservationService : BaseReadService<Reservation, ReservationRespon
             entity.CancelledAt = DateTime.UtcNow;
             entity.CancellationReason = reason;
         }
+        else
+        {
+            entity.CancelledByUserId = _userAccessor.GetUserId()
+                ?? throw new InvalidOperationException("User id claim is missing.");
+            entity.CancelledAt = DateTime.UtcNow;
+            entity.CancellationReason = "Cancelled by the customer.";
+        }
 
         var ownsTransaction = _dbContext.Database.CurrentTransaction == null;
         ReservationResponse cancelled = null!;

@@ -72,6 +72,30 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
+        public async Task Insert_RejectsAnInactiveActivity_AndDoesNotTakeASeat()
+        {
+            using var db = new SqliteDb();
+            var activity = await db.Context.Activities.SingleAsync(item => item.Id == 1);
+            activity.Status = ActivityStatus.Inactive;
+            await db.Context.SaveChangesAsync();
+
+            var scheduleId = await AddSchedule(db.Context, new DateOnly(2027, 8, 1), ScheduleStatus.Active, 4);
+            var service = Create(db.Context, userId: 4);
+
+            var error = await Assert.ThrowsAsync<ClientException>(() => service.InsertAsync(new ReservationInsertRequest
+            {
+                ScheduleId = scheduleId,
+                GuestCount = 1
+            }));
+            Assert.Equal("This activity is not available for reservation.", error.Message);
+
+            db.Context.ChangeTracker.Clear();
+            var capacity = await db.Context.Schedules.Where(item => item.Id == scheduleId).Select(item => item.CapacityLeft).SingleAsync();
+            Assert.Equal(4, capacity);
+            Assert.False(await db.Context.Reservations.AnyAsync(item => item.ScheduleId == scheduleId));
+        }
+
+        [Fact]
         public async Task Insert_ParallelRequests_CannotOverbookTheLastSpots()
         {
             using var shared = new SharedSqlite();

@@ -1,6 +1,8 @@
 import 'package:ecommerce_desktop/models/activity.dart';
+import 'package:ecommerce_desktop/models/reservation.dart';
 import 'package:ecommerce_desktop/models/schedule.dart';
 import 'package:ecommerce_desktop/providers/activity_provider.dart';
+import 'package:ecommerce_desktop/providers/reservation_provider.dart';
 import 'package:ecommerce_desktop/providers/schedule_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
 import 'package:ecommerce_desktop/utils/api_client_exception.dart';
@@ -40,6 +42,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   late DateTime _date;
   late TimeOfDay _start;
   late TimeOfDay _end;
+  int _occupied = 0;
   bool _loadingActivities = true;
   bool _saving = false;
   String? _error;
@@ -55,9 +58,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
     _start = _timeFromDuration(schedule?.startTime) ?? const TimeOfDay(hour: 9, minute: 0);
     _end = _timeFromDuration(schedule?.endTime) ?? const TimeOfDay(hour: 10, minute: 0);
     _activityId = schedule?.activityId;
-    _capacity = TextEditingController(
-      text: schedule == null ? '' : schedule.capacityLeft.toString(),
-    );
+    _capacity = TextEditingController();
     _loadActivities();
   }
 
@@ -96,8 +97,16 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
           ),
         );
       }
+      final schedule = widget.schedule;
+      var occupied = 0;
+      if (schedule != null) {
+        occupied = await _occupiedSeats(schedule.id);
+        if (!mounted) return;
+        _capacity.text = (schedule.capacityLeft + occupied).toString();
+      }
       setState(() {
         _activities = items;
+        _occupied = occupied;
         _loadingActivities = false;
       });
     } on SessionExpiredException {
@@ -109,6 +118,34 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
         _error = e.toString().replaceFirst('Bad state: ', '');
       });
     }
+  }
+
+  Future<int> _occupiedSeats(int scheduleId) async {
+    final provider = context.read<ReservationProvider>();
+    var occupied = 0;
+    var page = 1;
+    while (page <= 50) {
+      final result = await provider.get(
+        filter: {
+          'ScheduleId': scheduleId,
+          'Page': page,
+          'PageSize': 100,
+          'IncludeTotalCount': true,
+        },
+      );
+      final items = result.items ?? [];
+      for (final reservation in items) {
+        if (reservation.status != ReservationStatus.cancelled) {
+          occupied += reservation.guestCount;
+        }
+      }
+      final total = result.totalCount;
+      if (items.isEmpty || items.length < 100 || (total != null && page * 100 >= total)) {
+        break;
+      }
+      page++;
+    }
+    return occupied;
   }
 
   Activity? get _selectedActivity {
@@ -123,11 +160,10 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   Future<void> _pickDate() async {
     final today = DateUtils.dateOnly(DateTime.now());
     final current = DateUtils.dateOnly(_date);
-    final firstDate = current.isBefore(today) ? current : today;
     final picked = await showDatePicker(
       context: context,
-      initialDate: current.isBefore(firstDate) ? firstDate : current,
-      firstDate: firstDate,
+      initialDate: current.isBefore(today) ? today : current,
+      firstDate: today,
       lastDate: DateTime(today.year + 3, 12, 31),
     );
     if (picked == null || !mounted) return;
@@ -177,7 +213,7 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
       'date': formatApiDate(_date),
       'startTime': _apiTime(_start),
       'endTime': _apiTime(_end),
-      'capacityLeft': int.parse(_capacity.text.trim()),
+      'capacity': int.parse(_capacity.text.trim()),
       'status': _isEdit
           ? scheduleStatusApiValue(widget.schedule!.status)
           : scheduleStatusApiValue(ScheduleStatus.active),
@@ -319,11 +355,8 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
       validator: (value) {
         final date = value ?? _date;
         final day = DateUtils.dateOnly(date);
-        final original = widget.schedule == null
-            ? null
-            : DateUtils.dateOnly(widget.schedule!.date);
-        if (day.isBefore(today) && day != original) {
-          return 'Date cannot be in the past.';
+        if (day.isBefore(today)) {
+          return 'The date cannot be in the past.';
         }
         return null;
       },
@@ -380,16 +413,19 @@ class _ScheduleFormDialogState extends State<ScheduleFormDialog> {
   Widget _capacityField() {
     return TextFormField(
       controller: _capacity,
-      decoration: const InputDecoration(labelText: 'Capacity left'),
+      decoration: const InputDecoration(labelText: 'Capacity'),
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value) {
         final parsed = int.tryParse(value?.trim() ?? '');
-        if (parsed == null) return 'Enter the capacity left.';
-        if (parsed < 0) return 'Capacity left cannot be negative.';
+        if (parsed == null) return 'Enter the capacity.';
+        if (parsed < 0) return 'Capacity cannot be negative.';
+        if (parsed < _occupied) {
+          return 'Capacity cannot be less than the seats already reserved ($_occupied).';
+        }
         final maxCapacity = _selectedActivity?.capacity;
-        if (maxCapacity != null && maxCapacity > 0 && parsed > maxCapacity) {
-          return 'Capacity left cannot be greater than the activity capacity ($maxCapacity).';
+        if (maxCapacity != null && parsed > maxCapacity) {
+          return 'Capacity cannot exceed the activity capacity ($maxCapacity).';
         }
         return null;
       },

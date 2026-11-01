@@ -77,18 +77,13 @@ namespace eCommerce.Services
                 throw new ClientException("End time must be after start time.");
             }
 
-            if (request.CapacityLeft.HasValue)
-            {
-                EnsureCapacityValue(request.CapacityLeft.Value, activity.Capacity);
-            }
+            var totalCapacity = request.Capacity ?? activity.Capacity;
+            EnsureSlotCapacity(totalCapacity, occupied: 0, activity.Capacity);
 
             await EnsureNoActiveOverlapAsync(request.ActivityId, request.Date, request.StartTime, request.EndTime, null, request.Status);
 
             var entity = base.MapInsertRequestToEntity(request);
-            if (!request.CapacityLeft.HasValue)
-            {
-                entity.CapacityLeft = activity.Capacity;
-            }
+            entity.CapacityLeft = totalCapacity;
 
             _dbContext.Schedules.Add(entity);
             await _dbContext.SaveChangesAsync();
@@ -109,13 +104,22 @@ namespace eCommerce.Services
                 ThrowNotFound("Schedule", id, "Schedule not found.");
             }
 
+            if (request.Date < _zooClock.Today)
+            {
+                throw new ClientException("The date cannot be in the past.");
+            }
+
             if (request.ActivityId != entity.ActivityId)
             {
                 await GetActiveActivityAsync(request.ActivityId);
             }
 
-            var effectiveCapacity = request.CapacityLeft ?? entity.CapacityLeft;
-            await EnsureCapacityWithinActivityAsync(request.ActivityId, effectiveCapacity);
+            var activityCapacity = await ActivityCapacityAsync(request.ActivityId);
+            var occupied = await OccupiedGuestCountAsync(id);
+            if (request.Capacity.HasValue)
+            {
+                EnsureSlotCapacity(request.Capacity.Value, occupied, activityCapacity);
+            }
 
             var openReservations = await _dbContext.Reservations
                 .Where(r => r.ScheduleId == id && r.Status != ReservationStatus.Cancelled)
@@ -162,6 +166,11 @@ namespace eCommerce.Services
 
             await EnsureNoActiveOverlapAsync(request.ActivityId, request.Date, request.StartTime, request.EndTime, id, request.Status);
             MapUpdateRequestToEntity(request, entity);
+            if (request.Capacity.HasValue)
+            {
+                entity.CapacityLeft = request.Capacity.Value - occupied;
+            }
+
             await _dbContext.SaveChangesAsync();
             return await GetByIdAsync(id);
         }
@@ -194,13 +203,9 @@ namespace eCommerce.Services
 
         protected override void MapUpdateRequestToEntity(ScheduleUpdateRequest request, Schedule entity)
         {
-            var existingCapacityLeft = entity.CapacityLeft;
+            var capacityLeft = entity.CapacityLeft;
             base.MapUpdateRequestToEntity(request, entity);
-
-            if (!request.CapacityLeft.HasValue)
-            {
-                entity.CapacityLeft = existingCapacityLeft;
-            }
+            entity.CapacityLeft = capacityLeft;
         }
 
         protected override IQueryable<Schedule> ApplyFilters(IQueryable<Schedule> query, ScheduleSearchObject? search)
@@ -257,27 +262,43 @@ namespace eCommerce.Services
             return activity;
         }
 
-        private async Task EnsureCapacityWithinActivityAsync(int activityId, int capacityLeft)
+        private async Task<int> ActivityCapacityAsync(int activityId)
         {
-            var activity = await _dbContext.Activities.AsNoTracking().FirstOrDefaultAsync(item => item.Id == activityId);
-            if (activity == null)
+            var capacity = await _dbContext.Activities
+                .AsNoTracking()
+                .Where(activity => activity.Id == activityId)
+                .Select(activity => (int?)activity.Capacity)
+                .FirstOrDefaultAsync();
+            if (!capacity.HasValue)
             {
                 ThrowNotFound("Activity", activityId, "Activity not found.");
             }
 
-            EnsureCapacityValue(capacityLeft, activity.Capacity);
+            return capacity.Value;
         }
 
-        private static void EnsureCapacityValue(int capacityLeft, int activityCapacity)
+        private async Task<int> OccupiedGuestCountAsync(int scheduleId)
         {
-            if (capacityLeft < 0)
+            return await _dbContext.Reservations
+                .Where(reservation => reservation.ScheduleId == scheduleId && reservation.Status != ReservationStatus.Cancelled)
+                .SumAsync(reservation => (int?)reservation.GuestCount) ?? 0;
+        }
+
+        private static void EnsureSlotCapacity(int total, int occupied, int activityCapacity)
+        {
+            if (total < 0)
             {
-                throw new ClientException("Remaining capacity cannot be negative.");
+                throw new ClientException("Capacity cannot be negative.");
             }
 
-            if (capacityLeft > activityCapacity)
+            if (total < occupied)
             {
-                throw new ClientException($"Remaining capacity cannot exceed the activity capacity ({activityCapacity}).");
+                throw new ClientException($"Capacity cannot be less than the seats already reserved ({occupied}).");
+            }
+
+            if (total > activityCapacity)
+            {
+                throw new ClientException($"Capacity cannot exceed the activity capacity ({activityCapacity}).");
             }
         }
 
