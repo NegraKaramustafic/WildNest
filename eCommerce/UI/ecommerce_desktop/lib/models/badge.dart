@@ -34,7 +34,7 @@ class Badge {
 const badgeCriteriaValues = [
   'FirstAdoption',
   'FirstBooking',
-  'ThreeDonations',
+  'DonationTotal',
   'FiveAdoptions',
 ];
 
@@ -44,8 +44,8 @@ String badgeCriteriaLabel(String criteria) {
       return 'First adoption';
     case 'FirstBooking':
       return 'First booking';
-    case 'ThreeDonations':
-      return 'Three donations';
+    case 'DonationTotal':
+      return 'Donation total';
     case 'FiveAdoptions':
       return 'Five adoptions';
     default:
@@ -59,8 +59,8 @@ String badgeAwardRule(String criteria) {
       return 'Awarded after the first completed adoption.';
     case 'FirstBooking':
       return 'Awarded after the first completed activity booking.';
-    case 'ThreeDonations':
-      return 'Awarded after three completed donations.';
+    case 'DonationTotal':
+      return 'Awarded when completed donations reach a total of 50 EUR.';
     case 'FiveAdoptions':
       return 'Awarded after five completed adoptions.';
     default:

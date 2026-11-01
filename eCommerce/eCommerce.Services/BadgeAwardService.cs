@@ -32,8 +32,9 @@ namespace eCommerce.Services
                 a.UserId == userId && a.Payment != null && a.Payment.Status == PaymentStatus.Completed);
             var reservationCount = await _dbContext.Reservations.CountAsync(r =>
                 r.UserId == userId && r.Payment != null && r.Payment.Status == PaymentStatus.Completed);
-            var donationCount = await _dbContext.Donations.CountAsync(d =>
-                d.UserId == userId && d.Payment != null && d.Payment.Status == PaymentStatus.Completed);
+            var completedDonationTotal = await _dbContext.Donations
+                .Where(d => d.UserId == userId && d.Payment != null && d.Payment.Status == PaymentStatus.Completed)
+                .SumAsync(d => (decimal?)d.Amount) ?? 0m;
 
             var awarded = new List<AwardedBadge>();
             foreach (var badge in badges)
@@ -47,7 +48,7 @@ namespace eCommerce.Services
                 {
                     BadgeCriteria.FirstAdoption => adoptionCount >= 1,
                     BadgeCriteria.FirstBooking => reservationCount >= 1,
-                    BadgeCriteria.ThreeDonations => donationCount >= 3,
+                    BadgeCriteria.DonationTotal => completedDonationTotal >= DonationBadgeRule.TotalEuros,
                     BadgeCriteria.FiveAdoptions => adoptionCount >= 5,
                     _ => false
                 };

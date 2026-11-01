@@ -886,6 +886,20 @@ namespace eCommerce.Services
                             ThrowNotFound("Donation", id, "Donation not found.");
                         }
 
+                        var partnerIsActive = await _dbContext.ZooPartners.AsNoTracking()
+                            .Where(partner => partner.Id == donation.ZooPartnerId)
+                            .Select(partner => (bool?)partner.IsActive)
+                            .FirstOrDefaultAsync();
+                        if (partnerIsActive == null)
+                        {
+                            ThrowNotFound("ZooPartner", donation.ZooPartnerId, "Zoo partner not found.");
+                        }
+
+                        if (partnerIsActive == false)
+                        {
+                            throw new ClientException("This zoo partner is not accepting donations.");
+                        }
+
                         return new PayableRecord(
                             donation.UserId,
                             donation.Amount,

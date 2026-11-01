@@ -601,7 +601,7 @@ namespace eCommerce.Services.Migrations
                         {
                             Id = 3,
                             Criteria = 2,
-                            Description = "Donate to 3 zoos",
+                            Description = "Donate a total of 50 EUR",
                             Name = "Generous Heart"
                         },
                         new

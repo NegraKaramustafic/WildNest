@@ -60,10 +60,7 @@ namespace eCommerce.Services
 
         public override async Task<DonationResponse> InsertAsync(DonationInsertRequest request)
         {
-            if (!await _dbContext.ZooPartners.AnyAsync(partner => partner.Id == request.ZooPartnerId))
-            {
-                ThrowNotFound("ZooPartner", request.ZooPartnerId, "Zoo partner not found.");
-            }
+            await EnsurePartnerAcceptsDonationsAsync(request.ZooPartnerId);
 
             var created = await base.InsertAsync(request);
             return await GetByIdAsync(created.Id);
@@ -89,7 +86,29 @@ namespace eCommerce.Services
                 ThrowNotFound("Donation", id, "Donation not found.");
             }
 
+            if (await PaymentSettlement.IsCompletedOrRefundedAsync(_dbContext, entity.PaymentId))
+            {
+                throw new ClientException("A paid donation cannot be deleted.");
+            }
+
             await base.DeleteAsync(id);
+        }
+
+        private async Task EnsurePartnerAcceptsDonationsAsync(int zooPartnerId)
+        {
+            var isActive = await _dbContext.ZooPartners.AsNoTracking()
+                .Where(partner => partner.Id == zooPartnerId)
+                .Select(partner => (bool?)partner.IsActive)
+                .FirstOrDefaultAsync();
+            if (isActive == null)
+            {
+                ThrowNotFound("ZooPartner", zooPartnerId, "Zoo partner not found.");
+            }
+
+            if (isActive == false)
+            {
+                throw new ClientException("This zoo partner is not accepting donations.");
+            }
         }
 
         protected override Donation MapInsertRequestToEntity(DonationInsertRequest request)

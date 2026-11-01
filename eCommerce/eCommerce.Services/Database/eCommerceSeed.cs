@@ -869,9 +869,9 @@ namespace eCommerce.Services.Database
                 {
                     Id = 3,
                     Name = "Generous Heart",
-                    Description = "Donate to 3 zoos",
+                    Description = eCommerce.Model.Enums.DonationBadgeRule.Description,
                     IconUrl = (string?)null,
-                    Criteria = eCommerce.Model.Enums.BadgeCriteria.ThreeDonations
+                    Criteria = eCommerce.Model.Enums.BadgeCriteria.DonationTotal
                 },
                 new
                 {

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using eCommerce.Model;
 
 namespace eCommerce.Model.Requests
 {
@@ -8,7 +9,7 @@ namespace eCommerce.Model.Requests
         public DateOnly VisitDate { get; set; }
 
         [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "VisitorCount must be greater than 0.")]
+        [Range(TicketLimits.MinimumVisitors, TicketLimits.MaximumVisitors, ErrorMessage = TicketLimits.VisitorCountMessage)]
         public int VisitorCount { get; set; }
     }
 }

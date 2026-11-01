@@ -125,6 +125,11 @@ namespace eCommerce.Services
                 ThrowNotFound("Adoption", id, "Adoption not found.");
             }
 
+            if (await PaymentSettlement.IsCompletedOrRefundedAsync(_dbContext, entity.PaymentId))
+            {
+                throw new ClientException("A paid adoption cannot be deleted.");
+            }
+
             await base.DeleteAsync(id);
         }
 
