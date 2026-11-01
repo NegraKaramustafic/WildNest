@@ -93,6 +93,24 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
+        public async Task Read_ReportsTwoSeatsLeft_OnATenSeatSlot_WhenTheActivityHoldsTwenty()
+        {
+            using var db = new SqliteDb();
+            var activityId = await AddActivityAsync(db.Context, capacity: 20);
+            var scheduleId = await AddScheduleAsync(db.Context, activityId, new DateOnly(2027, 9, 1), capacityLeft: 2);
+            await AddReservationAsync(db.Context, scheduleId, userId: 4, guests: 8, ReservationStatus.Confirmed, "WN-SLOT08");
+            var service = Create(db.Context);
+
+            var byId = await service.GetByIdAsync(scheduleId);
+            Assert.Equal(2, byId.CapacityLeft);
+            Assert.Equal(10, byId.SlotCapacity);
+
+            var listed = Assert.Single((await service.GetAllAsync(new ScheduleSearchObject { ActivityId = activityId })).Items);
+            Assert.Equal(2, listed.CapacityLeft);
+            Assert.Equal(10, listed.SlotCapacity);
+        }
+
+        [Fact]
         public async Task Update_LeavesFreeSeatsUnchanged_WhenCapacityIsOmitted()
         {
             using var db = new SqliteDb();
