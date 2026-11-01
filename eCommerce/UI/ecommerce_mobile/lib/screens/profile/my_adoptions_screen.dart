@@ -1,5 +1,7 @@
 import 'package:ecommerce_mobile/models/adoption.dart';
+import 'package:ecommerce_mobile/models/animal.dart';
 import 'package:ecommerce_mobile/providers/adoption_provider.dart';
+import 'package:ecommerce_mobile/screens/adopt/adoption_payment_screen.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
 import 'package:ecommerce_mobile/utils/utils_widgets.dart';
@@ -50,6 +52,25 @@ class _MyAdoptionsScreenState extends State<MyAdoptionsScreen> {
       });
       showAppError(context, e);
     }
+  }
+
+  Future<void> _extend(Adoption adoption) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AdoptionPaymentScreen(
+          animal: Animal(
+            id: adoption.animalId,
+            name: adoption.animalName,
+            species: '',
+            categoryId: 0,
+            categoryName: '',
+            adoptionPrice: adoption.monthlyAmount,
+          ),
+          existingAdoption: adoption,
+        ),
+      ),
+    );
+    if (mounted) _load();
   }
 
   @override
@@ -108,6 +129,27 @@ class _MyAdoptionsScreenState extends State<MyAdoptionsScreen> {
                                   '${formatMoney(adoption.monthlyAmount)}/month · ${formatReviewDate(adoption.startDate)}',
                                   style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                                 ),
+                                if (adoption.validUntil != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Until ${formatReviewDate(adoption.validUntil!)}',
+                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                  ),
+                                ],
+                                if (adoption.status == AdoptionStatus.active ||
+                                    adoption.status == AdoptionStatus.expired)
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton(
+                                      onPressed: () => _extend(adoption),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Extend'),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -117,6 +159,7 @@ class _MyAdoptionsScreenState extends State<MyAdoptionsScreen> {
                               AdoptionStatus.active => StatusTone.success,
                               AdoptionStatus.cancelled => StatusTone.danger,
                               AdoptionStatus.pendingPayment => StatusTone.warning,
+                              AdoptionStatus.expired => StatusTone.neutral,
                             },
                           ),
                         ],

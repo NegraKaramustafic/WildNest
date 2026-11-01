@@ -128,7 +128,9 @@ namespace eCommerce.Services.ReservationStateMachine
                 }
 
                 var code = $"WN-{new string(suffix)}";
-                if (!await DbContext.Reservations.AnyAsync(r => r.Code == code))
+                var usedByReservation = await DbContext.Reservations.AnyAsync(r => r.Code == code);
+                var usedByTicket = await DbContext.Tickets.AnyAsync(t => t.Code == code);
+                if (!usedByReservation && !usedByTicket)
                 {
                     return code;
                 }

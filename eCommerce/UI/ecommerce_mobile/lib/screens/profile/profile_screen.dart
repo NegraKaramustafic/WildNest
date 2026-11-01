@@ -157,6 +157,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? StatusTone.success
               : adoption.status == AdoptionStatus.cancelled
               ? StatusTone.danger
+              : adoption.status == AdoptionStatus.expired
+              ? StatusTone.neutral
               : StatusTone.warning,
         ),
       for (final donation in _donations)

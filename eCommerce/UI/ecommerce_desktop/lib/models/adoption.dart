@@ -1,7 +1,7 @@
 import 'package:ecommerce_desktop/models/payment_status.dart';
 import 'package:ecommerce_desktop/utils/json_parsers.dart';
 
-enum AdoptionStatus { active, cancelled, pendingPayment }
+enum AdoptionStatus { active, cancelled, pendingPayment, expired }
 
 class Adoption {
   final int id;
@@ -72,6 +72,8 @@ class Adoption {
         return 'This adoption is already active.';
       case AdoptionStatus.cancelled:
         return 'A cancelled adoption cannot be approved.';
+      case AdoptionStatus.expired:
+        return 'An expired adoption cannot be approved.';
     }
   }
 
@@ -88,6 +90,8 @@ AdoptionStatus parseAdoptionStatus(dynamic value) {
         return AdoptionStatus.cancelled;
       case 2:
         return AdoptionStatus.pendingPayment;
+      case 3:
+        return AdoptionStatus.expired;
       default:
         return AdoptionStatus.active;
     }
@@ -100,6 +104,8 @@ AdoptionStatus parseAdoptionStatus(dynamic value) {
     case 'pending_payment':
     case 'pending':
       return AdoptionStatus.pendingPayment;
+    case 'expired':
+      return AdoptionStatus.expired;
     default:
       return AdoptionStatus.active;
   }
@@ -113,6 +119,8 @@ String adoptionStatusLabel(AdoptionStatus status) {
       return 'Cancelled';
     case AdoptionStatus.pendingPayment:
       return 'Pending payment';
+    case AdoptionStatus.expired:
+      return 'Expired';
   }
 }
 
@@ -124,5 +132,7 @@ String adoptionStatusApiValue(AdoptionStatus status) {
       return 'Cancelled';
     case AdoptionStatus.pendingPayment:
       return 'PendingPayment';
+    case AdoptionStatus.expired:
+      return 'Expired';
   }
 }

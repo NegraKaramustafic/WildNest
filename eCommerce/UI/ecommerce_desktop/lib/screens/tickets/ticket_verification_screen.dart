@@ -1,3 +1,4 @@
+import 'package:ecommerce_desktop/models/entry_check.dart';
 import 'package:ecommerce_desktop/models/ticket.dart';
 import 'package:ecommerce_desktop/providers/ticket_provider.dart';
 import 'package:ecommerce_desktop/theme/app_colors.dart';
@@ -16,7 +17,7 @@ class TicketVerificationScreen extends StatefulWidget {
 class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
   final _codeController = TextEditingController();
   bool _verifying = false;
-  Ticket? _ticket;
+  EntryCheck? _result;
   String? _error;
 
   @override
@@ -29,7 +30,7 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
       setState(() {
-        _ticket = null;
+        _result = null;
         _error = 'Enter a ticket code.';
       });
       return;
@@ -37,15 +38,15 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
 
     setState(() {
       _verifying = true;
-      _ticket = null;
+      _result = null;
       _error = null;
     });
 
     try {
-      final ticket = await context.read<TicketProvider>().verifyManualCode(code);
+      final result = await context.read<TicketProvider>().verifyManualCode(code);
       if (!mounted) return;
       setState(() {
-        _ticket = ticket;
+        _result = result;
         _verifying = false;
       });
     } on SessionExpiredException {
@@ -123,7 +124,11 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              TicketVerifyResultView(ticket: _ticket, error: _error),
+              TicketVerifyResultView(
+                ticket: _result?.ticket,
+                reservation: _result?.reservation,
+                error: _error,
+              ),
             ],
           ),
         ),
@@ -133,9 +138,10 @@ class _TicketVerificationScreenState extends State<TicketVerificationScreen> {
 }
 
 class TicketVerifyResultView extends StatelessWidget {
-  const TicketVerifyResultView({super.key, this.ticket, this.error});
+  const TicketVerifyResultView({super.key, this.ticket, this.reservation, this.error});
 
   final Ticket? ticket;
+  final ReservationCheck? reservation;
   final String? error;
 
   @override
@@ -145,6 +151,39 @@ class TicketVerifyResultView extends StatelessWidget {
         tone: _ResultTone.error,
         title: 'Ticket was not verified',
         message: error!,
+      );
+    }
+
+    final reservationResult = reservation;
+    if (reservationResult != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _ResultCard(
+            tone: _ResultTone.success,
+            title: 'Reservation verified',
+            message: 'The code was accepted and the reservation is marked as completed.',
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                _DetailRow(label: 'Code', value: reservationResult.code),
+                _DetailRow(label: 'Visitor', value: reservationResult.visitorName),
+                _DetailRow(label: 'Activity', value: reservationResult.activityName),
+                _DetailRow(label: 'Schedule date', value: formatDate(reservationResult.scheduleDate)),
+                _DetailRow(label: 'Guests', value: reservationResult.guestCount.toString()),
+                _DetailRow(label: 'Total', value: formatMoney(reservationResult.total)),
+              ],
+            ),
+          ),
+        ],
       );
     }
 

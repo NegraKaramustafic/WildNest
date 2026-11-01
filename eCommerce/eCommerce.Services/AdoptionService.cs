@@ -21,6 +21,7 @@ namespace eCommerce.Services
         private readonly IPaymentService _paymentService;
         private readonly INotificationEventService _notificationEvents;
         private readonly IValidator<AdoptionRejectRequest> _rejectValidator;
+        private readonly IAdoptionTermService _adoptionTerm;
 
         public AdoptionService(
             ECommerceDbContext dbContext,
@@ -31,6 +32,7 @@ namespace eCommerce.Services
             IPaymentService paymentService,
             INotificationEventService notificationEvents,
             IValidator<AdoptionRejectRequest> rejectValidator,
+            IAdoptionTermService adoptionTerm,
             ILoggerFactory loggerFactory)
             : base(dbContext, mapper, insertValidator, updateValidator, loggerFactory)
         {
@@ -38,6 +40,7 @@ namespace eCommerce.Services
             _paymentService = paymentService;
             _notificationEvents = notificationEvents;
             _rejectValidator = rejectValidator;
+            _adoptionTerm = adoptionTerm;
         }
 
         protected override string NotFoundMessage => "Adoption not found.";
@@ -68,7 +71,8 @@ namespace eCommerce.Services
             }
 
             var response = _mapper.Map<AdoptionResponse>(entity);
-            response.AllowedActions = AllowedActions(entity.Status);
+            response.Status = _adoptionTerm.StatusForList(entity.Status, entity.ValidUntil);
+            response.AllowedActions = AllowedActions(response.Status);
             return response;
         }
 
@@ -77,6 +81,7 @@ namespace eCommerce.Services
             var page = await base.GetAllAsync(search);
             foreach (var item in page.Items)
             {
+                item.Status = _adoptionTerm.StatusForList(item.Status, item.ValidUntil);
                 item.AllowedActions = AllowedActions(item.Status);
             }
 
@@ -151,6 +156,7 @@ namespace eCommerce.Services
             var existingAnimalId = entity.AnimalId;
             var existingPaymentId = entity.PaymentId;
             var existingMonthlyAmount = entity.MonthlyAmount;
+            var existingValidUntil = entity.ValidUntil;
             base.MapUpdateRequestToEntity(request, entity);
             entity.Status = existingStatus;
             entity.StartDate = existingStartDate;
@@ -158,6 +164,7 @@ namespace eCommerce.Services
             entity.AnimalId = existingAnimalId;
             entity.PaymentId = existingPaymentId;
             entity.MonthlyAmount = existingMonthlyAmount;
+            entity.ValidUntil = existingValidUntil;
         }
 
         protected override IQueryable<Adoption> ApplyFilters(IQueryable<Adoption> query, AdoptionSearchObject? search)

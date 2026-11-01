@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:ecommerce_mobile/models/entry_check.dart';
 import 'package:ecommerce_mobile/models/ticket.dart';
 import 'package:ecommerce_mobile/providers/ticket_provider.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
@@ -38,7 +39,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
   bool _busy = false;
   bool _picking = false;
   bool _holdCamera = false;
-  Ticket? _ticket;
+  EntryCheck? _result;
   String? _error;
   String? _invalidMessage;
   String? _cooldownCode;
@@ -47,7 +48,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
   Future<void> _cameraChain = Future<void>.value();
   bool _stopScheduled = false;
 
-  bool get _showResult => _busy || _ticket != null || _error != null;
+  bool get _showResult => _busy || _result != null || _error != null;
 
   bool get _shouldRunCamera =>
       widget.isActive && _appResumed && !_holdCamera && !_picking && !_busy;
@@ -197,7 +198,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
     setState(() {
       _busy = true;
       _holdCamera = true;
-      _ticket = null;
+      _result = null;
       _error = null;
       _invalidMessage = null;
     });
@@ -205,12 +206,12 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
 
     final tickets = context.read<TicketProvider>();
     try {
-      final ticket = await tickets.verify(
+      final result = await tickets.verify(
         code,
         method: TicketVerificationMethod.qrScan,
       );
       if (!mounted) return;
-      setState(() => _ticket = ticket);
+      setState(() => _result = result);
       await HapticFeedback.lightImpact();
     } on SessionExpiredException {
       _holdCamera = false;
@@ -245,7 +246,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
 
   void _scanNext() {
     setState(() {
-      _ticket = null;
+      _result = null;
       _error = null;
       _holdCamera = false;
     });
@@ -289,7 +290,7 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
 
   Color get _holdColor {
     if (_error != null) return AppColors.heart.withValues(alpha: 0.16);
-    if (_ticket != null) return AppColors.mint;
+    if (_result != null) return AppColors.mint;
     return AppColors.cream;
   }
 
@@ -334,7 +335,8 @@ class _ScanTicketScreenState extends State<ScanTicketScreen> with WidgetsBinding
                   child: _ResultSheet(
                     child: TicketVerificationResult(
                       loading: _busy,
-                      ticket: _ticket,
+                      ticket: _result?.ticket,
+                      reservation: _result?.reservation,
                       error: _error,
                       onNext: _busy ? null : _scanNext,
                     ),

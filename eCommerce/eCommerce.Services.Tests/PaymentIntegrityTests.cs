@@ -201,6 +201,7 @@ namespace eCommerce.Services.Tests
                 new NotificationEventService(new CapturingPublisher(), context),
                 new NoBadges(),
                 StripeSettings.FromEnvironment(),
+                new AdoptionTermService(context, new ZooClock("Europe/Sarajevo")),
                 new SilentLoggerFactory());
         }
 
@@ -216,6 +217,7 @@ namespace eCommerce.Services.Tests
                 new NotificationEventService(new CapturingPublisher(), context),
                 new RecordingPaymentService(),
                 clock,
+                new IdleReservationService(),
                 new SilentLoggerFactory());
         }
 

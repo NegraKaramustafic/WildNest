@@ -1,6 +1,6 @@
 import 'package:ecommerce_mobile/utils/json_parsers.dart';
 
-enum AdoptionStatus { active, cancelled, pendingPayment }
+enum AdoptionStatus { active, cancelled, pendingPayment, expired }
 
 class Adoption {
   final int id;
@@ -11,6 +11,7 @@ class Adoption {
   final double monthlyAmount;
   final AdoptionStatus status;
   final DateTime startDate;
+  final DateTime? validUntil;
   final int? paymentId;
   final bool isPaid;
 
@@ -23,6 +24,7 @@ class Adoption {
     this.monthlyAmount = 0,
     this.status = AdoptionStatus.pendingPayment,
     required this.startDate,
+    this.validUntil,
     this.paymentId,
     this.isPaid = false,
   });
@@ -37,6 +39,7 @@ class Adoption {
       monthlyAmount: asDouble(json['monthlyAmount']),
       status: parseAdoptionStatus(json['status']),
       startDate: parseDateTime(json['startDate']) ?? DateTime.now(),
+      validUntil: json['validUntil'] == null ? null : parseDateOnly(json['validUntil']),
       paymentId: json['paymentId'] == null ? null : asInt(json['paymentId']),
       isPaid: json['isPaid'] == true,
     );
@@ -50,6 +53,8 @@ class Adoption {
         return 'Cancelled';
       case AdoptionStatus.pendingPayment:
         return 'Pending';
+      case AdoptionStatus.expired:
+        return 'Expired';
     }
   }
 }
@@ -61,6 +66,8 @@ AdoptionStatus parseAdoptionStatus(dynamic value) {
         return AdoptionStatus.cancelled;
       case 2:
         return AdoptionStatus.pendingPayment;
+      case 3:
+        return AdoptionStatus.expired;
       default:
         return AdoptionStatus.active;
     }
@@ -73,6 +80,8 @@ AdoptionStatus parseAdoptionStatus(dynamic value) {
     case 'pending_payment':
     case 'pending':
       return AdoptionStatus.pendingPayment;
+    case 'expired':
+      return AdoptionStatus.expired;
     default:
       return AdoptionStatus.active;
   }

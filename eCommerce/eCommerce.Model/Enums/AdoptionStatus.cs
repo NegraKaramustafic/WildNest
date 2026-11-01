@@ -7,6 +7,7 @@ namespace eCommerce.Model.Enums
     {
         Active = 0,
         Cancelled = 1,
-        PendingPayment = 2
+        PendingPayment = 2,
+        Expired = 3
     }
 }

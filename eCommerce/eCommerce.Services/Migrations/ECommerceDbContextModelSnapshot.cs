@@ -300,6 +300,9 @@ namespace eCommerce.Services.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<DateOnly?>("ValidUntil")
+                        .HasColumnType("date");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AnimalId");

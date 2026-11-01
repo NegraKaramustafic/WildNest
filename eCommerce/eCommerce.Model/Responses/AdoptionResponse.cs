@@ -13,6 +13,7 @@ namespace eCommerce.Model.Responses
         public string? AnimalImageUrl { get; set; }
         public AdoptionStatus Status { get; set; }
         public DateTime StartDate { get; set; }
+        public DateOnly? ValidUntil { get; set; }
         public int? PaymentId { get; set; }
         public PaymentStatus? PaymentStatus { get; set; }
         public bool IsPaid { get; set; }

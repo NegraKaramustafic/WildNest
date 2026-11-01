@@ -1,3 +1,4 @@
+import 'package:ecommerce_mobile/models/entry_check.dart';
 import 'package:ecommerce_mobile/models/ticket.dart';
 import 'package:ecommerce_mobile/theme/app_colors.dart';
 import 'package:ecommerce_mobile/utils/formatters.dart';
@@ -7,6 +8,7 @@ class TicketVerificationResult extends StatelessWidget {
   const TicketVerificationResult({
     super.key,
     this.ticket,
+    this.reservation,
     this.error,
     this.errorTitle = 'Ticket rejected',
     this.loading = false,
@@ -15,6 +17,7 @@ class TicketVerificationResult extends StatelessWidget {
   });
 
   final Ticket? ticket;
+  final ReservationCheck? reservation;
   final String? error;
   final String errorTitle;
   final bool loading;
@@ -39,6 +42,46 @@ class TicketVerificationResult extends StatelessWidget {
         message: error!,
         onNext: onNext,
         nextLabel: nextLabel,
+      );
+    }
+
+    final reservationResult = reservation;
+    if (reservationResult != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _StatusBanner(
+            tone: _ResultTone.success,
+            title: 'Reservation verified',
+            message: 'This reservation is valid and has been marked as completed.',
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                _DetailRow(label: 'Code', value: _orDash(reservationResult.code)),
+                _DetailRow(label: 'Visitor', value: _orDash(reservationResult.visitorName)),
+                _DetailRow(label: 'Activity', value: _orDash(reservationResult.activityName)),
+                _DetailRow(
+                  label: 'Schedule date',
+                  value: formatReviewDate(reservationResult.scheduleDate),
+                ),
+                _DetailRow(label: 'Guests', value: reservationResult.guestCount.toString()),
+                _DetailRow(label: 'Total', value: formatMoney(reservationResult.total)),
+              ],
+            ),
+          ),
+          if (onNext != null) ...[
+            const SizedBox(height: 14),
+            ElevatedButton(onPressed: onNext, child: Text(nextLabel)),
+          ],
+        ],
       );
     }
 

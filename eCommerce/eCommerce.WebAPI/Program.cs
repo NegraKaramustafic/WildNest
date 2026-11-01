@@ -310,6 +310,8 @@ builder.Services.AddScoped<IScheduleReminderService, ScheduleReminderService>();
 builder.Services.AddHostedService<ScheduleReminderHostedService>();
 builder.Services.AddScoped<IReservationHoldService, ReservationHoldService>();
 builder.Services.AddHostedService<ReservationHoldHostedService>();
+builder.Services.AddScoped<IAdoptionTermService, AdoptionTermService>();
+builder.Services.AddHostedService<AdoptionExpiryHostedService>();
 builder.Services.AddSingleton<RecommendationModelCache>();
 builder.Services.AddSingleton<RecommendationTrainer>();
 builder.Services.AddHostedService<RecommendationTrainingHostedService>();

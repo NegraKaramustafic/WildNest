@@ -84,6 +84,7 @@ namespace eCommerce.Services.Tests
                 new Mapper(),
                 new AnimalInsertValidator(),
                 new AnimalUpdateValidator(),
+                new ZooClock("Europe/Sarajevo"),
                 new SilentLoggerFactory());
         }
 

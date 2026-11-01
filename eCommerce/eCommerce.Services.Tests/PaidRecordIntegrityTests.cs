@@ -116,6 +116,39 @@ namespace eCommerce.Services.Tests
         }
 
         [Fact]
+        public async Task Checkout_CompletedTicketPayment_IsStillRejected()
+        {
+            using var db = new SqliteDb();
+            var paymentId = await PaymentAsync(db.Context, 10m, PaymentStatus.Completed);
+            var ticket = new Ticket
+            {
+                UserId = CustomerId,
+                VisitDate = new DateOnly(2026, 12, 1),
+                VisitorCount = 1,
+                PricePerPerson = 10m,
+                TotalPrice = 10m,
+                Code = "WN-GUARD1",
+                QrCodeData = "WN-GUARD1",
+                Status = TicketStatus.Active,
+                PaymentId = paymentId,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Context.Tickets.Add(ticket);
+            await db.Context.SaveChangesAsync();
+
+            var error = await Assert.ThrowsAsync<ClientException>(() => Payments(db.Context).CreateCheckoutAsync(new PaymentCheckoutRequest
+            {
+                RelatedEntityType = PaymentRelatedEntityType.Ticket,
+                RelatedEntityId = ticket.Id
+            }));
+
+            Assert.Equal("This record already has a completed payment.", error.Message);
+            Assert.Equal(1, await db.Context.Payments.CountAsync());
+            Assert.Equal(paymentId, (await db.Context.Tickets.FindAsync(ticket.Id))!.PaymentId);
+            Assert.Equal(PaymentStatus.Completed, (await db.Context.Payments.FindAsync(paymentId))!.Status);
+        }
+
+        [Fact]
         public async Task Cancel_PaidAdoption_EndsItAndLeavesTheRow()
         {
             using var db = new SqliteDb();
@@ -563,6 +596,7 @@ namespace eCommerce.Services.Tests
                 payments,
                 new NotificationEventService(new CapturingPublisher(), context),
                 new AdoptionRejectValidator(),
+                new AdoptionTermService(context, new ZooClock("Europe/Sarajevo")),
                 new SilentLoggerFactory());
         }
 
@@ -577,6 +611,7 @@ namespace eCommerce.Services.Tests
                 new NotificationEventService(new CapturingPublisher(), context),
                 new RecordingPaymentService(),
                 clock,
+                new IdleReservationService(),
                 new SilentLoggerFactory());
         }
 
@@ -597,6 +632,7 @@ namespace eCommerce.Services.Tests
                 new NotificationEventService(new CapturingPublisher(), context),
                 new NoBadges(),
                 StripeSettings.FromEnvironment(),
+                new AdoptionTermService(context, new ZooClock("Europe/Sarajevo")),
                 new SilentLoggerFactory());
         }
 

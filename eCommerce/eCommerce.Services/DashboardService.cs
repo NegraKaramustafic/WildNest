@@ -26,15 +26,18 @@ namespace eCommerce.Services
 
         private readonly ECommerceDbContext _dbContext;
         private readonly IAuthenticatedUserAccessor _userAccessor;
+        private readonly ZooClock _zooClock;
         private readonly ILogger<DashboardService> _logger;
 
         public DashboardService(
             ECommerceDbContext dbContext,
             IAuthenticatedUserAccessor userAccessor,
+            ZooClock zooClock,
             ILogger<DashboardService> logger)
         {
             _dbContext = dbContext;
             _userAccessor = userAccessor;
+            _zooClock = zooClock;
             _logger = logger;
         }
 
@@ -269,7 +272,7 @@ namespace eCommerce.Services
                 ReservationPayments: await SumReservationPayments(),
                 AdoptionPayments: await SumAdoptionPayments(),
                 DonationPayments: await SumDonationPayments(),
-                ActiveAdoptions: await _dbContext.Adoptions.CountAsync(adoption => adoption.Status == AdoptionStatus.Active));
+                ActiveAdoptions: await _dbContext.Adoptions.CountAsync(AdoptionActivity.CurrentlyActive(_zooClock.Today)));
         }
 
         private async Task<decimal> SumTicketPayments() =>
@@ -380,7 +383,7 @@ namespace eCommerce.Services
         private async Task<List<DashboardCategoryPoint>> LoadAdoptionsByCategoryAsync()
         {
             var rows = await _dbContext.Adoptions.AsNoTracking()
-                .Where(adoption => adoption.Status == AdoptionStatus.Active)
+                .Where(AdoptionActivity.CurrentlyActive(_zooClock.Today))
                 .GroupBy(adoption => adoption.Animal.Category.Name)
                 .Select(group => new { CategoryName = group.Key, Count = group.Count() })
                 .ToListAsync();

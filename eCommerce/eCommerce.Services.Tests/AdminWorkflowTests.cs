@@ -348,6 +348,7 @@ namespace eCommerce.Services.Tests
                 payments,
                 new NotificationEventService(publisher, context),
                 new AdoptionRejectValidator(),
+                new AdoptionTermService(context, new ZooClock("Europe/Sarajevo")),
                 new SilentLoggerFactory());
         }
 
@@ -601,6 +602,20 @@ namespace eCommerce.Services.Tests
         public Task<PaymentResponse> GetByIdAsync(int id) => throw new NotImplementedException();
         public Task<PaymentResponse> InsertAsync(PaymentInsertRequest request) => throw new NotImplementedException();
         public Task<PaymentResponse> UpdateAsync(int id, PaymentUpdateRequest request) => throw new NotImplementedException();
+        public Task DeleteAsync(int id) => throw new NotImplementedException();
+    }
+
+    internal sealed class IdleReservationService : IReservationService
+    {
+        public Task<ReservationResponse> ConfirmAsync(int id) => throw new NotImplementedException();
+        public Task<ReservationResponse> CancelAsync(int id) => throw new NotImplementedException();
+        public Task<ReservationResponse> CancelWithReasonAsync(int id, ReservationCancelRequest request) => throw new NotImplementedException();
+        public Task<ReservationResponse> CompleteAsync(int id) => throw new NotImplementedException();
+        public Task<List<string>> GetAllowedActionsAsync(int id) => throw new NotImplementedException();
+        public Task<ReservationResponse> GetByIdAsync(int id) => throw new NotImplementedException();
+        public Task<PageResult<ReservationResponse>> GetAllAsync(ReservationSearchObject? search = null) => throw new NotImplementedException();
+        public Task<ReservationResponse> InsertAsync(ReservationInsertRequest request) => throw new NotImplementedException();
+        public Task<ReservationResponse> UpdateAsync(int id, ReservationUpdateRequest request) => throw new NotImplementedException();
         public Task DeleteAsync(int id) => throw new NotImplementedException();
     }
 

@@ -472,7 +472,7 @@ namespace eCommerce.Services.Tests
         }
 
         private static DashboardService Dashboard(ECommerceDbContext context, bool admin, int? userId) =>
-            new(context, new ReportUserAccessor { Admin = admin, UserId = userId }, NullLogger<DashboardService>.Instance);
+            new(context, new ReportUserAccessor { Admin = admin, UserId = userId }, new ZooClock("Europe/Sarajevo"), NullLogger<DashboardService>.Instance);
 
         private static ReportService Reports(ECommerceDbContext context, bool admin, int? userId) =>
             new(

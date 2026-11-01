@@ -56,7 +56,7 @@ public class TicketController : BaseCRUDController<TicketResponse, TicketSearchO
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TicketResponse>> Verify([FromBody] TicketVerifyRequest request)
+    public async Task<ActionResult<EntryCheckResponse>> Verify([FromBody] TicketVerifyRequest request)
     {
         var result = await _service.VerifyAsync(request);
         return Ok(result);
